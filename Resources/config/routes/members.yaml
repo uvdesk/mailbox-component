@@ -1,0 +1,4 @@
+helpdesk_member_mailbox_settings:
+    path:     /settings/mailbox
+    controller: Webkul\UVDesk\MailboxBundle\Controller\Mailbox::loadMailbox
+    defaults: { panelId: 'settings' }

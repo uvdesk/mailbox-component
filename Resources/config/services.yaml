@@ -1,0 +1,5 @@
+services:
+    uvdesk.mailbox:
+        public: true
+        class: Webkul\UVDesk\MailboxBundle\Services\MailboxService
+        arguments: ['@service_container', '@request_stack', '@doctrine.orm.entity_manager']
