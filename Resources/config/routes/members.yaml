@@ -1,4 +1,8 @@
-helpdesk_member_mailbox_settings:
+helpdesk_member_mailbox_collection:
     path:     /settings/mailbox
-    controller: Webkul\UVDesk\MailboxBundle\Controller\Mailbox::loadMailbox
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::listMailbox
     defaults: { panelId: 'settings' }
+
+helpdesk_member_mailbox_collection_xhr:
+    path:     /settings/mailbox/xhr
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::listMailboxXHR

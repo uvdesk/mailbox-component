@@ -1,4 +1,4 @@
-uvdesk:
+uvdesk_mailbox:
     # Configure your mailboxes here
     emails: ~
         # Often Reply emails like from gmail contains extra and redundant previous mail data.

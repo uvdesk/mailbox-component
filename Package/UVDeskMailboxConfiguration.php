@@ -7,8 +7,8 @@ use Webkul\UVDesk\PackageManager\ExtensionOptions\HelpdeskExtension\Section as H
 
 class UVDeskMailboxConfiguration extends HelpdeskExtension
 {
-    const WORKFLOW_BRICK_SVG = <<<SVG
-<path fill-rule="evenodd" d="M25.783,21.527L10.245,6.019,6.016,10.248,21.524,25.756ZM37.512,6.019l6.119,6.119L6.016,49.783l4.229,4.229L47.89,16.4l6.119,6.119V6.019h-16.5ZM38.5,34.245l-4.229,4.229,9.389,9.389-6.149,6.149h16.5v-16.5L47.89,43.634Z" />
+    const MAILBOX_BRICK_SVG = <<<SVG
+<path fill-rule="evenodd" d="M30,33L6,18V12L30,27,54,12v6ZM5.9,5.992A5.589,5.589,0,0,0,1.745,7.817,5.882,5.882,0,0,0-.016,12.027v35.93a5.875,5.875,0,0,0,1.761,4.211A5.581,5.581,0,0,0,5.9,53.992H54.069a5.588,5.588,0,0,0,4.155-1.825A5.8,5.8,0,0,0,60,48V12a5.847,5.847,0,0,0-1.776-4.183,5.6,5.6,0,0,0-4.155-1.825H5.9Z" />
 SVG;
 
     public function loadDashboardItems()
@@ -17,8 +17,8 @@ SVG;
             HelpdeskSection::SETTINGS => [
                 [
                     'name' => 'Mailbox',
-                    'route' => 'helpdesk_member_mailbox_settings',
-                    'brick_svg' => self::WORKFLOW_BRICK_SVG,
+                    'route' => 'helpdesk_member_mailbox_collection',
+                    'brick_svg' => self::MAILBOX_BRICK_SVG,
                     'permission' => 'ROLE_AGENT_MANAGE_WORKFLOW_AUTOMATIC',
                 ],
             ],

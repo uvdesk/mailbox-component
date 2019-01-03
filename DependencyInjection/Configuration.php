@@ -10,7 +10,7 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $treeBuilder->root('uvdesk')
+        $treeBuilder->root('uvdesk_mailbox')
             ->children()
                 ->node('emails', 'array')
                     ->children()

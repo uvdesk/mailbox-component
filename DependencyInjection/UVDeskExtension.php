@@ -30,7 +30,7 @@ class UVDeskExtension extends Extension
             switch ($param) {
                 case 'emails':
                     foreach ($value as $field => $fieldValue) {
-                        $container->setParameter("uvdesk.$param.$field", $fieldValue);
+                        $container->setParameter("uvdesk.emails.$field", $fieldValue);
                     }
                     break;
                 case 'mailboxes':
