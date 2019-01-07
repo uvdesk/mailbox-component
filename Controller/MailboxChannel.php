@@ -10,10 +10,11 @@ class MailboxChannel extends Controller
 {
     public function listMailbox(Request $request)
     {
-        // if (!$this->get('user.service')->isAccessAuthorized('ROLE_AGENT_MANAGE_MAILBOXES')){          
-        //     return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
-        // }
+        $mailboxService = $this->container->get('uvdesk.core.mailbox');
+        $mailboxes = $mailboxService->getRegisteredMailboxes();
 
-        return $this->render('@UVDeskMailbox//listMailboxes.html.twig');
+        return $this->render('@UVDeskMailbox//listMailboxes.html.html.twig', [
+            'mailboxes' => json_encode($mailboxes)
+        ]);
     }
 }
