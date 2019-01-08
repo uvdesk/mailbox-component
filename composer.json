@@ -1,5 +1,5 @@
 {
-    "name": "uv/mailbox",
+    "name": "uvdesk/mailbox",
     "description": "The Mailbox component provides tools that allows your helpdesk to process tickets from multiple email sources.",
     "type": "symfony-bundle",
     "license": "MIT",

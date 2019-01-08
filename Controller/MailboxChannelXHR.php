@@ -2,6 +2,7 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Controller;
 
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -59,10 +60,10 @@ class MailboxChannelXHR extends Controller
         
         // New mail box details fetch from request
         $data = json_decode($request->getContent(), true);
-        $isExistingMailbox = $this->checkExistingMailbox($data['mailer-id'], $data["imap['email']"]);
+        $isExistingMailbox = $this->checkExistingMailbox($data['mailbox_id'], $data["imap['email']"]);
 
         if (!$isExistingMailbox) {
-            $newMailbox[$data['mailer-id']] = [
+            $newMailbox[$data['mailbox_id']] = [
                 'name' => $data['sender-name'],
                 'enabled' => true,
                 'smtp_server' => [
@@ -89,16 +90,19 @@ class MailboxChannelXHR extends Controller
             $message = "Mailbox already exist.";
         }
         
-        $updateFile ?
+        if ($updateFile) {
+            $newMailbox[$data['mailbox_id']]['mailbox_id'] = $data['mailbox_id'];
             $result = [
-                'mailbox' => $newMailbox[$data['mailer-id']],
+                'mailbox' => $newMailbox[$data['mailbox_id']],
                 'alertClass' => "success",
                 'alertMessage' => "Success ! Mailbox saved successfully.",
-            ] :
+            ];
+        } else {
             $result = [
                 'alertClass' => "error",
                 'alertMessage' => "Error ! " . $message,
             ];
+        }
 
         return new Response(json_encode($result), 200, ['Content-Type: application/json']);
     }
@@ -144,16 +148,19 @@ class MailboxChannelXHR extends Controller
             $message = "Mailbox do not exist.";
         }
 
-        $updateFile ?
+        if ($updateFile) {
+            $editedDetails[$data['mailbox_id']]['mailbox_id'] = $data['mailbox_id'];
             $result = [
                 'mailbox' => $editedDetails[$data['mailbox_id']],
                 'alertClass' => "success",
                 'alertMessage' => "Success ! Mailbox edited successfully.",
-            ] :
+            ];
+        } else {
             $result = [
                 'alertClass' => "error",
                 'alertMessage' => "Error ! " . $message,
             ];
+        }
 
         return new Response(json_encode($result), 200, ['Content-Type: application/json']);
     }
@@ -162,16 +169,20 @@ class MailboxChannelXHR extends Controller
     {
         $mailboxId= $request->query->get('id');
 
-        $isRemoved = $this->removeExistingMailbox($mailboxId);
-        $$isRemoved ?
-            $result = [
-                'alertClass' => "success",
-                'alertMessage' => "Success ! Mailbox saved successfully.",
-            ] :
-            $result = [
-                'alertClass' => "error",
-                'alertMessage' => "Error ! File not updated.",
-            ];
+        $isExistingMailbox = $this->checkExistingMailbox($mailboxId);
+        if ($isExistingMailbox) {
+            $alertClass = "success";
+            $alertMessage = "Success ! Mailbox deleted successfully.";
+            $isRemoved = $this->removeExistingMailbox($mailboxId);
+        } else {
+            $alertClass = "error";
+            $alertMessage = "Error ! Mailbox do not exist.";
+        }
+
+        $result = [
+            'alertClass' => $alertClass,
+            'alertMessage' => $alertMessage,
+        ];
 
         return new Response(json_encode($result), 200, ['Content-Type: application/json']);
     }
@@ -190,7 +201,7 @@ class MailboxChannelXHR extends Controller
         $existingMailboxes = $file_content_array['uvdesk']['mailboxes'];
         if ($existingMailboxes) {
             foreach ($existingMailboxes as $index => $mailboxDetails) {
-                if (($index === $unique_id) || !($mail_id && $mailboxDetails['imap_server']['username'] != $mail_id)) {
+                if (($index === $unique_id) || ($mail_id && $mailboxDetails['imap_server']['username'] == $mail_id)) {
                     $isExist = true;
                 }
 
