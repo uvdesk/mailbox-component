@@ -421,7 +421,7 @@
 					app.appView.showLoader();
 					currentElement.attr("disabled","disabled");
 					this.model.save({}, {
-						url : "{{ path('helpdesk_member_mailbox_settings_update_mailbox_xhr') }}?id=" + $('#mailbox-id').val(),
+						url : "{{ path('helpdesk_member_mailbox_settings_update_mailbox_xhr') }}?id=" + $('#mailbox_id').val(),
 					    success: function (model, response, options) {
 							if (response.alertClass !== "error") {
 								self.model.attributes = response.mailbox;
