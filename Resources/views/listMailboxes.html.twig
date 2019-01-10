@@ -1,62 +1,117 @@
 {% extends "@UVDeskCore//Templates//layout.html.twig" %}
 
-{% block title %}Mailbox Settings{% endblock %}
-
-{% block templateCSS %}{% endblock %}
+{% block title %}Mailbox{% endblock %}
 
 {% block pageContent %}
 	<div class="uv-inner-section">
-		{# Agent Panel Sidebar #}
-        {{ include('@UVDeskCore/Templates/panel-sidebar.html.twig') }}
-		
+		{{ include('@UVDeskCore/Templates/panel-sidebar.html.twig') }}
 		<div class="uv-view {% if app.request.cookies and app.request.cookies.get('uv-asideView') %}uv-aside-view{% endif %}">
-			<h1>Mailboxes</h1>
-
-			<div class="uv-action-bar">
-                <div class="uv-action-bar-col-lt">
-                    {# Filter Agents by Status #}
-                    <div class="uv-dropdown filter-by-status">
-                        <div class="uv-dropdown-btn uv-vertical-align uv-margin-right-5">Status: All</div>
-                        <div class="uv-dropdown-list uv-bottom-left">
-							<div class="uv-dropdown-container">
-								<label>Status</label>
-								<ul>
-									<li class="uv-drop-list-active"><a href="#">All</a></li>
-									<li><a href="#" data-id="1">Active</a></li>
-									<li><a href="#" data-id="0">Disabled</a></li>
-								</ul>
-							</div>
-                        </div>
-                    </div>
-                </div>
-
-				<div class="uv-action-bar-col-rt">
-                    {# Search Agent #}
-					<input type="text" class="uv-search-inline uv-vertical-align uv-margin-right-15" placeholder="Search">
-
-					{# Create New Agent #}
-					<a href="{{ path('helpdesk_member_create_account') }}" type="button" class="uv-btn-action"><span class="uv-icon-add"></span> New Agent</a>
+			{% set resources = false %}
+			<div class="mailbox-list-view">
+				<div class="uv-action-bar">
+					<div class="uv-action-bar-col-lt">
+						<h1>
+							{{ 'Mailbox(es)'|trans }}
+						</h1>
+					</div>
+					<div class="uv-action-bar-col-rt">
+						<div class="uv-app-list-action-rt"><a class="uv-btn-action add-mailbox" id="add-mailbox-button" data-target="add-mailbox-form" >{{ 'New Mailbox'|trans }}</a></div>
+					</div>
 				</div>
-            </div>
 
-            {# Agent Listicle #}
-            <div class="uv-table uv-list-view">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Status</th>
-                            <th class="uv-last">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+				{% if resources %}
+					<div class="uv-message-wrapper" id="upgrade-plan-message"  {% if not (resources and resources.mailboxes.showAlert) %} style="display: none;"{% endif %}>
+						<p>	{{ resources.mailboxes.alertMessage |  raw }}</p>
+						<a href="" class="uv-btn-small">{{ 'Upgrade Plan'|trans }}</a>
+					</div>
+				{% endif %}
 
-                {# Pagintation #}
-				<div class="navigation"></div>
-            </div>
+				<div class="uv-app-screen">
+					<div id="mailbox-list" class="uv-app-list-channels">
+					</div>
+				</div>
+			</div>
+			<div class="mailbox-form">
+				<form>
+				</form>
+			</div>
+			<div id="mailbox-added">
+			</div>
+			<div id="add-mailbox-form" style="display: none;">
+				<form id="uv-add-mailbox-form">			
+					<!-- .fade-out-white -->
+					<div style="width: 500px;max-width: 80%;">
+						<!-- .jelly-out -->
+						<h2>{{ 'New Mailbox'|trans }}</h2>
+						<p>{{ 'You can setup your each support/query email address as a mailbox to receive all mails directly into helpdesk as tickets'|trans }}</p>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'Mailbox Id'|trans }}</label>
+							<div class="uv-field-block">
+								<input class="uv-field" type="text" name="mailbox_id">
+							</div>
+						</div>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'Sender Name'|trans }}</label>
+							<div class="uv-field-block">
+								<input class="uv-field" type="text" name="sender-name">
+							</div>
+						</div>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'Swiftmailer id (Select from drop down)'|trans }}</label>
+							<div class="uv-field-block">
+								<select name="swiftmailer-id" class="uv-select" type="text" value="">
+									<option>Select swiftmailer</option>
+
+									{% for swiftmailer in swiftmailers %}
+										<option>{{ swiftmailer }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'IMAP Host'|trans }}</label>
+							<div class="uv-field-block">
+								<input class="uv-field" type="text" name="imap['host']">
+							</div>
+						</div>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'IMAP username'|trans }}</label>
+							<div class="uv-field-block">
+								<input class="uv-field" type="text" name="imap['email']">
+							</div>
+							<span class="uv-field-info">{{ 'All mails forwarded from this email address will be created as tickets'|trans }}</span>
+						</div>
+						<div class="uv-element-block">
+							<label class="uv-field-label">{{ 'IMAP Password'|trans }}</label>
+							<div class="uv-field-block">
+								<input class="uv-field" type="text" name="imap['password']">
+							</div>
+						</div>
+						<div class="uv-pop-up-actions">
+							<button type="submit" class="uv-btn save-mailbox">{{ 'Proceed'|trans }}</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div id="confirm-existing-user" class="uv-pop-up-overlay" style="display: none">
+			<div class="uv-pop-up-box uv-pop-up-slim uv-no-error-success-icon">	
+				<span class="uv-pop-up-close"></span>
+				<h2>{{ 'Add Mailbox Confirmation'|trans }}</h2>
+				<div class="uv-element-block">				
+					<p class="uv-field-info">
+						{{ "You are trying to use %existing-email% as Mailbox email. There is also a user with email %existing-email%. If you want to add this email as mailbox, then user with email: %existing-email% cannot create ticket via mail." | trans({"%existing-email%": "<b><i class='existing-user-email-span'>" ~ "ipdeer@ipdeer.com"|trans ~ "</i></b>"}) | raw }}
+						{#<a href="" target="_blank">{{ 'Read more'|trans }}</a>#}
+					</p>
+				</div>
+				<div class="uv-element-block">
+					<div class="uv-action-buttons">
+						<div class="uv-btn" id="confirm-existing-user-btn">{{ 'Proceed'|trans }}</div>
+						<div class="uv-btn" id="cancel-existing-user-btn">{{ 'change email'|trans }}</div>
+					</div>
+				</div>
+			</div>
+		</div>
 		</div>
 	</div>
 {% endblock %}
@@ -64,235 +119,586 @@
 {% block footer %}
 	{{ parent() }}
 
-	{# Sorting Template #}
-	<script id="agent_list_sorting_tmp" type="text/template">
-        <li class="<% if(sort == 'userInstance.createdAt') { %>uv-drop-list-active<% } %>">
-            <a href="#<% if(queryString != '') { %><%= queryString %>/<% } %><% if(page) { %>page/<%= page %><% } else { %>page/1<% } %>/sort/userInstance.createdAt/<% if(sort == 'userInstance.createdAt') { %><% if(direction) { %>direction/<%= direction %><% } else { %>direction/desc<% } %><% } else { %>direction/asc<% } %>" data-field="userInstance.createdAt">
-				Created At
-				<% if(sort == 'userInstance.createdAt') { %>
-					<span class="uv-sorting <% if(direction == 'asc') { %> descend <% } else { %> ascend <% } %>"></span>
-				<% } %>
+	{# Mailboxes Collection template #}
+	<script id="mailbox_list_item_tmp" type="text/template">
+		<div class="uv-app-list-brick-lt" title="<%= imap_server.email %>">
+			<span class="uv-channel-count">#<%= parseInt(document.getElementsByClassName('uv-app-list-brick').length)+1 %></span>
+		</div>
+		<div class="uv-app-list-brick-rt">
+			{# <a href="{{ path('ticket_list') }}#mailbox/<%= id %>" class="semibold"> #}
+			<a href="" class="semibold">
+				<p>					
+					<%- name %>
+				</p>
 			</a>
-        </li>
-	    <li class="<% if(sort == 'user.firstName') { %>uv-drop-list-active<% } %>">
-            <a href="#<% if(queryString != '') { %><%= queryString %>/<% } %><% if(page) { %>page/<%= page %><% } else { %>page/1<% } %>/sort/user.firstName/<% if(sort == 'user.firstName') { %><% if(direction) { %>direction/<%= direction %><% } else { %>direction/desc<% } %><% } else { %>direction/asc<% } %>" data-field="user.firstName">
-				Name
-				<% if(sort == 'user.firstName') { %>
-					<span class="uv-sorting <% if(direction == 'asc') { %> descend <% } else { %> ascend <% } %>"></span>
+			<p>
+				<% if(enabled) { %>
+					<span class="uv-app-list-flag-active">{{'verified'|trans }}</span>
+				<% } else { %>
+					<span class="uv-app-list-flag-inactive">{{ 'unverified'|trans }}</span>
 				<% } %>
-			</a>
-        </li>
-	    <li class="<% if(sort == 'user.email') { %>uv-drop-list-active<% } %>">
-            <a href="#<% if(queryString != '') { %><%= queryString %>/<% } %><% if(page) { %>page/<%= page %><% } else { %>page/1<% } %>/sort/user.email/<% if(sort == 'user.email') { %><% if(direction) { %>direction/<%= direction %><% } else { %>direction/desc<% } %><% } else { %>direction/asc<% } %>" data-field="user.email">
-				Email
-				<% if(sort == 'user.email') { %>
-					<span class="uv-sorting <% if(direction == 'asc') { %> descend <% } else { %> ascend <% } %>"></span>
-				<% } %>
-			</a>
-        </li>
+			</p>
+			<div class="uv-app-list-actions">
+				<a href class="edit-mailbox">{{ 'Edit'|trans }}</a>
+				<a href class="uv-delete delete-mailbox">{{ 'Delete'|trans }}</a>
+			</div>
+		</div>
 	</script>
 
-	{# Type list item template #}
-	<script id="agent_list_item_tmp" type="text/template">
-		<td data-value="Name">
-			<% if (smallThumbnail != null) { %>
-				<img src="<%= smallThumbnail %>" alt=""/>
-			<% } else { %>
-				<img src="{{ asset(default_agent_image_path) }}" alt=""/>
-			<% } %>
-			<%- name %>
-		</td>
-		<td data-value="Email"><%- email %></td>
-        <td data-value="Role"><%= role %></td>
-		<td data-value="Status">
-			<% if (isActive) { %>
-            	<span class="uv-text-success">Active</span>
-            <% } else { %>
-            	<span class="uv-text-danger">Disabled</span>
-        	<% } %>
-		</td>
-		<td data-value="Action" class="uv-last">
-			<a href="<%- path.replace('replaceId', id) %>" class="uv-btn-stroke edit-agent">Edit</a>
-			<% if (roleCode == "ROLE_SUPER_ADMIN") { %>
-				<div class="uv-btn-stroke" disabled="disabled">Delete</div>
-			<% } else { %>
-				<div class="uv-btn-stroke delete-agent">Delete</div>
-			<% } %>
-		</td>
-    </script>
+	{# Mailbox Edit template #}
+	<script id="mailbox_form_tmp" type="text/template">
+		<h1>
+			{{ 'Edit Mailbox'|trans }}
+		</h1>
+		<!--Form-->
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'Mailbox Id'|trans }}</label>
+				<div class="uv-field-block">
+					<input name="mailbox_id" class="uv-field" type="text" value="<% if ('undefined' !== typeof(mailbox_id)) print(mailbox_id);  %>" disabled>
+				</div>
+			</div>
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'Sender Name'|trans }}</label>
+				<div class="uv-field-block">
+					<input name="sender-name" class="uv-field" type="text" value="<% if ('undefined' !== typeof(name)) print(name);  %>">
+				</div>
+			</div>
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'Swiftmailer Id'|trans }}</label>
+				<div class="uv-field-block">
+					<select name="swiftmailer-id" class="uv-select" type="text" value="">
+						<option><% if('undefined' !== typeof(smtp_server.mailer_id)) print(smtp_server.mailer_id);  %></option>
+
+						{% for swiftmailer in swiftmailers %}
+							<option>{{ swiftmailer }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'IMAP Host'|trans }}</label>
+				<div class="uv-field-block">
+					<input name="imap['host']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.host)) print(imap_server.host);  %>">
+				</div>
+				<span class="uv-field-info">{{ 'All mails forwarded from this email address will be created as tickets'|trans }}</span>
+			</div>
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'IMAP Email'|trans }}</label>
+				<div class="uv-field-block">
+					<input name="imap['email']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.username)) print(imap_server.username);  %>">
+				</div>
+				<span class="uv-field-info">{{ 'All mails forwarded from this email address will be created as tickets'|trans }}</span>
+			</div>
+			<div class="uv-element-block">
+				<label class="uv-field-label">{{ 'IMAP Password'|trans }}</label>
+				<div class="uv-field-block">
+					<input name="imap['password']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.password)) print(imap_server.password);  %>">
+				</div>
+			</div>
+			<!--CTA-->
+				<input type="button" class="uv-btn save-mailbox" value="Save Changes">
+			<!--//CTA-->
+			<div class="uv-element-block">
+					<h4>{{ 'Need Help?'|trans }}</h4>
+					<p>{{ 'Need any help regarding email forwarding for different email clients like Gmail, Outlook or Thunderbird, %Check% at UVdesk Support'|trans({ '%Check%': '<a href="https://support.uvdesk.com/en/blog/how-to-create-mailbox" target="_blank">' ~ 'Check out the complete guide'|trans ~ '</a>' })|raw }}</p>
+			</div>
+		<!--Form-->
+	</script>
+
+	{# Mailbox Added template #}
+	<script id="mailbox_added_tmp" type="text/template">
+		<div class="uv-pop-up-overlay">
+			<!-- .fade-out-white -->
+			<div class="uv-pop-up-box uv-pop-up-slim">
+				<!-- .jelly-out -->
+				<span class="uv-pop-up-close"></span>
+				<h2>Mailbox Created</h2>
+				<p><%= "{{ 'Forward %email% to'|trans({'%email%': '<span>%replaceEmail%</span>'})|raw }}".replace('%replaceEmail%', 'sender-mail') %></p>
+				<div class="uv-element-block">
+					<div class="uv-split-copy">
+						<input type="text" class="uv-split-field" readonly value="<% if('undefined' !== typeof(mailboxEmail)) { print(mailboxEmail) } %>">
+						<button type="button" class="uv-btn uv-split-btn">{{ 'Copy'|trans }}</button>
+					</div>
+					<span class="uv-field-info">{{ 'You can easily copy the secret email address by clicking the Copy button.'|trans }}</span>
+				</div>
+				<div class="uv-element-block uv-element-info">
+					<h4>{{ 'Need Help?'|trans }}</h4>
+					<p>{{ 'Need any help regarding email forwarding for different email clients like Gmail, Outlook or Thunderbird, %Check% at UVdesk Support'|trans({ '%Check%': '<a href="https://support.uvdesk.com/en/blog/how-to-create-mailbox" target="_blank">' ~ 'Check out the complete guide'|trans ~ '</a>' })|raw }}</p>
+				</div>
+				<div class="uv-pop-up-actions">
+					<a href="#" class="uv-btn cancel">{{ 'Got It'|trans }}</a>
+				</div>
+			</div>
+		</div>
+	</script>
+
+	{# No Mailbox found screen template #}
+	<script type="text/template" id="no-mailbox-template">
+        <div class="uv-app-screen">
+            <div class="uv-app-splash" style="text-align: center;">
+                <img class="uv-app-splash-image" src="{{ asset('bundles/uvdeskcore/images/task-splash.png') }}" alt="Tasks">
+                <h2 class="uv-margin-top-10">{{ 'No mailbox Found.'|trans }}</h2>
+                <p><a href="https://support.uvdesk.com/en/blog/how-to-create-mailbox" target="_blank">{{ "Need help?"|trans }}</a></p>
+            </div>
+        </div>	
+	</script>
 
 	<script type="text/javascript">
-		var path = "{{ path('helpdesk_member_account', { 'agentId': 'replaceId' }) }}";
-		var deletePath = "{{ path('helpdesk_member_account_xhr', { 'id': 'replaceId' }) }}";
-
-		$(function () {
-			var MailboxModel = Backbone.Model.extend({
-				idAttribute : "id"
-			});
-
-			var MailboxCollection = AppCollection.extend({
-				model: MailboxModel,
-				url: "{{ path('helpdesk_member_mailbox_collection_xhr') }}",
-				filterParameters: {
-					"isActive": "",
-					"search": ""
-				},
-				parseRecords: function (resp, options) {
-					return resp.users;
-				},
-				syncData : function() {
-					app.appView.showLoader();
-					
-                    this.fetch({
-						data: this.getValidParameters(),
-						reset: true,
-						success: function(model, response) {
-                            console.log('model:', model);
-                            console.log('response:', response);
-
-							app.appView.hideLoader();
-							{# var agentListView = new AgentList();
-							app.pager.paginationData = response.pagination_data;
-
-							var url = app.pager.paginationData.url;
-							if(mailboxCollection.length == 0 && app.pager.paginationData.current != "0")
-								router.navigate(url.replace('replacePage', app.pager.paginationData.last),{trigger: true});
-							else {
-								app.pager.render();
-							} #}
-						},
-						error: function (model, xhr, options) {
-							if(url = xhr.getResponseHeader('Location'))
-								window.location = url;
-						}
-					});
+		{# https://blog.aweber.com/email-deliverability/top-10-email-domains-of-2006.html #}
+		publicEmailDomains = ['uvdesk.com', 'webkul.com', 'gmail.com', 'zoho.com' , 'yahoo.in', 'yahoo.com', 'yahoo.co.in' , 'yahoo.co.uk', 'yahoo.ca', 'hotmail.com', 'hotmail.co.uk', 'aol.com', 'msn.com', 'rediffmail.com'];
+		defaultEmailDomain = 'uvdesk.com';
+		publicEmailDomains.push(defaultEmailDomain);
+		_.extend(Backbone.Validation.validators, {
+		    validateEmailValidator: function(value, attr, customValue, model) {
+				if('undefined' == typeof(value) || value.toLowerCase().indexOf('@uvdesk.com') > -1) {
+					return '{{ "You can not add UVdesk Email as a mailbox !!"|trans }}';
 				}
-			});
+			},
+		});
 
-			var AgentItem = Backbone.View.extend({
-				tagName : "tr",
-				template : _.template($("#agent_list_item_tmp").html()),
-				events : {
-					'click .delete-agent' : "confirmRemove"
-				},
-				render : function() {
-					this.$el.html(this.template(this.model.toJSON()));
-					return this;
-				},
-				unrender : function(response) {
-					if(response.alertMessage != undefined) {
-						mailboxCollection.syncData();
-						app.appView.renderResponseAlert(response)
+		var MailboxModel = Backbone.Model.extend({
+			idAttribute : "id",
+		    validation: {
+				"mailbox_id": function (mailer_id) {
+					if (mailer_id == '') {
+						return '{{ "Please enter a mailer id"|trans }}'
 					}
 				},
-				confirmRemove: function(e) {
-					e.preventDefault();
-					app.appView.openConfirmModal(this)
+				"sender-name": [
+					{
+						required: true,
+						msg: '{{ "Please enter a sender name"|trans }}'
+					},
+				],
+				"swiftmailer-id": function (id) {
+					if (id == "Select swiftmailer")
+						return '{{ "Please select a swiftmailer id"|trans }}';
 				},
-				removeItem : function (e) {
-					app.appView.showLoader();
-					self = this;
+				"imap['host']": [
+					{
+						required: true,
+						msg: '{{ "Please enter a imap host"|trans }}'
+					},
+				],
+				"imap['password']": [
+					{
+						required: true,
+						msg: '{{ "Please enter a imap password"|trans }}'
+					},
+				],
+				"imap['email']": [
+					{
+						required: true,
+						msg: '{{ "Please enter an email address"|trans }}'
+					},{
+						pattern: 'email',
+						msg: '{{ "Please enter a valid email"|trans }}'
+					},{
+						validateEmailValidator: true,
+				}],
+		    },
+		    parse: function (resp) {
+			    return resp.mailbox;
+			},
+			urlRoot : "{{ path('helpdesk_member_mailbox_add') }}"
+		});
 
-					this.model.destroy({
-						url: deletePath.replace('replaceId', this.model.get('id')),
-						success : function (model, response, options) {
+		var MailboxCollection = Backbone.PageableCollection.extend({
+			model : MailboxModel
+		});
+
+		var FullView = Backbone.View.extend({
+			el: $('body'),
+			events: {
+				'click #cancel-existing-user-btn': 'cancelExistingUserPrompt',
+				'click #confirm-existing-user-btn': 'confirmExistingUserPrompt',
+				'click #mailbox-added .uv-pop-up-close,#mailbox-added .cancel': 'showMobAside',
+			},
+			showMobAside: function(e) {
+				$('.uv-mob-aside').show();
+			},
+			cancelExistingUserPrompt: function(e) {
+				$('#confirm-existing-user').hide();
+			},
+			confirmExistingUserPrompt: function(e) {
+				$('#confirm-existing-user').hide();
+				continueForm.find('.save-mailbox').before('<input type="hidden" name="confirmed" value="1">');
+				setTimeout(function() {
+					console.log($('input[name="confirmed"]'));
+					$('input[name="confirmed"]').remove();
+				},1000);
+				continueForm.find('.save-mailbox').trigger('click');
+			}
+		});
+
+		var MailboxList = Backbone.View.extend({
+			el : $(".mailbox-list-view"),
+			listEl: $('#mailbox-list'),
+			noResultTemplate: _.template($('#no-mailbox-template').html()),
+			initialize : function() {
+		        this.render();
+		    },
+			events: {
+				'click .add-mailbox': 'addMailboxForm',
+			},
+	        render : function () {
+	        	this.listEl.html('');
+	        	if(mailboxCollection.length) {
+		            _.each(mailboxCollection.models, function (item) {
+		                this.renderMailbox(item);
+		            }, this);
+		        } else {
+					this.listEl.append(this.noResultTemplate())
+		        }
+	        },
+	        renderMailbox : function (item) {
+	            var mailboxItem = new MailboxItem({
+	                model: item
+	            });
+	            this.listEl.append(mailboxItem.render().el);
+	        },
+			addMailboxForm: function(e) {
+				e.preventDefault();
+				$('.mailbox-list-view').hide();
+				addMailboxForm.resetModel();
+				$(".mailbox-list-view").hide();
+				$('#add-mailbox-form').show();
+				mailboxList.StartCopyListener();
+				$('.uv-aside-back span').attr('onclick', '');
+			},
+			StartCopyListener: function() {
+				copyBtn = $(".uv-split-copy .uv-split-btn");
+				copyBtn.on("click", function() {
+					if(copyInput = document.querySelector(".uv-split-copy .uv-split-field")) {
+						success = app.appView.copyToClipboard(copyInput);
+						if(success) {
+							prevHtml = copyBtn.html();
+							copyBtn.html('Copied');
+							copyBtn.addClass('uv-success');
+							setTimeout(function() {
+								copyBtn.html(prevHtml);
+								copyBtn.removeClass('uv-success');								
+							},1000);
+						}
+					}
+				});
+			},
+			checkMailboxLimit: function(response) {
+				if(typeof(response.allowedToAdd) != 'undefined' && response.allowedToAdd) {
+					$('#upgrade-plan-message').hide();
+					$('.add-mailbox').show();
+				} else {
+					$('#upgrade-plan-message').show();
+					$('.add-mailbox').hide();					
+				}
+			}
+		});
+
+		var MailboxForm = Backbone.View.extend({
+			el: $('.mailbox-form>form'),
+			initialize : function() {
+		        Backbone.Validation.bind(this);
+		    },
+		    mailboxFormTemplate : _.template($("#mailbox_form_tmp").html()),
+		    events : {
+				'click .close-edit': 'showMailboxList',
+				'blur input': 'formChanged',
+				'click .save-mailbox': 'editMailboxXHR',
+		    	'click .send-test-email' : 'sendTestEmailEvent'
+		    },
+			render: function() {
+				this.$el.html('');
+				this.$el.html(this.mailboxFormTemplate(this.model.toJSON()));
+			},
+		    editMailboxXHR: function (e) {
+	            e.preventDefault();
+		        Backbone.Validation.bind(this);				
+	            var currentElement = Backbone.$(e.currentTarget);
+				var data = currentElement.closest('form').serializeObject();
+				this.model.set(data);
+				self = this;
+				if(this.model.isValid(true)) {
+					app.appView.showLoader();
+					currentElement.attr("disabled","disabled");
+					this.model.save({}, {
+						url : "{{ path('helpdesk_member_mailbox_edit') }}?id=" + $('#mailbox-id').val(),
+					    success: function (model, response, options) {
+							if (response.alertClass !== "error") {
+								self.model.attributes = response.mailbox;
+								app.appView.hideLoader();
+								currentElement.removeAttr("disabled");;
+								globalMessageResponse = response;
+								app.appView.renderResponseAlert(response);
+								mailboxCollection.set(model, {remove: false});
+								mailboxForm.showMailboxList();
+								mailboxList.render();
+								// mailboxList.checkMailboxLimit(response);							
+							} else {
+								app.appView.hideLoader();
+								currentElement.removeAttr("disabled");;
+								globalMessageResponse = response;
+								app.appView.renderResponseAlert(response);
+							}
+					    },
+					    error: function (model, xhr, options) {
 							app.appView.hideLoader();
-							mailboxCollection.syncData();
-						},
-						error: function (model, xhr, options) {
+					    	currentElement.removeAttr("disabled");;
 							if(url = xhr.getResponseHeader('Location'))
 								window.location = url;
 							var response = warningResponse;
 							if(xhr.responseJSON)
 								response = xhr.responseJSON;
-
-							app.appView.hideLoader();
+							try {
+								errors = JSON.parse(response['alertMessage'])
+								for (var field in errors) {
+									Backbone.Validation.callbacks.invalid(self, field, errors[field], 'input');
+								}
+							} catch(e) {
+								app.appView.renderResponseAlert(response);
+								mailboxForm.showMailboxList();							
+							}
+							mailboxList.checkMailboxLimit(xhr);
+							if(response && response.existingUserEmail) {
+								if(self.model.get('email')) {
+									continueForm = currentElement.closest('form');
+									$('.existing-user-email-span').html(self.model.get('email'));
+									$('#confirm-existing-user').show();
+								}
+							}
+		                }
+					});
+				}
+	        },
+			showMailboxList: function(e) {
+				$(".mailbox-list-view").show();
+				$('.mailbox-form').hide();
+				$('.uv-aside-back span').attr('onclick' ,'history.go(-1);');
+			},
+			formChanged: function(e) {
+				this.model.set(Backbone.$(e.currentTarget).attr('name'), Backbone.$(e.currentTarget).val())
+				this.model.isValid([Backbone.$(e.currentTarget).attr('name')])
+			},
+			setModel(model) {
+				this.model = model;
+		        Backbone.Validation.bind(this);				
+			},
+		    sendTestEmailEvent : function(e) {
+				e.preventDefault();
+	        	this.requestCount = 0;
+	        	this.sendTestEmail();
+	        },
+		    sendTestEmail : function () {
+	        	self = this;
+	        	$('.send-test-email').attr("disabled","disabled");
+	        	self.$el.find('.send-test-email').val('{{ "Sending test mail"|trans }} ...');
+				if(!self.$el.find('.send-test-email').next().hasClass('uv-loader')) {
+					self.$el.find('.send-test-email').after('<div class="uv-loader sending-mail-loader" style="display: inline-block;margin-left:10px;margin-top:5px;vertical-align:top;"><span></span><span></span><span></span></div>');
+				}
+								
+				var testModel = new MailboxModel({ id: this.model.id });
+		        testModel.save({
+		        		data : {flag: self.requestCount}
+		        	},{
+					PATCH: true,
+		        	{# url : "{{ path('mailbox_send_test_email_action') }}", #}
+		        	success : function (model, response, options) {
+	        			if(!model.attributes.isActive) {
+	        				self.requestCount++;
+	        				if(self.requestCount < 5) {
+	        					setTimeout(function() {
+								  	self.sendTestEmail();
+								}, 10000);
+	        				} else {
+	        					response['alertMessage'] = "{{ 'Warning! Cannot verifiy that Auto forwarding is enabled for this email. Make sure forwarding is enabled.'|trans }}";
+								app.appView.renderResponseAlert(response);
+								self.$el.find('.send-test-email').val('{{ "SEND TEST MAIL"|trans }}');
+								$('.sending-mail-loader').remove();
+	        					$('.send-test-email').removeAttr("disabled");
+	        				}
+	        			} else {
+	        				response['alertMessage'] = "{% trans %}Success ! Auto forwarding is enabled.{% endtrans %}";
 							app.appView.renderResponseAlert(response);
-						}
+							self.$el.find('.send-test-email').val('{{ "SEND TEST MAIL"|trans }}');
+							$('.sending-mail-loader').remove();							
+	        				$('.send-test-email').removeAttr("disabled");
+	        				mailboxCollection.set(model,{remove: false});
+	        				mailboxList.render();
+	        			}
+				    },
+				    error: function (model, xhr, options) {
+						self.$el.find('.send-test-email').val('{{ "SEND TEST MAIL"|trans }}');
+						$('.sending-mail-loader').remove();						
+				    	if(url = xhr.getResponseHeader('Location'))
+	                		window.location = url;
+	                    var response = warningResponse;
+				    	if(xhr.responseJSON)
+				    		response = xhr.responseJSON;
+				    	
+						app.appView.renderResponseAlert(response);
+	                }
+		        });
+	        },
+		});
+
+		var AddMailboxForm = Backbone.View.extend({
+			el: $('#add-mailbox-form'),
+		    mailBoxAddedTemplate : _.template($("#mailbox_added_tmp").html()),
+			events: {
+				'blur input': 'formChanged',
+				'click .save-mailbox': 'saveMailbox',
+			},
+			initialize:  function() {
+		        Backbone.Validation.bind(this);				
+			},
+			formChanged: function(e) {
+		        Backbone.Validation.bind(this);				
+				this.model.set(Backbone.$(e.currentTarget).attr('name'), Backbone.$(e.currentTarget).val());
+				this.model.isValid([Backbone.$(e.currentTarget).attr('name')])
+			},
+			saveMailbox: function(e) {
+	            e.preventDefault();
+		        Backbone.Validation.bind(this);				
+	            var currentElement = Backbone.$(e.currentTarget);
+				var data = currentElement.closest('form').serializeObject();
+				this.model.set(data);
+				self = this;
+				if(this.model.isValid(true)) {
+					app.appView.showLoader();
+					currentElement.attr("disabled","disabled");
+					this.model.save({}, {
+					    success: function (model, response, options) {
+							if(response.alertClass !== "error") {
+								mailboxCollection.add(model);
+								currentElement.removeAttr("disabled");
+								$("#mailbox-added").html(self.mailBoxAddedTemplate(self.model.toJSON())); //change
+								mailboxList.StartCopyListener();
+								$('.uv-mob-aside').hide();
+								$('#add-mailbox-form').hide();
+								$('.mailbox-list-view').show();
+								mailboxList.render();
+								self.resetModel();
+								$('#add-mailbox-button').css('display', 'unset');
+								app.appView.hideLoader();
+								globalMessageResponse = response;
+								app.appView.renderResponseAlert(response);
+								$('#uv-add-mailbox-form').trigger('reset');
+							} else {
+								currentElement.removeAttr("disabled");
+								app.appView.hideLoader();
+								globalMessageResponse = response;
+								app.appView.renderResponseAlert(response);
+							}
+					    },
+					    error: function (model, xhr, options) {
+							app.appView.hideLoader();
+					    	currentElement.removeAttr("disabled");;
+							if(url = xhr.getResponseHeader('Location'))
+								window.location = url;
+							var response = warningResponse;
+							if(xhr.responseJSON)
+								response = xhr.responseJSON;
+							try {
+								errors = JSON.parse(response['alertMessage'])
+								for (var field in errors) {
+									Backbone.Validation.callbacks.invalid(self, field, errors[field], 'input');
+								}
+							} catch(e) {
+								if(Object.keys(response.alertMessage).length) {
+									response.alertMessage = response.alertMessage[Object.keys(response.alertMessage)[0]];
+									app.appView.renderResponseAlert(response);
+								}
+							}
+							if(response && response.existingUserEmail) {
+								if(self.model.get('email')) {
+									continueForm = currentElement.closest('form');
+									$('.existing-user-email-span').html(self.model.get('email'));
+									$('#confirm-existing-user').show();
+								}
+							}
+							mailboxList.checkMailboxLimit(response);
+		                }
 					});
 				}
-			});
+				// this.model = new MailboxModel();
+			},
+			resetModel: function() {
+				this.model = new MailboxModel();
+			},
+		});
 
-			var AgentList = Backbone.View.extend({
-				el : $(".uv-list-view table tbody"),
-				initialize : function() {
-					this.render();
-				},
-				render : function () {
-					this.$el.find("tr").remove();
-					if(mailboxCollection.length) {
-						_.each(mailboxCollection.models, function (item) {
-							this.renderAgent(item);
-						}, this);
-					} else {
-						this.$el.append("<tr style='text-align: center;'><td colspan='5'>{% trans %}No Record Found{% endtrans %}</td></tr>")
-					}
-				},
-				renderAgent : function (item) {
-					var agentItem = new AgentItem({
-						model: item
-					});
-					this.$el.append(agentItem.render().el);
-				}
-			});
+		var MailboxItem = Backbone.View.extend({
+			tagName : "div",
+			className:'uv-app-list-brick',
+			template : _.template($("#mailbox_list_item_tmp").html()),
+			requestCount : 0,
+		    events : {
+		    	'click .edit-mailbox' : "editMailbox",
+		    	'click .delete-mailbox' : "confirmRemove",
+		    },
+		    render : function() {
+	            this.$el.html(this.template(this.model.toJSON()));
+	            return this;
+	        },
+		    editMailbox : function(e) {
+				e.preventDefault();
+				mailboxForm.setModel(this.model);
+				mailboxForm.render();
+				$(".mailbox-list-view").hide();
+				$('.mailbox-form').show();
+				mailboxList.StartCopyListener();
+				$('.uv-aside-back span').attr('onclick', '');
+		    },
+			confirmRemove: function(e) {
+				e.preventDefault();
+				app.appView.openConfirmModal(this);
+			},
+			removeItem : function (e) {
+				app.appView.showLoader();
+		    	self = this;
+				$.ajax({
+					type: 'DELETE',
+					url:"{{ path('helpdesk_member_mailbox_remove') }}?id=" + self.model.attributes.mailbox_id,
+					success: function (response) {
+						app.appView.renderResponseAlert(JSON.parse(response));
+						self.model.destroy({
+							success: function (model, response, options) {
+								app.appView.hideLoader();
+								mailboxList.render();
+								mailboxForm.showMailboxList();
+								mailboxList.checkMailboxLimit(response);
+							},
+							error: function (model, xhr, options) {
+								app.appView.hideLoader();
+								if(url = xhr.getResponseHeader('Location'))
+									window.location = url;
+								var response = warningResponse;
+								if(xhr.responseJSON)
+									response = xhr.responseJSON;
+								
+								app.appView.renderResponseAlert(response);
+							}
+						});
+					},
+					error: function (error) {
+						console.log("Error:", error);
+	                }
+				});
 
-			var Filter = app.Filter.extend({
-				defaultSortIndex: 'userInstance.createdAt',
-				sortText: "{% trans %}Sort By:{% endtrans %} ",
-				defaultSortText: "{% trans %}Sort By:{% endtrans %} {% trans %}Created At{% endtrans %}",
-				template : _.template($("#agent_list_sorting_tmp").html())
-			})
+		    },
+		});
 
-			var mailboxCollection = new MailboxCollection();
-
-			var filter = new Filter({
-				collection: mailboxCollection
-			});
-
-			Router = Backbone.Router.extend({
-				routes: {
-					'page/:number(/sort/:sortField)(/direction/:order)' : 'paginate',
-					'isActive/:status(/search/:query)(/page/:number)(/sort/:sortField)(/direction/:order)' : 'filterAgentByStatus',
-					'search/:query(/page/:number)(/sort/:sortField)(/direction/:order)' : 'filterByQuery',
-					'' : 'initializeList'
-				},
-				initializeList : function() {
-					this.resetParams('', '');
-					mailboxCollection.state.currentPage = null;
-					filter.sortCollection();
-					mailboxCollection.syncData();
-				},
-				paginate : function(number,sortField,order) {
-					this.resetParams('', '');
-					mailboxCollection.state.currentPage = number;
-					filter.sortCollection(sortField,order);
-					mailboxCollection.syncData();
-				},
-				filterAgentByStatus: function(status,query,number,sortField,order) {
-					this.resetParams(status,query);
-					mailboxCollection.state.currentPage = number;
-					filter.sortCollection(sortField,order);
-					mailboxCollection.syncData();
-				},
-				filterByQuery : function(query,number,sortField,order) {
-					this.resetParams('',query);
-					mailboxCollection.state.currentPage = number;
-					filter.sortCollection(sortField,order);
-					mailboxCollection.syncData();
-				},
-				resetParams : function(status, query) {
-					if(query != null)
-						query = query.replace(/\+/g,' ');
-					mailboxCollection.filterParameters.isActive = status;
-					var statusText = status ? $(".filter-by-status a[data-id='" + status + "']").text() : "{% trans %}All{% endtrans %}";
-					$(".filter-by-status .uv-dropdown-btn").text("{% trans %}Status:{% endtrans %} " + statusText);
-					mailboxCollection.filterParameters.search = query;
-					$(".uv-search-inline").val(query);
-				}
-			});
-
-			router = new Router();
-			Backbone.history.start({push_state:true});
+		var fullView = new FullView();
+		var mailboxCollection = new MailboxCollection($.parseJSON('{{ mailboxes|raw }}'));
+		var mailboxList = new MailboxList();
+		
+		mailboxForm = new MailboxForm({
+	        model : new MailboxModel()
+	    });
+		addMailboxForm = new AddMailboxForm({
+			model : new MailboxModel()
+		});
+		$('.uv-aside-back').click(function() {
+			mailboxForm.showMailboxList();
 		});
 	</script>
 {% endblock %}

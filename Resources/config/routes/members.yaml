@@ -6,3 +6,16 @@ helpdesk_member_mailbox_collection:
 helpdesk_member_mailbox_collection_xhr:
     path:     /settings/mailbox/xhr
     controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::listMailboxXHR
+
+# Routes for xhr
+helpdesk_member_mailbox_add:
+    path:     /mailbox/xhr/add
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::addMailbox
+
+helpdesk_member_mailbox_edit:
+    path:     /mailbox/xhr/edit
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::editExistingMailbox
+
+helpdesk_member_mailbox_remove:
+    path: /mailbox/xhr/remove
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeExistingMailboxXHR
