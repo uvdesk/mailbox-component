@@ -1,0 +1,25 @@
+{
+    "name": "uvdesk/mailbox",
+    "description": "The Mailbox component provides tools that allows your helpdesk to process tickets from multiple email sources.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "akshay kumar",
+            "email": "akshay.kumar758@webkul.com"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "uvdesk/composer-package-manager": "0.1.*",
+        "symfony/flex": "^1.0",
+        "uvdesk/core-framework": "0.1.*"
+    },
+    "autoload": {
+        "psr-4": { "Webkul\\UVDesk\\MailboxBundle\\": "" }
+    },
+    "extra": {
+        "uvdesk-package-extension": "Webkul\\UVDesk\\MailboxBundle\\Package\\Composer"
+    },
+    "minimum-stability": "dev"
+}
