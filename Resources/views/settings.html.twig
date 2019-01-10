@@ -154,7 +154,7 @@
 			<div class="uv-element-block">
 				<label class="uv-field-label">{{ 'Mailbox Id'|trans }}</label>
 				<div class="uv-field-block">
-					<input name="mailbox_id" class="uv-field" type="text" value="<% if ('undefined' !== typeof(mailbox_id)) print(mailbox_id);  %>" disabled>
+					<input name="mailbox_id" id="mailbox_id" class="uv-field" type="text" value="<% if ('undefined' !== typeof(mailbox_id)) print(mailbox_id);  %>" disabled>
 				</div>
 			</div>
 			<div class="uv-element-block">
@@ -236,7 +236,7 @@
 	<script type="text/template" id="no-mailbox-template">
         <div class="uv-app-screen">
             <div class="uv-app-splash" style="text-align: center;">
-                <img class="uv-app-splash-image" src="{{ asset('bundles/uvdeskcore/images/splash/mailbox.png') }}" alt="Mailboxes">
+                <img class="uv-app-splash-image" src="{{ asset('bundles/uvdeskcore/images/splash/mailbox.png') }}" alt="Tasks">
                 <h2 class="uv-margin-top-10">{{ 'No mailbox Found.'|trans }}</h2>
                 <p><a href="https://support.uvdesk.com/en/blog/how-to-create-mailbox" target="_blank">{{ "Need help?"|trans }}</a></p>
             </div>
@@ -417,7 +417,7 @@
 				var data = currentElement.closest('form').serializeObject();
 				this.model.set(data);
 				self = this;
-				if(this.model.isValid(true)) {
+				if (this.model.isValid(true)) {
 					app.appView.showLoader();
 					currentElement.attr("disabled","disabled");
 					this.model.save({}, {
@@ -577,7 +577,7 @@
 								$('.mailbox-list-view').show();
 								mailboxList.render();
 								self.resetModel();
-								$('#add-mailbox-button').css('display', 'unset');
+								$('#add-mailbox-button').css('display', 'inline-block');
 								app.appView.hideLoader();
 								globalMessageResponse = response;
 								app.appView.renderResponseAlert(response);
