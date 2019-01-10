@@ -14,7 +14,7 @@ class MailboxChannel extends Controller
         $mailboxCollection = $this->getRegisteredMailboxes();
 
         return $this->render('@UVDeskMailbox//settings.html.twig', [
-            'swiftmailers' => $this->container->get('uvdesk.service')->getSwiftmailerIds(),
+            'swiftmailers' => $this->container->get('swiftmailer.service')->getSwiftmailerIds(),
             'mailboxes' => json_encode($mailboxCollection)
         ]);
     }
@@ -22,14 +22,14 @@ class MailboxChannel extends Controller
     private function getRegisteredMailboxes()
     {
         // Fetch existing content in file
-        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk.yaml';
+        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
         $file_content = $this->getFileContent($filePath);
 
         // Convert yaml file content into array and merge existing mailbox and new mailbox
         $file_content_array = Yaml::parse($file_content, 6);
 
-        if ($file_content_array['uvdesk']['mailboxes']) {
-            foreach ($file_content_array['uvdesk']['mailboxes'] as $key => $value) {
+        if ($file_content_array['uvdesk_mailbox']['mailboxes']) {
+            foreach ($file_content_array['uvdesk_mailbox']['mailboxes'] as $key => $value) {
                 $value['mailbox_id'] = $key;
                 $mailboxCollection[] = $value;
             }
