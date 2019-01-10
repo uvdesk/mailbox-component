@@ -180,7 +180,6 @@ class MailboxChannelXHR extends Controller
                 if (($index === $unique_id) || ($mail_id && $mailboxDetails['imap_server']['username'] == $mail_id)) {
                     $isExist = true;
                 }
-
             }
         }
 
@@ -198,7 +197,6 @@ class MailboxChannelXHR extends Controller
                 if ($mailboxDetails['imap_server']['username'] == $mail_id && $unique_id !== $index) {
                     $isAvailable = false;
                 }
-
             }
         }
 
