@@ -118,7 +118,9 @@ class MailboxChannelXHR extends Controller
         $data = json_decode($request->getContent(), true);
 
         $isExistingMailbox = $this->checkExistingMailbox($mailbox_id, $data["imap['email']"]);
-        if ($isExistingMailbox) {
+        $availableMailboxWithNewEmail = $this->checkAvailabilityForEmail($mailbox_id, $data["imap['email']"]);
+
+        if ($isExistingMailbox && $availableMailboxWithNewEmail) {
             $this->removeExistingMailbox($mailbox_id);
 
             $editedDetails[$data['mailbox_id']] = [
@@ -143,6 +145,9 @@ class MailboxChannelXHR extends Controller
             }
 
             $updateFile = $this->setYamlContent($filePath, $file_content_array);
+        } else if (!$availableMailboxWithNewEmail) {
+            $updateFile = false;
+            $message = "This email id is already registered with mailbox.";
         } else {
             $updateFile = false;
             $message = "Mailbox do not exist.";
@@ -193,7 +198,7 @@ class MailboxChannelXHR extends Controller
         return file_put_contents($filePath, Yaml::dump($arrayContent, 6));
     }
 
-    private function checkExistingMailbox($unique_id, $mail_id = null)
+    private function checkExistingMailbox($unique_id = null, $mail_id = null)
     {
         $isExist = false;
         $file_content_array = $this->getYamlContentAsArray(dirname(__FILE__, 5) . '/config/packages/uvdesk.yaml');
@@ -209,6 +214,24 @@ class MailboxChannelXHR extends Controller
         }
 
         return $isExist;
+    }
+
+    private function checkAvailabilityForEmail($unique_id, $mail_id)
+    {
+        $isAvailable = true;
+        $file_content_array = $this->getYamlContentAsArray(dirname(__FILE__, 5) . '/config/packages/uvdesk.yaml');
+
+        $existingMailboxes = $file_content_array['uvdesk']['mailboxes'];
+        if ($existingMailboxes) {
+            foreach ($existingMailboxes as $index => $mailboxDetails) {
+                if ($mailboxDetails['imap_server']['username'] == $mail_id && $unique_id !== $index) {
+                    $isAvailable = false;
+                }
+
+            }
+        }
+
+        return $isAvailable;
     }
 
     private function getYamlContentAsArray($filePath)
