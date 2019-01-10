@@ -1,21 +1,16 @@
-helpdesk_member_mailbox_collection:
+helpdesk_member_mailbox_settings:
     path:     /settings/mailbox
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::listMailbox
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::loadSettings
     defaults: { panelId: 'settings' }
 
-helpdesk_member_mailbox_collection_xhr:
-    path:     /settings/mailbox/xhr
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::listMailboxXHR
+helpdesk_member_mailbox_settings_create_mailbox_xhr:
+    path:     /settings/mailbox/xhr/create
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::createMailbox
 
-# Routes for xhr
-helpdesk_member_mailbox_add:
-    path:     /mailbox/xhr/add
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::addMailbox
+helpdesk_member_mailbox_settings_update_mailbox_xhr:
+    path:     /settings/mailbox/xhr/update
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::updateMailbox
 
-helpdesk_member_mailbox_edit:
-    path:     /mailbox/xhr/edit
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::editExistingMailbox
-
-helpdesk_member_mailbox_remove:
-    path: /mailbox/xhr/remove
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeExistingMailboxXHR
+helpdesk_member_mailbox_settings_remove_mailbox_xhr:
+    path:     /settings/mailbox/xhr/remove
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeMailbox

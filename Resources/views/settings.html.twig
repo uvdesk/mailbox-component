@@ -300,7 +300,7 @@
 		    parse: function (resp) {
 			    return resp.mailbox;
 			},
-			urlRoot : "{{ path('helpdesk_member_mailbox_add') }}"
+			urlRoot : "{{ path('helpdesk_member_mailbox_settings_create_mailbox_xhr') }}"
 		});
 
 		var MailboxCollection = Backbone.PageableCollection.extend({
@@ -421,7 +421,7 @@
 					app.appView.showLoader();
 					currentElement.attr("disabled","disabled");
 					this.model.save({}, {
-						url : "{{ path('helpdesk_member_mailbox_edit') }}?id=" + $('#mailbox_id').val(),
+						url : "{{ path('helpdesk_member_mailbox_settings_update_mailbox_xhr') }}?id=" + $('#mailbox-id').val(),
 					    success: function (model, response, options) {
 							if (response.alertClass !== "error") {
 								self.model.attributes = response.mailbox;
@@ -657,7 +657,7 @@
 		    	self = this;
 				$.ajax({
 					type: 'DELETE',
-					url:"{{ path('helpdesk_member_mailbox_remove') }}?id=" + self.model.attributes.mailbox_id,
+					url:"{{ path('helpdesk_member_mailbox_settings_remove_mailbox_xhr') }}?id=" + self.model.attributes.mailbox_id,
 					success: function (response) {
 						app.appView.renderResponseAlert(JSON.parse(response));
 						self.model.destroy({

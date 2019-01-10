@@ -17,7 +17,7 @@ SVG;
             HelpdeskSection::SETTINGS => [
                 [
                     'name' => 'Mailbox',
-                    'route' => 'helpdesk_member_mailbox_collection',
+                    'route' => 'helpdesk_member_mailbox_settings',
                     'brick_svg' => self::MAILBOX_BRICK_SVG,
                     'permission' => 'ROLE_AGENT_MANAGE_WORKFLOW_AUTOMATIC',
                 ],

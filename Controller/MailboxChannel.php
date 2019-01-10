@@ -9,11 +9,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 class MailboxChannel extends Controller
 {
-    public function listMailbox(Request $request)
+    public function loadSettings(Request $request)
     {
         $mailboxCollection = $this->getRegisteredMailboxes();
 
-        return $this->render('@UVDeskMailbox//listMailboxes.html.twig', [
+        return $this->render('@UVDeskMailbox//settings.html.twig', [
             'swiftmailers' => $this->container->get('uvdesk.service')->getSwiftmailerIds(),
             'mailboxes' => json_encode($mailboxCollection)
         ]);
