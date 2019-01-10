@@ -47,7 +47,7 @@ class MailboxChannelXHR extends Controller
                 ],
             ];
 
-            $file_content_array = $this->container->get('swiftmailer.service')->getYamlContentAsArray($filePath);
+            $file_content_array = Yaml::parse(file_get_contents($filePath), 6);
             if (isset($file_content_array['uvdesk_mailbox']['mailboxes']) && $file_content_array['uvdesk_mailbox']['mailboxes']) {
                 $existingMailboxesCount = sizeof($file_content_array['uvdesk_mailbox']['mailboxes']);
                 $file_content_array['uvdesk_mailbox']['mailboxes'] = array_merge($file_content_array['uvdesk_mailbox']['mailboxes'], $newMailbox);
@@ -55,7 +55,7 @@ class MailboxChannelXHR extends Controller
                 $file_content_array['uvdesk_mailbox']['mailboxes'] = $newMailbox;
             }
 
-            $updateFile = $this->setYamlContent($filePath, $file_content_array);
+            $updateFile = file_put_contents($filePath, Yaml::dump($file_content_array, 6));
         } else {
             $updateFile = false;
             $message = "Mailbox already exist.";
@@ -107,7 +107,7 @@ class MailboxChannelXHR extends Controller
                 ],
             ];
 
-            $file_content_array = $this->container->get('swiftmailer.service')->getYamlContentAsArray($filePath);
+            $file_content_array = Yaml::parse(file_get_contents($filePath), 6);
             if (isset($file_content_array['uvdesk_mailbox']['mailboxes']) && $file_content_array['uvdesk_mailbox']['mailboxes']) {
                 $existingMailboxesCount = sizeof($file_content_array['uvdesk_mailbox']['mailboxes']);
                 $file_content_array['uvdesk_mailbox']['mailboxes'] = array_merge($file_content_array['uvdesk_mailbox']['mailboxes'], $editedDetails);
@@ -115,7 +115,7 @@ class MailboxChannelXHR extends Controller
                 $file_content_array['uvdesk_mailbox']['mailboxes'] = $editedDetails;
             }
 
-            $updateFile = $this->setYamlContent($filePath, $file_content_array);
+            $updateFile = file_put_contents($filePath, Yaml::dump($file_content_array, 6));
         } else if (!$availableMailboxWithNewEmail) {
             $updateFile = false;
             $message = "This email id is already registered with mailbox.";
@@ -163,16 +163,10 @@ class MailboxChannelXHR extends Controller
         return new Response(json_encode($result), 200, ['Content-Type: application/json']);
     }
 
-    private function setYamlContent($filePath, $arrayContent)
-    {
-        // Write the content with new mailbox details in file
-        return file_put_contents($filePath, Yaml::dump($arrayContent, 6));
-    }
-
     private function checkExistingMailbox($unique_id = null, $mail_id = null)
     {
         $isExist = false;
-        $file_content_array = $this->container->get('swiftmailer.service')->getYamlContentAsArray(dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml');
+        $file_content_array = Yaml::parse(file_get_contents(dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml'), 6);
 
         $existingMailboxes = $file_content_array['uvdesk_mailbox']['mailboxes'];
         if ($existingMailboxes) {
@@ -189,7 +183,7 @@ class MailboxChannelXHR extends Controller
     private function checkAvailabilityForEmail($unique_id, $mail_id)
     {
         $isAvailable = true;
-        $file_content_array = $this->container->get('swiftmailer.service')->getYamlContentAsArray(dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml');
+        $file_content_array = Yaml::parse(file_get_contents(dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml'), 6);
 
         $existingMailboxes = $file_content_array['uvdesk_mailbox']['mailboxes'];
         if ($existingMailboxes) {
@@ -220,7 +214,7 @@ class MailboxChannelXHR extends Controller
     private function removeExistingMailbox($mailboxId)
     {
         $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
-        $file_content_array = $this->container->get('swiftmailer.service')->getYamlContentAsArray($filePath);
+        $file_content_array = Yaml::parse(file_get_contents($filePath), 6);
 
         $mailboxes = $file_content_array['uvdesk_mailbox']['mailboxes'];
         if (isset($mailboxes[$mailboxId])) {
@@ -232,7 +226,7 @@ class MailboxChannelXHR extends Controller
         }
 
         // Final write the content with new mailbox details in file
-        $updateFile = $this->setYamlContent($filePath, $file_content_array);
+        $updateFile = file_put_contents($filePath, Yaml::dump($file_content_array, 6));
 
         return $updateFile ? true : false;
     }

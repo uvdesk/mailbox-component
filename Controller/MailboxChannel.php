@@ -23,7 +23,7 @@ class MailboxChannel extends Controller
     {
         // Fetch existing content in file
         $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
-        $file_content = $this->getFileContent($filePath);
+        $file_content = file_get_contents($filePath);
 
         // Convert yaml file content into array and merge existing mailbox and new mailbox
         $file_content_array = Yaml::parse($file_content, 6);
@@ -36,17 +36,5 @@ class MailboxChannel extends Controller
         }
 
         return $mailboxCollection ?? [];
-    }
-
-    private function getFileContent($filePath)
-    {
-        $file_content = '';
-        if ($fh = fopen($filePath, 'r')) {
-            while (!feof($fh)) {
-                $file_content = $file_content.fgets($fh);
-            }
-        }
-
-        return $file_content;
     }
 }
