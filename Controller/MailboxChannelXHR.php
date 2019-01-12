@@ -188,7 +188,7 @@ class MailboxChannelXHR extends Controller
         $existingMailboxes = $file_content_array['uvdesk_mailbox']['mailboxes'];
         if ($existingMailboxes) {
             foreach ($existingMailboxes as $index => $mailboxDetails) {
-                if ($mailboxDetails['imap_server']['username'] == $mail_id && $unique_id !== $index) {
+                if ($mailboxDetails['imap_server']['username'] == $mail_id && $unique_id !== (string) $index) {
                     $isAvailable = false;
                 }
             }
