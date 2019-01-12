@@ -71,7 +71,7 @@
 						<div class="uv-element-block">
 							<label class="uv-field-label">{{ 'IMAP Host'|trans }}</label>
 							<div class="uv-field-block">
-								<input class="uv-field" type="text" name="imap['host']">
+								<input class="uv-field" type="text" name="imap['host']" placeholder="{imap.gmail.com:993/imap/ssl}INBOX">
 							</div>
 						</div>
 						<div class="uv-element-block">
@@ -84,7 +84,7 @@
 						<div class="uv-element-block">
 							<label class="uv-field-label">{{ 'IMAP Password'|trans }}</label>
 							<div class="uv-field-block">
-								<input class="uv-field" type="text" name="imap['password']">
+								<input class="uv-field" type="password" name="imap['password']">
 							</div>
 						</div>
 						<div class="uv-pop-up-actions">
@@ -178,7 +178,7 @@
 			<div class="uv-element-block">
 				<label class="uv-field-label">{{ 'IMAP Host'|trans }}</label>
 				<div class="uv-field-block">
-					<input name="imap['host']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.host)) print(imap_server.host);  %>">
+					<input name="imap['host']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.host)) print(imap_server.host);  %>" placeholder="{imap.gmail.com:993/imap/ssl}INBOX">
 				</div>
 				<span class="uv-field-info">{{ 'All mails forwarded from this email address will be created as tickets'|trans }}</span>
 			</div>
@@ -192,7 +192,7 @@
 			<div class="uv-element-block">
 				<label class="uv-field-label">{{ 'IMAP Password'|trans }}</label>
 				<div class="uv-field-block">
-					<input name="imap['password']" class="uv-field" type="text" value="<% if ('undefined' !== typeof(imap_server.password)) print(imap_server.password);  %>">
+					<input name="imap['password']" class="uv-field" type="password" value="<% if ('undefined' !== typeof(imap_server.password)) print(imap_server.password);  %>">
 				</div>
 			</div>
 			<!--CTA-->
