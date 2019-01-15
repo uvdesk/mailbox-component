@@ -10,7 +10,6 @@ uvdesk_mailbox:
     mailboxes: ~
         # default:
         #     name: 'Sample Mailbox'
-        #     email: ~
         #     enabled: true
         
         #     # [SMTP] Outgoing mail server

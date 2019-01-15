@@ -22,7 +22,6 @@ class Configuration implements ConfigurationInterface
                     ->arrayPrototype()
                         ->children()
                             ->node('name', 'scalar')->cannotBeEmpty()->end()
-                            ->node('email', 'scalar')->cannotBeEmpty()->end()
                             ->node('enabled', 'boolean')->defaultFalse()->end()
                             ->node('smtp_server', 'array')
                                 ->children()
