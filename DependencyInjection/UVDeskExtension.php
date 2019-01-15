@@ -37,6 +37,8 @@ class UVDeskExtension extends Extension
                     $container->setParameter("uvdesk.mailboxes", array_keys($value));
 
                     foreach ($value as $mailboxId => $mailboxDetails) {
+                        $mailboxDetails['email'] = $mailboxDetails['imap_server']['username'];
+                        
                         $container->setParameter("uvdesk.mailboxes.$mailboxId", $mailboxDetails);
                     }
                     break;
