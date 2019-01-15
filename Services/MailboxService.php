@@ -69,7 +69,7 @@ class MailboxService
     public function getMailboxByEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['email']) {
+            if ($email === $registeredMailbox['imap_server']['username']) {
                 return $registeredMailbox;
             }
         }
