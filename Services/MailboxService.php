@@ -3,8 +3,8 @@
 namespace Webkul\UVDesk\MailboxBundle\Services;
 
 use PhpMimeMailParser\Parser;
-use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManager;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Webkul\UVDesk\CoreBundle\Utils\HTMLFilter;
@@ -38,7 +38,7 @@ class MailboxService
         return $this->parser;
     }
 
-    public function getRegisteredMailboxes()
+    private function getRegisteredMailboxes()
     {
         if (empty($this->mailboxCollection)) {
             $this->mailboxCollection = array_map(function ($mailboxId) {
@@ -48,7 +48,8 @@ class MailboxService
 
         return $this->mailboxCollection;
     }
-    public function getRegisteredMailboxesWithId()
+
+    public function getRegisteredMailboxesById()
     {
         // Fetch existing content in file
         $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
@@ -64,7 +65,7 @@ class MailboxService
             }
         }
 
-        return $mailboxCollection ?? [];
+        return $mailboxCollection ?: [];
     }
 
     public function parseAddress($type)

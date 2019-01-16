@@ -11,7 +11,7 @@ class MailboxChannel extends Controller
 {
     public function loadSettings(Request $request)
     {
-        $mailboxCollection = $this->container->get('uvdesk.mailbox')->getRegisteredMailboxesWithId();
+        $mailboxCollection = $this->get('uvdesk.mailbox')->getRegisteredMailboxesById();
 
         return $this->render('@UVDeskMailbox//settings.html.twig', [
             'swiftmailers' => $this->container->get('swiftmailer.service')->getSwiftmailerIds(),
