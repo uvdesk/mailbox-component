@@ -1,0 +1,11 @@
+services:
+    uvdesk.mailbox:
+        public: true
+        class: Webkul\UVDesk\MailboxBundle\Services\MailboxService
+        arguments: ['@service_container', '@request_stack', '@doctrine.orm.entity_manager']
+
+    Webkul\UVDesk\MailboxBundle\Console\:
+        resource: '../../Console/*'
+        exclude: '../../Console/{UTF8Symbol.php,ANSIEscapeSequence.php}'
+        arguments: ['@service_container', '@doctrine.orm.entity_manager']
+        tags: ['console.command']
