@@ -12,8 +12,8 @@ class MailboxChannelXHR extends Controller
     public function processMailXHR(Request $request)
     {
         // Return HTTP_OK Response
-        // $response = new Response(Response::HTTP_OK);
-        // $response->send();
+        $response = new Response(Response::HTTP_OK);
+        $response->send();
 
         if ("POST" == $request->getMethod() && null != $request->get('email')) {
             $this->get('uvdesk.mailbox')->processMail($request->get('email'));
