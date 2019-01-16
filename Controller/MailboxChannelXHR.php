@@ -96,7 +96,7 @@ class MailboxChannelXHR extends Controller
 
             $editedDetails[$data['mailbox_id']] = [
                 'name' => $data['sender-name'],
-                'enabled' => true,
+                'enabled' => $data['swiftmailer-id'] ? true : false,
                 'smtp_server' => [
                     'mailer_id' => $data['swiftmailer-id'],
                 ],

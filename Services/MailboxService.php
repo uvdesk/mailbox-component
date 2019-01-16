@@ -3,6 +3,7 @@
 namespace Webkul\UVDesk\MailboxBundle\Services;
 
 use PhpMimeMailParser\Parser;
+use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +38,7 @@ class MailboxService
         return $this->parser;
     }
 
-    private function getRegisteredMailboxes()
+    public function getRegisteredMailboxes()
     {
         if (empty($this->mailboxCollection)) {
             $this->mailboxCollection = array_map(function ($mailboxId) {
@@ -46,6 +47,24 @@ class MailboxService
         }
 
         return $this->mailboxCollection;
+    }
+    public function getRegisteredMailboxesWithId()
+    {
+        // Fetch existing content in file
+        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
+        $file_content = file_get_contents($filePath);
+
+        // Convert yaml file content into array and merge existing mailbox and new mailbox
+        $file_content_array = Yaml::parse($file_content, 6);
+
+        if ($file_content_array['uvdesk_mailbox']['mailboxes']) {
+            foreach ($file_content_array['uvdesk_mailbox']['mailboxes'] as $key => $value) {
+                $value['mailbox_id'] = $key;
+                $mailboxCollection[] = $value;
+            }
+        }
+
+        return $mailboxCollection ?? [];
     }
 
     public function parseAddress($type)
@@ -69,7 +88,7 @@ class MailboxService
     public function getMailboxByEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['imap_server']['username']) {
+            if ($email === $registeredMailbox['email']) {
                 return $registeredMailbox;
             }
         }
