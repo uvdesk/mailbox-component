@@ -65,7 +65,7 @@ class MailboxService
             }
         }
 
-        return $mailboxCollection ?: [];
+        return $mailboxCollection ?? [];
     }
 
     public function parseAddress($type)
