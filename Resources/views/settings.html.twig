@@ -173,9 +173,10 @@
 				<div class="uv-field-block">
 					<select name="swiftmailer-id" class="uv-select" type="text" value="">
 						<option><%- smtp_server.mailer_id !== null ? smtp_server.mailer_id : "Select swiftmailer"  %></option>
-
 						{% for swiftmailer in swiftmailers %}
-							<option>{{ swiftmailer }}</option>
+							<% if (smtp_server.mailer_id !== "{{ swiftmailer }}") { %>
+								<option>{{ swiftmailer }}</option>
+							<% } %>
 						{% endfor %}
 					</select>
 				</div>
