@@ -259,6 +259,11 @@ class MailboxService
         //     }
         // }
 
+        $website = $this->entityManager->getRepository('UVDeskCoreBundle:Website')->findOneByCode('knowledgebase');
+        if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
+           return;
+        }
+
         // Search for any existing tickets
         $ticket = $this->searchExistingTickets([
             'messageId' => $mailData['messageId'],
