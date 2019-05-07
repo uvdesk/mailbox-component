@@ -27,7 +27,7 @@ class MailboxChannelXHR extends Controller
         // Default values
         $updateFile = false;
         $message = "Something went wrong";
-        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
+        $filePath = $this->get('kernel')->getProjectDir() . '/config/packages/uvdesk_mailbox.yaml';
         
         // New mail box details fetch from request
         $data = json_decode($request->getContent(), true);
@@ -83,7 +83,7 @@ class MailboxChannelXHR extends Controller
         // Default values
         $updateFile = false;
         $message = "Something went wrong";
-        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
+        $filePath = $this->get('kernel')->getProjectDir() . '/config/packages/uvdesk_mailbox.yaml';
 
         $mailbox_id = $request->query->get('id');
         $data = json_decode($request->getContent(), true);

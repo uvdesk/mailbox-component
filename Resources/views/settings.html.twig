@@ -63,7 +63,7 @@
 									<option>Select swiftmailer</option>
 
 									{% for swiftmailer in swiftmailers %}
-										<option>{{ swiftmailer }}</option>
+										<option>{{ swiftmailer.id }}</option>
 									{% endfor %}
 								</select>
 							</div>
@@ -133,9 +133,9 @@
 			</a>
 			<p>
 				<% if(enabled) { %>
-					<span class="uv-app-list-flag-active">{{'verified'|trans }}</span>
+					<span class="uv-app-list-flag-active">{{'Active'|trans }}</span>
 				<% } else { %>
-					<span class="uv-app-list-flag-inactive">{{ 'unverified'|trans }}</span>
+					<span class="uv-app-list-flag-inactive">{{ 'Inactive'|trans }}</span>
 				<% } %>
 			</p>
 			<div class="uv-app-list-actions">
@@ -169,8 +169,8 @@
 					<select name="swiftmailer-id" class="uv-select" type="text" value="">
 						<option><%- smtp_server.mailer_id !== null ? smtp_server.mailer_id : "Select swiftmailer"  %></option>
 						{% for swiftmailer in swiftmailers %}
-							<% if (smtp_server.mailer_id !== "{{ swiftmailer }}") { %>
-								<option>{{ swiftmailer }}</option>
+							<% if (smtp_server.mailer_id !== "{{ swiftmailer.id }}") { %>
+								<option>{{ swiftmailer.id }}</option>
 							<% } %>
 						{% endfor %}
 					</select>
