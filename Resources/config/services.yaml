@@ -9,3 +9,9 @@ services:
         exclude: '../../Console/{UTF8Symbol.php,ANSIEscapeSequence.php}'
         arguments: ['@service_container', '@doctrine.orm.entity_manager']
         tags: ['console.command']
+    
+    Webkul\UVDesk\MailboxBundle\EventListener\Mailbox:
+        arguments: ['@service_container', '@request_stack']
+        tags:
+            - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigurationRemoved, priority: 1 }
+            - { name: uvdesk.event_listener, event: swiftmailer.configuration.created, method: onSwiftMailerConfigurationCreated, priority: 2 }

@@ -13,9 +13,14 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreBundle\Workflow\Events as CoreWorkflowEvents;
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
+use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 
 class MailboxService
 {
+    const PATH_TO_CONFIG = '/config/packages/uvdesk_mailbox.yaml';
+
     private $parser;
     private $container;
 	private $requestStack;
@@ -27,6 +32,58 @@ class MailboxService
         $this->container = $container;
 		$this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
+    }
+
+    public function getPathToConfigurationFile()
+    {
+        return $this->container->get('kernel')->getProjectDir() . self::PATH_TO_CONFIG;
+    }
+
+    public function createConfiguration($params)
+    {
+        $configuration = new MailboxConfigurations\MailboxConfiguration($params);
+        return $configuration ?? null;
+    }
+
+    public function parseMailboxConfigurations() 
+    {
+        $path = $this->getPathToConfigurationFile();
+
+        if (!file_exists($path)) {
+            throw new \Exception("File '$path' not found.");
+        }
+
+        // Read configurations from package config.
+        $mailboxConfiguration = new MailboxConfiguration();
+        $swiftmailerConfigurations = $this->container->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+
+        foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
+            // Swiftmailer Configuration
+            $swiftmailerConfiguration = null;
+
+            foreach ($swiftmailerConfigurations as $configuration) {
+                if ($configuration->getId() == $params['smtp_server']['mailer_id']) {
+                    $swiftmailerConfiguration = $configuration;
+                    break;
+                }
+            }
+            
+            // IMAP Configuration
+            ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
+                ->setUsername($params['imap_server']['username'])
+                ->setPassword($params['imap_server']['password']);
+
+            // Mailbox Configuration
+            ($mailbox = new Mailbox($id))
+                ->setName($params['name'])
+                ->setIsEnabled($params['enabled'])
+                ->setImapConfiguration($imapConfiguration)
+                ->setSwiftMailerConfiguration($swiftmailerConfiguration);
+
+            $mailboxConfiguration->addMailbox($mailbox);
+        }
+
+        return $mailboxConfiguration;
     }
 
     private function getParser()
@@ -52,7 +109,7 @@ class MailboxService
     public function getRegisteredMailboxesById()
     {
         // Fetch existing content in file
-        $filePath = dirname(__FILE__, 5) . '/config/packages/uvdesk_mailbox.yaml';
+        $filePath = $this->getPathToConfigurationFile();
         $file_content = file_get_contents($filePath);
 
         // Convert yaml file content into array and merge existing mailbox and new mailbox
@@ -64,7 +121,7 @@ class MailboxService
                 $mailboxCollection[] = $value;
             }
         }
-
+        
         return $mailboxCollection ?? [];
     }
 

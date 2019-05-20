@@ -1,16 +1,23 @@
 helpdesk_member_mailbox_settings:
     path:     /settings/mailbox
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::loadSettings
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::loadMailboxes
     defaults: { panelId: 'settings' }
 
-helpdesk_member_mailbox_settings_create_mailbox_xhr:
-    path:     /settings/mailbox/xhr/create
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::createMailbox
+helpdesk_member_mailbox_load_configurations_xhr:
+    path:     /settings/mailbox/xhr
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::loadMailboxesXHR
 
-helpdesk_member_mailbox_settings_update_mailbox_xhr:
-    path:     /settings/mailbox/xhr/update
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::updateMailbox
+helpdesk_member_mailbox_create_configuration:
+    path:     /settings/mailbox/create
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::createMailboxConfiguration
+    defaults: { panelId: 'settings'}
 
-helpdesk_member_mailbox_settings_remove_mailbox_xhr:
-    path:     /settings/mailbox/xhr/remove
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeMailbox
+helpdesk_member_mailbox_update_configuration:
+    path:     /settings/mailbox/update/{id}
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::updateMailboxConfiguration
+    defaults: { panelId: 'settings', id: ''}
+
+helpdesk_member_mailbox_remove_configuration_xhr:
+    path:     /settings/mailbox/remove/{id}
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::removeMailboxConfiguration
+    defaults: { id: ''}
