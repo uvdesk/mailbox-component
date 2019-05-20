@@ -8,9 +8,7 @@ interface ResolvedConfigurationInterface
     
     public static function getName();
     
-    public function setHost($host);
-    
-    public function getHost();
+    public static function getHost();
     
     public function setUsername($username);
     
