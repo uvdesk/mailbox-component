@@ -45,7 +45,7 @@ class MailboxService
         return $configuration ?? null;
     }
 
-    public function parseMailboxConfigurations() 
+    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false) 
     {
         $path = $this->getPathToConfigurationFile();
 
@@ -55,7 +55,8 @@ class MailboxService
 
         // Read configurations from package config.
         $mailboxConfiguration = new MailboxConfiguration();
-        $swiftmailerConfigurations = $this->container->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+        $swiftmailerService = $this->container->get('swiftmailer.service');
+        $swiftmailerConfigurations = $swiftmailerService->parseSwiftMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
             // Swiftmailer Configuration
@@ -77,8 +78,13 @@ class MailboxService
             ($mailbox = new Mailbox($id))
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
-                ->setImapConfiguration($imapConfiguration)
-                ->setSwiftMailerConfiguration($swiftmailerConfiguration);
+                ->setImapConfiguration($imapConfiguration);
+            
+            if (!empty($swiftmailerConfiguration)) {
+                $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
+            } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
+                $mailbox->setSwiftMailerConfiguration($swiftmailerService->createConfiguration('smtp', $params['smtp_server']['mailer_id']));
+            }
 
             $mailboxConfiguration->addMailbox($mailbox);
         }
