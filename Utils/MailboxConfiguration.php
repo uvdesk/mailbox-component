@@ -20,7 +20,20 @@ final class MailboxConfiguration
 
     public function removeMailbox(Mailbox $mailbox)
     {
-        $this->collection[] = $mailbox;
+        if ($mailbox->getId() != null) {
+            foreach ($this->collection as $index => $configuration) {
+                if ($configuration->getId() == null) {
+                    continue;
+                }
+                
+                if ($configuration->getId() == $mailbox->getId()) {
+                    unset($this->collection[$index]);
+                    break;
+                }
+            }
+        }
+
+        $this->collection = array_values($this->collection);
 
         return $this;
     }

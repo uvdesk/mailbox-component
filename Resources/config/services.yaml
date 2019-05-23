@@ -10,8 +10,8 @@ services:
         arguments: ['@service_container', '@doctrine.orm.entity_manager']
         tags: ['console.command']
     
-    Webkul\UVDesk\MailboxBundle\EventListener\Mailbox:
+    Webkul\UVDesk\MailboxBundle\EventListener\Swiftmailer:
         arguments: ['@service_container', '@request_stack']
         tags:
-            - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigurationRemoved, priority: 1 }
-            - { name: uvdesk.event_listener, event: swiftmailer.configuration.created, method: onSwiftMailerConfigurationCreated, priority: 2 }
+            - { name: uvdesk.event_listener, event: swiftmailer.configuration.updated, method: onSwiftMailerConfigurationUpdated }
+            - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigurationRemoved }

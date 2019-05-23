@@ -63,7 +63,7 @@ class Mailbox
         return $this;
     }
 
-    public function getImapConfiguration() : ImapConfiguration
+    public function getImapConfiguration() : ?ImapConfiguration
     {
         return $this->imapConfiguration;
     }
@@ -75,7 +75,7 @@ class Mailbox
         return $this;
     }
 
-    public function getSwiftMailerConfiguration() : SwiftMailerConfiguration
+    public function getSwiftMailerConfiguration() : ?SwiftMailerConfiguration
     {
         return $this->swiftmailerConfiguration;
     }
@@ -94,7 +94,7 @@ class Mailbox
             '[[ id ]]' => $this->getId(),
             '[[ name ]]' => $this->getName(),
             '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
-            '[[ swiftmailer_id ]]' => $swiftmailerConfiguration->getId(),
+            '[[ swiftmailer_id ]]' => $swiftmailerConfiguration ? $swiftmailerConfiguration->getId() : '~',
             '[[ imap_host ]]' => $imapConfiguration->getHost(),
             '[[ imap_username ]]' => $imapConfiguration->getUsername(),
             '[[ imap_password ]]' => $imapConfiguration->getPassword(),
