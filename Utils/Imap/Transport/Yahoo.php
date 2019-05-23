@@ -9,7 +9,7 @@ class Yahoo implements ConfigurationInterface, ResolvedConfigurationInterface
 {
     CONST CODE = 'yahoo';
     CONST NAME = 'Yahoo';
-    CONST HOST = '{imap.gmail.com:993/imap/ssl}INBOX';
+    CONST HOST = '{imap.mail.yahoo.com:993/imap/ssl}INBOX';
 
     private $username;
     private $password;
