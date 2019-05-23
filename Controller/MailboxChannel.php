@@ -45,7 +45,7 @@ class MailboxChannel extends Controller
                 $mailboxService = $this->get('uvdesk.mailbox');
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
-                ($mailbox = new Mailbox())
+                ($mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null))
                     ->setName($params['name'])
                     ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
                     ->setImapConfiguration($imapConfiguration)
@@ -104,16 +104,22 @@ class MailboxChannel extends Controller
             }
 
             if (!empty($imapConfiguration) && !empty($swiftmailerConfiguration)) {
-                $mailbox
-                    ->setName($params['name'])
-                    ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
-                    ->setImapConfiguration($imapConfiguration)
-                    ->setSwiftMailerConfiguration($swiftmailerConfiguration);
-
                 $mailboxConfiguration = new MailboxConfiguration();
                 
                 foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
                     if ($mailbox->getId() == $configuration->getId()) {
+                        if (empty($params['id'])) {
+                            $mailbox = new Mailbox();
+                        } else if ($mailbox->getId() != $params['id']) {
+                            $mailbox = new Mailbox($params['id']);
+                        }
+
+                        $mailbox
+                            ->setName($params['name'])
+                            ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
+                            ->setImapConfiguration($imapConfiguration)
+                            ->setSwiftMailerConfiguration($swiftmailerConfiguration);
+
                         $mailboxConfiguration->addMailbox($mailbox);
 
                         continue;
