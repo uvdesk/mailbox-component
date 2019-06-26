@@ -48,7 +48,7 @@ class RefreshMailboxCommand extends Command
 
             return;
         }
-
+        $output->writeln("\n <comment>1. Processing uvdesk mailbox configuration.</comment>");
         // Process mailboxes
         $timestamp = new \DateTime(sprintf("-%u minutes", (int) ($input->getOption('timestamp') ?: 1440)));
 
@@ -76,26 +76,35 @@ class RefreshMailboxCommand extends Command
 
                 continue;
             }
-
-            $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], $mailbox['imap_server']['password'], $timestamp);
+            $output->writeln("\n <comment>2. Opening IMAP stream ... </comment>");
+            $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], $mailbox['imap_server']['password'], $timestamp, $output);
         }
     }
 
-    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp)
+    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output)
     {
         $imap = imap_open($server_host, $server_username, $server_password);
-
+        $output->writeln("\n <comment>3. IMAP stream opened.</comment>");
         if ($imap) {
+            $timeSpan = $timestamp->format('d F Y');
+            $output->writeln("\n <comment>4. Fetching Email collection since </comment><info>$timeSpan</info><comment>.</comment>");
             $emailCollection = imap_search($imap, 'SINCE "' . $timestamp->format('d F Y') . '"');
 
             if (is_array($emailCollection)) {
+                $emailCount = count($emailCollection);
+                $output->writeln("\n <comment>5. Total fetched email -> </comment><info>$emailCount</info><comment></comment>");
+                $output->writeln("\n <comment>6. Starting to convert Emails into Tickets -> </comment>\n=============================================\n=============================================\n");
+                $counter = 1;
                 foreach ($emailCollection as $id => $messageNumber) {
+                    $output->writeln("\n <comment> Converting email </comment><info>$counter</info><comment> out of </comment><info>$emailCount</info><comment>.</comment>");
                     $message = imap_fetchbody($imap, $messageNumber, "");
                     $this->pushMessage($message);
+                    $counter ++;
                 }
+                $output->writeln("\n <comment>Mailbox refreshed successfully !!!</comment>");
             }
-        }
-        
+
+        }  
         return;
     }
 
