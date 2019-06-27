@@ -39,7 +39,7 @@ class RefreshMailboxCommand extends Command
         $mailboxEmailCollection = array_map(function ($email) {
             return filter_var($email, FILTER_SANITIZE_EMAIL);
         }, $input->getArgument('emails'));
-        
+       
         // Stop execution if no valid emails have been specified
         if (empty($mailboxEmailCollection)) {
             if (false === $input->getOption('no-interaction')) {
@@ -55,7 +55,6 @@ class RefreshMailboxCommand extends Command
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             try {
                 $mailbox = $this->container->get('uvdesk.mailbox')->getMailboxByEmail($mailboxEmail);
-
                 if (false == $mailbox['enabled']) {
                     if (false === $input->getOption('no-interaction')) {
                         $output->writeln("\n <comment>Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>\n");
@@ -114,10 +113,15 @@ class RefreshMailboxCommand extends Command
         $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
 
         $curlHandler = curl_init();
+        $requestUrl = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);   
+        if($this->container->getParameter('uvdesk.site_url') != $router->getContext()->getHost()){
+            $requestUrl = str_replace($router->getContext()->getHost(),$this->container->getParameter('uvdesk.site_url'),$requestUrl);
+        }
+       
         curl_setopt($curlHandler, CURLOPT_HEADER, 0);
         curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curlHandler, CURLOPT_POST, 1);
-        curl_setopt($curlHandler, CURLOPT_URL, $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL));
+        curl_setopt($curlHandler, CURLOPT_URL, $requestUrl );
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
         $curlResponse = curl_exec($curlHandler);
         curl_close($curlHandler);
