@@ -299,11 +299,11 @@ class MailboxService
         $htmlFilter = new HTMLFilter();
         $mailData['subject'] = $parser->getHeader('subject');
         $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('html')));
+        $mailData['attachments'] = $parser->getAttachments();
+        
         if (!$mailData['message']) {
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
-
-        $mailData['attachments'] = $parser->getAttachments();
 
         // $mailboxes = $this->getMailboxByEmail($data['replyTo']);
         // if(!count($mailboxes)) {
@@ -327,6 +327,7 @@ class MailboxService
         // }
 
         $website = $this->entityManager->getRepository('UVDeskCoreBundle:Website')->findOneByCode('knowledgebase');
+        
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
            return;
         }
@@ -354,9 +355,9 @@ class MailboxService
 
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam') {
-            $thread = $this->entityManager->getRepository('UVDeskCoreBundle:Thread')->findOneByMessageId($mailData['messageId']);
-            
             $mailData['threadType'] = 'reply';
+            $thread = $this->entityManager->getRepository('UVDeskCoreBundle:Thread')->findOneByMessageId($mailData['messageId']);
+
             if (!empty($thread)) {
                 // Thread with the same message id exists. Skip processing.
                 return;
