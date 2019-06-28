@@ -48,13 +48,15 @@ class RefreshMailboxCommand extends Command
 
             return;
         }
-        $output->writeln("\n <comment>1. Processing uvdesk mailbox configuration.</comment>");
+
         // Process mailboxes
         $timestamp = new \DateTime(sprintf("-%u minutes", (int) ($input->getOption('timestamp') ?: 1440)));
+        $output->writeln("\n <comment>1. Processing uvdesk mailbox configuration.</comment>");
 
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             try {
                 $mailbox = $this->container->get('uvdesk.mailbox')->getMailboxByEmail($mailboxEmail);
+
                 if (false == $mailbox['enabled']) {
                     if (false === $input->getOption('no-interaction')) {
                         $output->writeln("\n <comment>Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>\n");
@@ -75,7 +77,8 @@ class RefreshMailboxCommand extends Command
 
                 continue;
             }
-            $output->writeln("\n <comment>2. Opening IMAP stream ... </comment>");
+
+            $output->writeln("\n <comment>2. Opening imap stream... </comment>");
             $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], $mailbox['imap_server']['password'], $timestamp, $output);
         }
     }
@@ -84,6 +87,7 @@ class RefreshMailboxCommand extends Command
     {
         $imap = imap_open($server_host, $server_username, $server_password);
         $output->writeln("\n <comment>3. IMAP stream opened.</comment>");
+
         if ($imap) {
             $timeSpan = $timestamp->format('d F Y');
             $output->writeln("\n <comment>4. Fetching Email collection since </comment><info>$timeSpan</info><comment>.</comment>");
@@ -94,16 +98,18 @@ class RefreshMailboxCommand extends Command
                 $output->writeln("\n <comment>5. Total fetched email -> </comment><info>$emailCount</info><comment></comment>");
                 $output->writeln("\n <comment>6. Starting to convert Emails into Tickets -> </comment>\n=============================================\n=============================================\n");
                 $counter = 1;
+                
                 foreach ($emailCollection as $id => $messageNumber) {
                     $output->writeln("\n <comment> Converting email </comment><info>$counter</info><comment> out of </comment><info>$emailCount</info><comment>.</comment>");
                     $message = imap_fetchbody($imap, $messageNumber, "");
                     $this->pushMessage($message);
                     $counter ++;
                 }
+
                 $output->writeln("\n <comment>Mailbox refreshed successfully !!!</comment>");
             }
+        }
 
-        }  
         return;
     }
 
@@ -114,14 +120,15 @@ class RefreshMailboxCommand extends Command
 
         $curlHandler = curl_init();
         $requestUrl = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);   
-        if($this->container->getParameter('uvdesk.site_url') != $router->getContext()->getHost()){
-            $requestUrl = str_replace($router->getContext()->getHost(),$this->container->getParameter('uvdesk.site_url'),$requestUrl);
+        
+        if ($this->container->getParameter('uvdesk.site_url') != $router->getContext()->getHost()) {
+            $requestUrl = str_replace($router->getContext()->getHost(), $this->container->getParameter('uvdesk.site_url'), $requestUrl);
         }
        
         curl_setopt($curlHandler, CURLOPT_HEADER, 0);
         curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curlHandler, CURLOPT_POST, 1);
-        curl_setopt($curlHandler, CURLOPT_URL, $requestUrl );
+        curl_setopt($curlHandler, CURLOPT_URL, $requestUrl);
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
         $curlResponse = curl_exec($curlHandler);
         curl_close($curlHandler);
