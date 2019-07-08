@@ -4,6 +4,7 @@ namespace Webkul\UVDesk\MailboxBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -143,6 +144,7 @@ class MailboxChannel extends Controller
 
     public function removeMailboxConfiguration($id, Request $request)
     {
+        $id = $request->query->get('id');
         $mailboxService = $this->get('uvdesk.mailbox');
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
@@ -170,7 +172,9 @@ class MailboxChannel extends Controller
 
         file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-        $this->addFlash('success', 'Mailbox successfully deleted.');
-        return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
+        return new JsonResponse([
+            'alertClass' => 'success',
+            'alertMessage' => 'Mailbox configuration removed successfully.',
+        ]);
     }
 }
