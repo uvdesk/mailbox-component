@@ -19,5 +19,5 @@ helpdesk_member_mailbox_update_configuration:
 
 helpdesk_member_mailbox_remove_configuration_xhr:
     path:     /settings/mailbox/remove/{id}
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannel::removeMailboxConfiguration
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeMailboxConfiguration
     defaults: { id: ''}

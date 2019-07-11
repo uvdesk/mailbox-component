@@ -244,7 +244,7 @@
 					self = this;
 				
 					$.ajax({
-						url: "{{ path('helpdesk_member_mailbox_remove_configuration_xhr') }}?id="+this.model.id,
+						url: "{{ path('helpdesk_member_mailbox_remove_configuration_xhr') }}/"+this.model.id,
 							success: function (response) {
 							app.appView.hideLoader();
 							globalMessageResponse = response;
