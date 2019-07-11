@@ -213,7 +213,7 @@
 						}
                     },
 					"imap[host]": function(value) {
-                        if ('imap' == this.get('transport')) {
+                        if ('custom' == this.get('transport') || 'imap' == this.get('transport')) {
                             if (value == undefined || value == '') {
                                 return "Please specify a valid host address.";
                             }
