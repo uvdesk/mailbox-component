@@ -52,7 +52,7 @@ class MailboxChannelXHR extends Controller
         if (empty($mailbox)) {
             return new JsonResponse([
                 'alertClass' => 'danger',
-                'alertMessage' => '',
+                'alertMessage' => "No mailbox found with id '$id'.",
             ], 404);
         }
 

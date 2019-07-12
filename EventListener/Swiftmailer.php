@@ -2,7 +2,6 @@
 
 namespace Webkul\UVDesk\MailboxBundle\EventListener;
 
-use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -65,8 +64,8 @@ class Swiftmailer implements EventListenerInterface
         $mailboxConfiguration = $this->container->get('uvdesk.mailbox')->parseMailboxConfigurations();
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
-                if (!empty($existingMailbox->getSwiftmailerConfiguration()) && $existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
-                // Disable mailbox and update configuration
+                if (null != $existingMailbox->getSwiftmailerConfiguration() && $existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
+                    // Disable mailbox and update configuration
                     $mailbox = new Mailbox($existingMailbox->getId());
                     $mailbox->setName($existingMailbox->getName())
                         ->setIsEnabled(false)
@@ -81,6 +80,7 @@ class Swiftmailer implements EventListenerInterface
         if (true === $isUpdateRequiredFlag) {
             file_put_contents($this->container->get('uvdesk.mailbox')->getPathToConfigurationFile(), (string) $mailboxConfiguration);
         }
+
         return;
     }
 }

@@ -15,9 +15,3 @@ services:
         tags:
             - { name: uvdesk.event_listener, event: swiftmailer.configuration.updated, method: onSwiftMailerConfigurationUpdated }
             - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigurationRemoved }
-
-    Webkul\UVDesk\CoreBundle\EventListener\Swiftmailer:
-        arguments: ['@service_container', '@request_stack']
-        tags:
-            - { name: uvdesk.event_listener, event: swiftmailer.configuration.updated, method: onSwiftMailerConfigUvdeskYmlUpdate }
-            - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigUvdeskYmlRemove }
