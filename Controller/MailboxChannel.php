@@ -140,37 +140,4 @@ class MailboxChannel extends Controller
             'swiftmailerConfigurations' => $swiftmailerConfigurationCollection,
         ]);
     }
-
-    public function removeMailboxConfiguration($id, Request $request)
-    {
-        $mailboxService = $this->get('uvdesk.mailbox');
-        $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-
-        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
-            if ($configuration->getId() == $id) {
-                $mailbox = $configuration;
-
-                break;
-            }
-        }
-
-        if (empty($mailbox)) {
-            return new Response('', 404);
-        }
-
-        $mailboxConfiguration = new MailboxConfiguration();
-
-        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
-            if ($configuration->getId() == $id) {
-                continue;
-            }
-
-            $mailboxConfiguration->addMailbox($configuration);
-        }
-
-        file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
-
-        $this->addFlash('success', 'Mailbox successfully deleted.');
-        return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
-    }
 }
