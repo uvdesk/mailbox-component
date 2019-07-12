@@ -169,7 +169,7 @@
 			
 			<div class="uv-field-block">
 				<% if (typeof(host) != 'undefined' && host != '') { %>
-					<input class="uv-field" type="text" name="imap[host]" value="<%- host %>" placeholder="<%- port %>">
+					<input class="uv-field" type="text" name="imap[host]" value="<%- host %>" placeholder="<%- host %>">
 				<% } else { %>
 					<input class="uv-field" type="text" name="imap[host]" value="" placeholder="IMAP Host">
                 <% } %>
@@ -213,7 +213,7 @@
 						}
                     },
 					"imap[host]": function(value) {
-                        if ('imap' == this.get('transport')) {
+                        if ('custom' == this.get('transport') || 'imap' == this.get('transport')) {
                             if (value == undefined || value == '') {
                                 return "Please specify a valid host address.";
                             }

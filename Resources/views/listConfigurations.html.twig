@@ -101,6 +101,16 @@
 			display: inline-block;
 			vertical-align: middle;
 		} #}
+		.mailbox-del-button {
+		    padding: 8px 10px;
+    		border-radius: 3px;
+			cursor: pointer;
+			/* vertical-align: middle; */
+			font-size: 15px;
+			display: inline-block;
+			margin: 5px 0px;
+			color: #e00d0d;
+		}
 	</style>
 {% endblock %}
 
@@ -157,8 +167,12 @@
 			</p>
 
 			<div class="uv-app-list-actions">
-				<a href="{{ path('helpdesk_member_mailbox_update_configuration', {'id': '' }) }}/<%- id %>" class="edit-mailbox">Edit</a>
-				<a href="{{ path('helpdesk_member_mailbox_remove_configuration_xhr', {'id': '' }) }}/<%- id %>" class="uv-delete delete-mailbox">Delete</a>
+				<a href="{{ path('helpdesk_member_mailbox_update_configuration', {'id': '' }) }}/<%- id %>"  class="edit-mailbox">
+					{{ "Edit"|trans }}
+				</a>
+				<div class="mailbox-del-button delete-type">
+					{{ "Delete"|trans }}
+				</div>
 			</div>
 		</div>
     </script>
@@ -228,14 +242,14 @@
 				removeItem: function (e) {
 					app.appView.showLoader();
 					self = this;
-					
+				
 					$.ajax({
-						url: "{{ path('helpdesk_member_mailbox_remove_configuration_xhr') }}?id="+this.model.id,
-						success: function (response) {
+						url: "{{ path('helpdesk_member_mailbox_remove_configuration_xhr') }}/"+this.model.id,
+							success: function (response) {
 							app.appView.hideLoader();
 							globalMessageResponse = response;
 							configurationCollection.syncData();
-						},
+						}, 
 						error: function (model, xhr, options) {
 							if (url = xhr.getResponseHeader('Location')) {
 								window.location = url;
@@ -261,7 +275,7 @@
 					this.render(listItems);
 				},
 				render : function (items) {
-					this.$el.find("tr").remove();
+					this.$el.find("div").remove();
 					
 					if (items.length > 0) {
 						_.each(items, function (item) {

@@ -2,6 +2,7 @@
 
 namespace Webkul\UVDesk\MailboxBundle\EventListener;
 
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,7 +26,7 @@ class Swiftmailer implements EventListenerInterface
         $isUpdateRequiredFlag = false;
         $updatedConfiguration = $event->getUpdatedSwiftMailerConfiguration();
         $existingConfiguration = $event->getExistingSwiftMailerConfiguration();
-
+               
         if ($updatedConfiguration->getId() == $existingConfiguration->getId()) {
             // We only need to update if the swiftmailer configuration's id has changed
             // or if it has been disabled.
@@ -60,27 +61,26 @@ class Swiftmailer implements EventListenerInterface
     public function onSwiftMailerConfigurationRemoved(ConfigurationRemovedEvent $event)
     {
         $isUpdateRequiredFlag = false;
-        $configuration = $event->getSwiftMailerConfiguration();
+        $configuration = $event->getSwiftMailerConfiguration(); 
         $mailboxConfiguration = $this->container->get('uvdesk.mailbox')->parseMailboxConfigurations();
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
-            if ($existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
+                if (!empty($existingMailbox->getSwiftmailerConfiguration()) && $existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
                 // Disable mailbox and update configuration
-                $mailbox = new Mailbox($existingMailbox->getId());
-                $mailbox->setName($existingMailbox->getName())
-                    ->setIsEnabled(false)
-                    ->setImapConfiguration($existingMailbox->getImapConfiguration());
-                
-                $isUpdateRequiredFlag = true;
-                $mailboxConfiguration->removeMailbox($existingMailbox);
-                $mailboxConfiguration->addMailbox($mailbox);
-            }
+                    $mailbox = new Mailbox($existingMailbox->getId());
+                    $mailbox->setName($existingMailbox->getName())
+                        ->setIsEnabled(false)
+                        ->setImapConfiguration($existingMailbox->getImapConfiguration());
+
+                    $isUpdateRequiredFlag = true;
+                    $mailboxConfiguration->removeMailbox($existingMailbox);
+                    $mailboxConfiguration->addMailbox($mailbox);
+                }
         }
 
         if (true === $isUpdateRequiredFlag) {
             file_put_contents($this->container->get('uvdesk.mailbox')->getPathToConfigurationFile(), (string) $mailboxConfiguration);
         }
-        
         return;
     }
 }

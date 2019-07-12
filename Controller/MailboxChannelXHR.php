@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 
 class MailboxChannelXHR extends Controller
 {
@@ -33,5 +34,43 @@ class MailboxChannelXHR extends Controller
         }, $this->get('uvdesk.mailbox')->parseMailboxConfigurations()->getMailboxes());
 
         return new JsonResponse($collection ?? []);
+    }
+
+    public function removeMailboxConfiguration($id, Request $request)
+    {
+        $mailboxService = $this->get('uvdesk.mailbox');
+        $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
+
+        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
+            if ($configuration->getId() == $id) {
+                $mailbox = $configuration;
+
+                break;
+            }
+        }
+
+        if (empty($mailbox)) {
+            return new JsonResponse([
+                'alertClass' => 'danger',
+                'alertMessage' => '',
+            ], 404);
+        }
+
+        $mailboxConfiguration = new MailboxConfiguration();
+
+        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
+            if ($configuration->getId() == $id) {
+                continue;
+            }
+
+            $mailboxConfiguration->addMailbox($configuration);
+        }
+
+        file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
+
+        return new JsonResponse([
+            'alertClass' => 'success',
+            'alertMessage' => 'Mailbox configuration removed successfully.',
+        ]);
     }
 }
