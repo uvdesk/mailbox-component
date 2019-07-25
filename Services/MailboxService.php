@@ -3,16 +3,16 @@
 namespace Webkul\UVDesk\MailboxBundle\Services;
 
 use PhpMimeMailParser\Parser;
-use Doctrine\ORM\EntityManager;
 use Symfony\Component\Yaml\Yaml;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Webkul\UVDesk\CoreBundle\Utils\HTMLFilter;
-use Webkul\UVDesk\CoreBundle\Utils\TokenGenerator;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Webkul\UVDesk\CoreBundle\Workflow\Events as CoreWorkflowEvents;
+use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
@@ -27,7 +27,7 @@ class MailboxService
     private $entityManager;
     private $mailboxCollection = [];
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManager $entityManager)
+    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager)
     {
         $this->container = $container;
 		$this->requestStack = $requestStack;
@@ -166,8 +166,8 @@ class MailboxService
             return null;
         }
 
-        $ticketRepository = $this->entityManager->getRepository('UVDeskCoreBundle:Ticket');
-        $threadRepository = $this->entityManager->getRepository('UVDeskCoreBundle:Thread');
+        $ticketRepository = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Ticket');
+        $threadRepository = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Thread');
 
         foreach ($criterias as $criteria => $criteriaValue) {
             if (empty($criteriaValue)) {
@@ -326,7 +326,7 @@ class MailboxService
         //     }
         // }
 
-        $website = $this->entityManager->getRepository('UVDeskCoreBundle:Website')->findOneByCode('knowledgebase');
+        $website = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Website')->findOneByCode('knowledgebase');
         
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
            return;
@@ -356,7 +356,7 @@ class MailboxService
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam') {
             $mailData['threadType'] = 'reply';
-            $thread = $this->entityManager->getRepository('UVDeskCoreBundle:Thread')->findOneByMessageId($mailData['messageId']);
+            $thread = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Thread')->findOneByMessageId($mailData['messageId']);
 
             if (!empty($thread)) {
                 // Thread with the same message id exists. Skip processing.
