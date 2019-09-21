@@ -1,6 +1,6 @@
-{% extends "@UVDeskCore/Templates/layout.html.twig" %}
+{% extends "@UVDeskCoreFramework/Templates/layout.html.twig" %}
 
-{% block title %}Mailbox Settings{% endblock %}
+{% block title %}{{'Mailbox Settings'|trans}}{% endblock %}
 
 {% block templateCSS %}
     <style>
@@ -117,17 +117,20 @@
 
 {% block pageContent %}
 	<div class="uv-inner-section">
-        {# Setting Panel Sidebar #}
-        {{ include('@UVDeskCore/Templates/panel-sidebar.html.twig') }}
+        {# Append Panel Aside #}
+		{% set asideTemplate = 'Webkul\\UVDesk\\CoreFrameworkBundle\\Dashboard\\AsideTemplate' %}
+		{% set asideSidebarReference = 'Webkul\\UVDesk\\CoreFrameworkBundle\\UIComponents\\Dashboard\\Panel\\Sidebars\\Settings' %}
+
+		{{ uvdesk_extensibles.getRegisteredComponent(asideTemplate).renderSidebar(asideSidebarReference) | raw }}
 
 		<div class="uv-view {% if app.request.cookies and app.request.cookies.get('uv-asideView') %}uv-aside-view{% endif %}">
 			<div class="uv-action-bar">
                 <div class="uv-action-bar-col-lt" style="vertical-align: middle;">
-					<h1>Mailbox Settings</h1>
+					<h1>{{'Mailbox Settings'|trans}}</h1>
                 </div>
 
 				<div class="uv-action-bar-col-rt" style="vertical-align: middle;">
-					<a href="{{ path('helpdesk_member_mailbox_create_configuration') }}" type="button" class="uv-btn-action" style="margin: unset;">New Mailbox</a>
+					<a href="{{ path('helpdesk_member_mailbox_create_configuration') }}" type="button" class="uv-btn-action" style="margin: unset;">{{'New Mailbox'|trans}}</a>
 				</div>
             </div>
 
@@ -143,7 +146,7 @@
 	<script type="text/template" id="no_mailers_template">
         <div class="uv-app-screen">
             <div class="uv-app-splash" style="text-align: center;">
-                <img class="uv-app-splash-image" src="{{ asset('bundles/uvdeskcore/images/splash/mailbox.png') }}" alt="Tasks">
+                <img class="uv-app-splash-image" src="{{ asset('bundles/uvdeskcoreframework/images/splash/mailbox.png') }}" alt="Tasks">
                 <h2 class="uv-margin-top-10">{{ 'No mailbox configurations found'|trans }}</h2>
             </div>
         </div>	
@@ -161,9 +164,9 @@
 			
 			<p style="line-height: 1.4em; margin-bottom: 10px;">
 				<% if (isEnabled) { %>
-					<span class="uv-app-list-flag-active">Enabled</span>
+					<span class="uv-app-list-flag-active">{{'Enabled'|trans}}</span>
 				<% } else { %>
-					<span class="uv-app-list-flag-inactive">Disabled</span>
+					<span class="uv-app-list-flag-inactive">{{'Disabled'|trans}}</span>
 				<% } %>
 			</p>
 

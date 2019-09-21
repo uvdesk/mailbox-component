@@ -2,7 +2,7 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Console;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,7 +16,7 @@ class RefreshMailboxCommand extends Command
     private $container;
     private $entityManager;
 
-    public function __construct(ContainerInterface $container, EntityManager $entityManager)
+    public function __construct(ContainerInterface $container, EntityManagerInterface $entityManager)
     {
         $this->container = $container;
         $this->entityManager = $entityManager;

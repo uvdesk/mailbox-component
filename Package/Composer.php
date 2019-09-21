@@ -9,10 +9,9 @@ class Composer extends ComposerPackageExtension
 {
     public function loadConfiguration()
     {
-        $composerPackage = new ComposerPackage(new UVDeskMailboxConfiguration());
+        $composerPackage = new ComposerPackage();
         $composerPackage
-            ->movePackageConfig('config/packages/uvdesk_mailbox.yaml', 'Templates/config.yaml')
-            ->movePackageConfig('config/routes/uvdesk_mailbox.yaml', 'Templates/routes.yaml');
+            ->movePackageConfig('config/packages/uvdesk_mailbox.yaml', 'Templates/config.yaml');
         
         return $composerPackage;
     }

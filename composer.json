@@ -10,10 +10,9 @@
         }
     ],
     "require": {
-        "php": "^7.0",
-        "uvdesk/composer-plugin": "0.1.*",
-        "symfony/flex": "^1.0",
-        "uvdesk/core-framework": "0.1.*",
+        "php": "^7.1.3",
+        "uvdesk/composer-plugin": "^1.0",
+        "uvdesk/core-framework": "^1.0",
         "iamcal/lib_autolink": "^1.7",
         "php-mime-mail-parser/php-mime-mail-parser": "^3.0"
     },
@@ -23,7 +22,7 @@
     "extra": {
         "uvdesk-package-extension": "Webkul\\UVDesk\\MailboxBundle\\Package\\Composer",
         "branch-alias": {
-            "dev-master": "0.1.x-dev"
+            "dev-master": "1.0.x-dev"
         }
     },
     "minimum-stability": "dev"

@@ -1,17 +1,27 @@
 services:
-    uvdesk.mailbox:
-        public: true
-        class: Webkul\UVDesk\MailboxBundle\Services\MailboxService
-        arguments: ['@service_container', '@request_stack', '@doctrine.orm.entity_manager']
-
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+    
+    Webkul\UVDesk\MailboxBundle\:
+        resource: '../../*'
+        exclude: '../../{DependencyInjection,Entity,Package,Templates,Migrations,Tests}'
+    
+    Webkul\UVDesk\MailboxBundle\Controller\:
+        resource: '../../Controller/*'
+        tags: ['controller.service_arguments']
+    
     Webkul\UVDesk\MailboxBundle\Console\:
         resource: '../../Console/*'
         exclude: '../../Console/{UTF8Symbol.php,ANSIEscapeSequence.php}'
-        arguments: ['@service_container', '@doctrine.orm.entity_manager']
-        tags: ['console.command']
     
     Webkul\UVDesk\MailboxBundle\EventListener\Swiftmailer:
-        arguments: ['@service_container', '@request_stack']
         tags:
             - { name: uvdesk.event_listener, event: swiftmailer.configuration.updated, method: onSwiftMailerConfigurationUpdated }
             - { name: uvdesk.event_listener, event: swiftmailer.configuration.removed, method: onSwiftMailerConfigurationRemoved }
+    
+    # Public aliases
+    uvdesk.mailbox:
+        public: true
+        class: Webkul\UVDesk\MailboxBundle\Services\MailboxService

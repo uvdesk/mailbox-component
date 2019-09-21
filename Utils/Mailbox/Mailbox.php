@@ -2,9 +2,9 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Utils\Mailbox;
 
-use Webkul\UVDesk\CoreBundle\Utils\TokenGenerator;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface as ImapConfiguration;
-use Webkul\UVDesk\CoreBundle\Utils\SwiftMailer\BaseConfiguration as SwiftMailerConfiguration;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\SwiftMailer\BaseConfiguration as SwiftMailerConfiguration;
 
 class Mailbox
 {
