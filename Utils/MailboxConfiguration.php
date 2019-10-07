@@ -13,6 +13,14 @@ final class MailboxConfiguration
 
     public function addMailbox(Mailbox $mailbox)
     {
+        if (preg_match('/"/', $mailbox->getImapConfiguration()->getHost())) {
+            $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), '"')); 
+        }
+
+        if (preg_match("/'/", $mailbox->getImapConfiguration()->getHost())) {
+            $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), "'")); 
+        }
+
         $this->collection[] = $mailbox;
 
         return $this;
