@@ -22,5 +22,5 @@
     "extra": {
         "uvdesk-package-extension": "Webkul\\UVDesk\\MailboxBundle\\Package\\Composer"
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "stable"
 }
