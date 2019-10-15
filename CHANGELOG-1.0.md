@@ -3,6 +3,10 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.1 (2019-10-15)
+    * **Misc. Updates:**
+        * Only users with admin level privileges can configure mailbox settings
+
 * 1.0.0 (Released on 2019-10-09)
     * **Issue #44:** Misc. fixes (raised by anmol107)
     * **Issue #14:** duplicate swiftmailer created with same email (raised by vaishaliwebkul)
