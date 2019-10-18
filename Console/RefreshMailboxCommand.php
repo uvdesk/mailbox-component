@@ -116,15 +116,18 @@ class RefreshMailboxCommand extends Command
     public function pushMessage($message)
     {
         $router = $this->container->get('router');
-        $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
-
+        $domain = $this->container->getParameter('uvdesk.site_url');
+        $router->getContext()->setHost($domain);
+        if (strpos($domain, 'https') === false && strpos($domain, 'http') === false && $this->isSecure($domain)) {
+            $router->getContext()->setScheme('https');
+        }
         $curlHandler = curl_init();
         $requestUrl = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);   
         
-        if ($this->container->getParameter('uvdesk.site_url') != $router->getContext()->getHost()) {
-            $requestUrl = str_replace($router->getContext()->getHost(), $this->container->getParameter('uvdesk.site_url'), $requestUrl);
+        if ($domain != $router->getContext()->getHost()) {
+            $requestUrl = str_replace($router->getContext()->getHost(), $domain, $requestUrl);
         }
-       
+        
         curl_setopt($curlHandler, CURLOPT_HEADER, 0);
         curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curlHandler, CURLOPT_POST, 1);
@@ -132,5 +135,17 @@ class RefreshMailboxCommand extends Command
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
         $curlResponse = curl_exec($curlHandler);
         curl_close($curlHandler);
+    }
+
+    public function isSecure($domain_without_protocol) {
+        $curlHandler = curl_init('https://'.$domain_without_protocol);
+        curl_setopt_array($curlHandler, array(
+            CURLOPT_NOBODY => true,
+            CURLOPT_HEADER => false,
+        ));
+        curl_exec($curlHandler);
+        $is_secure = curl_errno($curlHandler) === 0 ? true : false;
+        curl_close($curlHandler);
+        return $is_secure;
     }
 }
