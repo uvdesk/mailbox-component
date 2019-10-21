@@ -3,6 +3,10 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.2 (2019-10-21)
+    * **Misc. Updates:**
+        * Use https when available while refreshing mailboxes via CLI
+
 * 1.0.1 (2019-10-15)
     * **Misc. Updates:**
         * Only users with admin level privileges can configure mailbox settings

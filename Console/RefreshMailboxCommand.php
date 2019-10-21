@@ -95,6 +95,8 @@ class RefreshMailboxCommand extends Command
 
             if (is_array($emailCollection)) {
                 $emailCount = count($emailCollection);
+                $useSecureConnection = $this->isSecureConnectionAvailable();
+
                 $output->writeln("\n <comment>5. Total fetched email -> </comment><info>$emailCount</info><comment></comment>");
                 $output->writeln("\n <comment>6. Starting to convert Emails into Tickets -> </comment>\n=============================================\n=============================================\n");
                 $counter = 1;
@@ -102,7 +104,7 @@ class RefreshMailboxCommand extends Command
                 foreach ($emailCollection as $id => $messageNumber) {
                     $output->writeln("\n <comment> Converting email </comment><info>$counter</info><comment> out of </comment><info>$emailCount</info><comment>.</comment>");
                     $message = imap_fetchbody($imap, $messageNumber, "");
-                    $this->pushMessage($message);
+                    $this->pushMessage($message, $useSecureConnection);
                     $counter ++;
                 }
 
@@ -113,24 +115,36 @@ class RefreshMailboxCommand extends Command
         return;
     }
 
-    public function pushMessage($message)
+    public function pushMessage($message, bool $secure = false)
     {
         $router = $this->container->get('router');
         $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
+        $router->getContext()->setScheme(true === $secure ? 'https' : 'http');
 
         $curlHandler = curl_init();
         $requestUrl = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);   
         
-        if ($this->container->getParameter('uvdesk.site_url') != $router->getContext()->getHost()) {
-            $requestUrl = str_replace($router->getContext()->getHost(), $this->container->getParameter('uvdesk.site_url'), $requestUrl);
-        }
-       
         curl_setopt($curlHandler, CURLOPT_HEADER, 0);
         curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curlHandler, CURLOPT_POST, 1);
         curl_setopt($curlHandler, CURLOPT_URL, $requestUrl);
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
+
         $curlResponse = curl_exec($curlHandler);
         curl_close($curlHandler);
+    }
+
+    protected function isSecureConnectionAvailable()
+    {
+        $headers = [CURLOPT_NOBODY => true, CURLOPT_HEADER => false];
+        $curlHandler = curl_init('https://' . $this->container->getParameter('uvdesk.site_url'));
+
+        curl_setopt_array($curlHandler, $headers);
+        curl_exec($curlHandler);
+
+        $isSecureRequestAvailable = curl_errno($curlHandler) === 0 ? true : false;
+        curl_close($curlHandler);
+
+        return $isSecureRequestAvailable;
     }
 }
