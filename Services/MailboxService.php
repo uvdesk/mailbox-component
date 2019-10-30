@@ -377,8 +377,14 @@ class MailboxService
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
                     // No user found.
-                    // @TODO: Do something about this case.
-                    return;
+                    $role = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:SupportRole')->findOneByCode('ROLE_CUSTOMER');
+                    $newCustomer = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
+                        'source' => 'website',
+                        'active' => true
+                    ]);
+                    
+                    $mailData['user'] = $newCustomer;
+                    $userDetails = $newCustomer->getCustomerInstance()->getPartialDetails();
                 }
             }
 
