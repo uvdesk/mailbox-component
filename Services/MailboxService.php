@@ -139,7 +139,7 @@ class MailboxService
     }
 
     public function getEmailAddress($addresses)
-    {   
+    {
         foreach ((array) $addresses as $address) {
             if (filter_var($address['address'], FILTER_VALIDATE_EMAIL)) {
                 return $address['address'];
