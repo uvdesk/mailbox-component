@@ -270,14 +270,6 @@ class MailboxService
             if ($parser->getHeader('precedence') || $parser->getHeader('x-autoreply') || $parser->getHeader('x-autorespond') || 'auto-replied' == $parser->getHeader('auto-submitted')) {
                 return;
             }
-
-            // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
-            try {
-                $this->getMailboxByEmail($addresses['from']);
-                return;
-            } catch (\Exception $e) {
-                // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
-            }
         }
 
         // Process Mail - References
@@ -370,15 +362,21 @@ class MailboxService
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
-                $user = $this->entityManager->getRepository('UVDeskSupportBundle:User')->findOneByEmail($mailData['from']);
+                $user = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($mailData['from']);
 
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
                     // No user found.
-                    // @TODO: Do something about this case.
-                    return;
+                    $role = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:SupportRole')->findOneByCode('ROLE_CUSTOMER');
+                    $newCustomer = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
+                        'source' => 'website',
+                        'active' => true
+                    ]);
+                    
+                    $mailData['user'] = $newCustomer;
+                    $userDetails = $newCustomer->getCustomerInstance()->getPartialDetails();
                 }
             }
 
