@@ -270,14 +270,6 @@ class MailboxService
             if ($parser->getHeader('precedence') || $parser->getHeader('x-autoreply') || $parser->getHeader('x-autorespond') || 'auto-replied' == $parser->getHeader('auto-submitted')) {
                 return;
             }
-
-            // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
-            try {
-                $this->getMailboxByEmail($addresses['from']);
-                return;
-            } catch (\Exception $e) {
-                // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
-            }
         }
 
         // Process Mail - References
@@ -376,7 +368,7 @@ class MailboxService
                     $mailData['user'] = $user;
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
-                    
+                    // No user found.
                     $role = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:SupportRole')->findOneByCode('ROLE_CUSTOMER');
                     $newCustomer = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
                         'source' => 'website',
