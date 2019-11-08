@@ -397,7 +397,7 @@ class MailboxService
                         $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
                             'entity' => $ticket,
                         ]);
-                        $this->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+                        $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
                     }
                 }
             }
