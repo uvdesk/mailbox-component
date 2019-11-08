@@ -270,6 +270,14 @@ class MailboxService
             if ($parser->getHeader('precedence') || $parser->getHeader('x-autoreply') || $parser->getHeader('x-autorespond') || 'auto-replied' == $parser->getHeader('auto-submitted')) {
                 return;
             }
+
+              // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
+            try {
+                $this->getMailboxByEmail($addresses['from']);
+                return;
+            } catch (\Exception $e) {
+                // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
+            }
         }
 
         // Process Mail - References
@@ -363,25 +371,39 @@ class MailboxService
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($mailData['from']);
-
+                
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
                     // No user found.
                     $role = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:SupportRole')->findOneByCode('ROLE_CUSTOMER');
-                    $newCustomer = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
-                        'source' => 'website',
-                        'active' => true
-                    ]);
-                    
-                    $mailData['user'] = $newCustomer;
-                    $userDetails = $newCustomer->getCustomerInstance()->getPartialDetails();
+                    $collaborator = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($mailData['from']);
+                    if (empty($collaborator)) {
+                        $collaborator = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
+                            'source' => 'website',
+                            'active' => true
+                        ]);
+                    }
+                    $checkTicket = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Ticket')->isTicketCollaborator($ticket, $mailData['from']);
+                    $mailData['user'] = $collaborator;
+                    $userDetails = $collaborator->getCustomerInstance()->getPartialDetails();
+
+                    if (!$checkTicket) {
+                        $ticket->addCollaborator($collaborator);
+                        $this->entityManager->persist($ticket);
+                        $this->entityManager->flush();
+                        $ticket->lastCollaborator = $collaborator;
+                        $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
+                            'entity' => $ticket,
+                        ]);
+                        $this->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+                    }
                 }
             }
 
             $mailData['fullname'] = $userDetails['name'];
-
+            
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
 
             if ($thread->getCreatedBy() == 'customer') {
