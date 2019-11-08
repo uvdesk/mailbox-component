@@ -370,7 +370,7 @@ class MailboxService
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
-                $user = $this->entityManager->getRepository('UVDeskSupportBundle:User')->findOneByEmail($mailData['from']);
+                $user = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($mailData['from']);
 
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
