@@ -3,6 +3,11 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.3 (2019-11-15)
+    * **Issue #46:** IMAP not creating tickets
+    * **Misc. Updates:**
+        * Included Github issue templates
+
 * 1.0.2 (2019-10-22)
     * **Misc. Updates:**
         * Use https when available while refreshing mailboxes via CLI

@@ -7,14 +7,19 @@ use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Thread;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Website;
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\SupportRole;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
+use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
-use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 
 class MailboxService
@@ -166,8 +171,8 @@ class MailboxService
             return null;
         }
 
-        $ticketRepository = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Ticket');
-        $threadRepository = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Thread');
+        $ticketRepository = $this->entityManager->getRepository(Ticket::class);
+        $threadRepository = $this->entityManager->getRepository(Thread::class);
 
         foreach ($criterias as $criteria => $criteriaValue) {
             if (empty($criteriaValue)) {
@@ -271,7 +276,7 @@ class MailboxService
                 return;
             }
 
-            // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
+              // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
             try {
                 $this->getMailboxByEmail($addresses['from']);
                 return;
@@ -305,28 +310,7 @@ class MailboxService
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
-        // $mailboxes = $this->getMailboxByEmail($data['replyTo']);
-        // if(!count($mailboxes)) {
-        //     if($cc) {
-        //         foreach ($cc as $value) {
-        //             $toAdress[] = $value['address'];
-        //         }
-        //         $mailboxes = $this->getMailboxByEmail($toAdress);
-
-        //         if(count($mailboxes)) {
-        //             foreach ($mailboxes as $mailbox) {
-        //                 foreach ($data['cc'] as $key => $value) {
-        //                     if (strpos($value, $mailbox->getEmail()) !== FALSE) {
-        //                         unset($data['cc'][$key]);
-        //                     }
-        //                 }
-        //             }
-        //             $data['replyTo'] = $toAdress;
-        //         }
-        //     }
-        // }
-
-        $website = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Website')->findOneByCode('knowledgebase');
+        $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
         
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
            return;
@@ -345,7 +329,6 @@ class MailboxService
             $mailData['threadType'] = 'create';
             $mailData['referenceIds'] = $mailData['messageId'];
 
-            $this->addCollaboratorFlag = 1;
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
 
             // Trigger ticket created event
@@ -356,7 +339,7 @@ class MailboxService
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam') {
             $mailData['threadType'] = 'reply';
-            $thread = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Thread')->findOneByMessageId($mailData['messageId']);
+            $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
 
             if (!empty($thread)) {
                 // Thread with the same message id exists. Skip processing.
@@ -370,20 +353,45 @@ class MailboxService
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
-                $user = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($mailData['from']);
-
+                $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
+                
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
-                    // No user found.
-                    // @TODO: Do something about this case.
-                    return;
+                    // Add user as a ticket collaborator
+                    if (empty($user)) {
+                        // Create a new user instance with customer support role
+                        $role = $this->entityManager->getRepository(SupportRole::class)->findOneByCode('ROLE_CUSTOMER');
+
+                        $user = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
+                            'source' => 'email',
+                            'active' => true
+                        ]);
+                    }
+
+                    $mailData['user'] = $user;
+                    $userDetails = $user->getCustomerInstance()->getPartialDetails();
+
+                    if (false == $this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])) {
+                        $ticket->addCollaborator($user);
+
+                        $this->entityManager->persist($ticket);
+                        $this->entityManager->flush();
+
+                        $ticket->lastCollaborator = $user;
+                        
+                        $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
+                            'entity' => $ticket,
+                        ]);
+
+                        $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+                    }
                 }
             }
 
             $mailData['fullname'] = $userDetails['name'];
-
+            
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
 
             if ($thread->getCreatedBy() == 'customer') {
