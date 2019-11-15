@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "php": "^7.1.3",
+        "php": "^7.2",
         "uvdesk/composer-plugin": "^1.0",
         "uvdesk/core-framework": "^1.0",
         "iamcal/lib_autolink": "^1.7",
