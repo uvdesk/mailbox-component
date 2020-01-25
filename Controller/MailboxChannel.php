@@ -26,7 +26,7 @@ class MailboxChannel extends Controller
 
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
-                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? $params['imap']['host'] : null))
+                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
                     ->setUsername($params['imap']['username'])
                     ->setPassword($params['imap']['password']);
             }
@@ -84,10 +84,9 @@ class MailboxChannel extends Controller
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
-
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
-                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? $params['imap']['host'] : null))
+                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
                     ->setUsername($params['imap']['username'])
                     ->setPassword($params['imap']['password']);
             }

@@ -124,7 +124,7 @@
 						<select name="swiftmailer_id" class="uv-select">
 							<option value="none">None Selected</option>
 							{% for configuration in swiftmailerConfigurations %}
-								{% if mailbox is defined and mailbox.swiftmailerConfiguration.id == configuration.id %}
+								{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
 									<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
 								{% else %}
 									<option value="{{ configuration.id }}">{{ configuration.id }}</option>

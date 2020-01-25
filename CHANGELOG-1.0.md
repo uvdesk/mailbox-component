@@ -3,6 +3,12 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.4 (2019-01-25)
+    * **Issue #38:** Issue for imap host field when add host inside qoutes ' '.
+    * **Issue #28:** Error while edit disable mailbox.
+    * **Issue #50:** Email setting are not being update in production mode.
+    * **Issue #51:** Duplicate entry for ticket when running refresh command second     time.
+
 * 1.0.3 (2019-11-15)
     * **Issue #46:** IMAP not creating tickets
     * **Misc. Updates:**
