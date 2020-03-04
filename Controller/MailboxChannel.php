@@ -55,7 +55,7 @@ class MailboxChannel extends Controller
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', 'Mailbox successfully created.');
+                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully created.'));
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
         }
@@ -129,7 +129,8 @@ class MailboxChannel extends Controller
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', 'Mailbox successfully updated.');
+                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully updated.'));
+                
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
         }
