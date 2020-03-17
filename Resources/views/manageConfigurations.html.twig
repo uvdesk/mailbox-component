@@ -34,9 +34,9 @@
 
 		<div class="uv-view {% if app.request.cookies and app.request.cookies.get('uv-asideView') %}uv-aside-view{% endif %}">
 			{% if mailbox is defined and mailbox.id is not empty %}
-				<h1>Update Mailbox</h1>
+				<h1>{{ 'Update Mailbox'|trans }}</h1>
 			{% else %}
-				<h1>New Mailbox</h1>
+				<h1>{{ 'Add Mailbox'|trans }}</h1>
 			{% endif %}
 
             <div class="uv-hr"></div>
@@ -44,26 +44,26 @@
 			<form method="post" action="" id="mailbox-settings-view">
 				{# Mailer Id #}
 				<div class="uv-element-block">
-					<label class="uv-field-label">ID:</label>
+					<label class="uv-field-label">{{ 'ID'|trans }}</label>
 
 					<div class="uv-field-block">
 						{% if mailbox is defined and mailbox.id is not empty %}
-							<input type="text" name="id" class="uv-field" value="{{ mailbox.id }}" placeholder="Mailbox ID - Leave blank to automatically create id" />
+							<input type="text" name="id" class="uv-field" value="{{ mailbox.id }}" placeholder="{{ 'Mailbox ID - Leave blank to automatically create id'|trans }}" />
 						{% else %}
-							<input type="text" name="id" class="uv-field" value="" placeholder="Mailbox ID - Leave blank to automatically create id" />
+							<input type="text" name="id" class="uv-field" value="" placeholder="{{ 'Mailbox ID - Leave blank to automatically create id'|trans }}" />
 						{% endif %}
 					</div>
 				</div>
 
 				{# Mailer Name #}
 				<div class="uv-element-block">
-					<label class="uv-field-label">Name:</label>
+					<label class="uv-field-label">{{ 'Name'|trans }}</label>
 
 					<div class="uv-field-block">
 						{% if mailbox is defined and mailbox.name is not empty %}
-							<input type="text" name="name" class="uv-field" value="{{ mailbox.name }}" placeholder="Mailbox Name" />
+							<input type="text" name="name" class="uv-field" value="{{ mailbox.name }}" placeholder="{{ 'Mailbox Name'|trans }}" />
 						{% else %}
-							<input type="text" name="name" class="uv-field" value="" placeholder="Mailbox Name" />
+							<input type="text" name="name" class="uv-field" value="" placeholder="{{ 'Mailbox Name'|trans }}" />
 						{% endif %}
 					</div>
 				</div>
@@ -81,30 +81,30 @@
 							<span class="uv-checkbox-view"></span>
 						</div>
 
-						<span class="uv-checkbox-label">Enable Mailbox</span>
+						<span class="uv-checkbox-label">{{ 'Enable Mailbox'|trans }}</span>
 					</label>
 				</div>
 
 				<div class="uv-hr"></div>
 
 				{# IMAP Settings #}
-				<h3 class="section-heading">Incoming Mail (IMAP) Server</h3>
-				<p class="section-description">Configure your imap settings which will be used to fetch emails from your mailbox.</p>
+				<h3 class="section-heading">{{ 'Incoming Mail (IMAP) Server'|trans }}</h3>
+				<p class="section-description">{{ 'Configure your imap settings which will be used to fetch emails from your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
-					<label class="uv-field-label">Transport:</label>
+					<label class="uv-field-label">{{ 'Transport'|trans }}</label>
 
 					{% if mailbox is defined %}
 						<select name="imap[transport]" id="cta-mailbox-imap-transport" class="uv-select">
-							<option value="custom" {% if mailbox.imapConfiguration.code == 'custom' %}selected{% endif %}>IMAP</option>
-							<option value="gmail" {% if mailbox.imapConfiguration.code == 'gmail' %}selected{% endif %}>Gmail</option>
-							<option value="yahoo" {% if mailbox.imapConfiguration.code == 'yahoo' %}selected{% endif %}>Yahoo Mail</option>
+							<option value="custom" {% if mailbox.imapConfiguration.code == 'custom' %}selected{% endif %}>{{ 'IMAP'|trans }}</option>
+							<option value="gmail" {% if mailbox.imapConfiguration.code == 'gmail' %}selected{% endif %}>{{ 'Gmail'|trans }}</option>
+							<option value="yahoo" {% if mailbox.imapConfiguration.code == 'yahoo' %}selected{% endif %}>{{ 'Yahoo'|trans }}</option>
 						</select>
 					{% else %}
 						<select name="imap[transport]" id="cta-mailbox-imap-transport" class="uv-select">
-							<option value="custom" selected>IMAP</option>
-							<option value="gmail">Gmail</option>
-							<option value="yahoo">Yahoo</option>
+							<option value="custom" selected>{{ 'IMAP'|trans }}</option>
+							<option value="gmail">{{ 'Gmail'|trans }}</option>
+							<option value="yahoo">{{ 'Yahoo'|trans }}</option>
 						</select>
 					{% endif %}
 				</div>
@@ -114,15 +114,15 @@
 				<div class="uv-hr"></div>
 
 				{# SwiftMailer Settings #}
-				<h3 class="section-heading">Outgoing Mail (SMTP) Server</h3>
-				<p class="section-description">Select a valid Swift Mailer configuration which will be used to send emails through your mailbox.</p>
+				<h3 class="section-heading">{{ 'Outgoing Mail (SMTP) Server'|trans }}</h3>
+				<p class="section-description">{{ 'Select a valid Swift Mailer configuration which will be used to send emails through your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
-					<label class="uv-field-label">Swift Mailer ID:</label>
+					<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
 
 					{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
 						<select name="swiftmailer_id" class="uv-select">
-							<option value="none">None Selected</option>
+							<option value="none">{{ 'None Selected'|trans }}</option>
 							{% for configuration in swiftmailerConfigurations %}
 								{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
 									<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
@@ -133,7 +133,7 @@
 						</select>
 					{% else %}
 						<select name="swiftmailer_id" class="uv-select">
-							<option value="none">None Selected</option>
+							<option value="none">{{ 'None Selected'|trans }}</option>
 						</select>
 					{% endif %}
 				</div>
@@ -155,56 +155,56 @@
 
     <script id="imap_conf_template_predefined" type="text/template">
         <div class="uv-element-block">
-			<label class="uv-field-label">Username:</label>
+			<label class="uv-field-label">{{ 'Username' |trans }}</label>
 			
 			<div class="uv-field-block">
 				<% if (typeof(username) != 'undefined' && username != '') { %>
-					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="Email address">
+					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{ 'Email address'|trans }}">
 				<% } else { %>
-					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="Email address">
+					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{ 'Email address'|trans }}">
                 <% } %>
 			</div>
 		</div>
 		
 		<div class="uv-element-block">
-			<label class="uv-field-label">Password:</label>
+			<label class="uv-field-label">{{ 'Password' |trans }}</label>
 
 			<div class="uv-field-block">
-				<input class="uv-field" type="password" name="imap[password]" placeholder="Associated Password">
+				<input class="uv-field" type="password" name="imap[password]" placeholder="{{ 'Associated Password'|trans }}">
 			</div>
 		</div>
 	</script>
 
     <script id="imap_conf_template_custom" type="text/template">
         <div class="uv-element-block">
-			<label class="uv-field-label">Host:</label>
+			<label class="uv-field-label">{{ 'Host'|trans }}</label>
 			
 			<div class="uv-field-block">
 				<% if (typeof(host) != 'undefined' && host != '') { %>
 					<input class="uv-field" type="text" name="imap[host]" value="<%- host %>" placeholder="<%- host %>">
 				<% } else { %>
-					<input class="uv-field" type="text" name="imap[host]" value="" placeholder="IMAP Host">
+					<input class="uv-field" type="text" name="imap[host]" value="" placeholder="{{'IMAP Host'|trans }}">
                 <% } %>
 			</div>
 		</div>
 
 		<div class="uv-element-block">
-			<label class="uv-field-label">Email:</label>
+			<label class="uv-field-label">{{ 'Email'|trans }}</label>
 			
 			<div class="uv-field-block">
 				<% if (typeof(username) != 'undefined' && username != '') { %>
-					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="Email address">
+					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{'Email address'|trans }}">
 				<% } else { %>
-					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="Email address">
+					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{'Email address'|trans }}">
                 <% } %>
 			</div>
 		</div>
 		
 		<div class="uv-element-block">
-			<label class="uv-field-label">Password:</label>
+			<label class="uv-field-label">{{'Password'|trans }}</label>
 
 			<div class="uv-field-block">
-				<input class="uv-field" type="password" name="imap[password]" placeholder="Associated Password">
+				<input class="uv-field" type="password" name="imap[password]" placeholder="{{'Associated Password'|trans }}">
 			</div>
 		</div>
 	</script>

@@ -70,7 +70,7 @@ class MailboxChannelXHR extends Controller
 
         return new JsonResponse([
             'alertClass' => 'success',
-            'alertMessage' => 'Mailbox configuration removed successfully.',
+            'alertMessage' => $this->get('translator')->trans('Mailbox configuration removed successfully.'),
         ]);
     }
 }

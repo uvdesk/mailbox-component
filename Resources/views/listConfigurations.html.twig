@@ -126,11 +126,11 @@
 		<div class="uv-view {% if app.request.cookies and app.request.cookies.get('uv-asideView') %}uv-aside-view{% endif %}">
 			<div class="uv-action-bar">
                 <div class="uv-action-bar-col-lt" style="vertical-align: middle;">
-					<h1>Mailbox Settings</h1>
+					<h1>{{ 'Mailbox Settings'|trans }}</h1>
                 </div>
 
 				<div class="uv-action-bar-col-rt" style="vertical-align: middle;">
-					<a href="{{ path('helpdesk_member_mailbox_create_configuration') }}" type="button" class="uv-btn-action" style="margin: unset;">New Mailbox</a>
+					<a href="{{ path('helpdesk_member_mailbox_create_configuration') }}" type="button" class="uv-btn-action" style="margin: unset;">{{ 'New Mailbox'|trans }}</a>
 				</div>
             </div>
 
