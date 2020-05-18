@@ -165,6 +165,21 @@ class MailboxService
         throw new \Exception("No mailbox found for email '$email'");
     }
 
+    private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
+        
+        // Search Criteria: Find ticket based on subject
+        if (!empty($senderEmail) && !empty($messageSubject)) {
+            $threadRepository = $this->entityManager->getRepository(Thread::class);
+            $ticket = $threadRepository->findTicketBySubject($senderEmail, $messageSubject);
+
+            if ($ticket  != null) {
+                return $ticket;
+            }
+        }
+
+        return null;
+    }
+
     private function searchExistingTickets(array $criterias = [])
     {
         if (empty($criterias)) {
@@ -328,6 +343,12 @@ class MailboxService
         if (empty($ticket)) {
             $mailData['threadType'] = 'create';
             $mailData['referenceIds'] = $mailData['messageId'];
+
+            $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+
+            if(!empty($ticketSubjectRefrenceExist)) {
+                return;
+            }
 
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
 
