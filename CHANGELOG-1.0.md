@@ -3,6 +3,10 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.8 (2020-05-26)
+    * **Misc. Updates:**
+        * Added some condition to remove redundency of tickets when more conversation between customer and agent and ticket get duplicates.
+
 * 1.0.7 (2020-04-17)
     * **Misc. Updates:**
         * Change processing function and removed unnecessary code for speed up.
