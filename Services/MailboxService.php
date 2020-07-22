@@ -318,7 +318,7 @@ class MailboxService
         // Process Mail - Content
         $htmlFilter = new HTMLFilter();
         $mailData['subject'] = $parser->getHeader('subject');
-        $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('html')));
+        $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
         $mailData['attachments'] = $parser->getAttachments();
         
         if (!$mailData['message']) {
