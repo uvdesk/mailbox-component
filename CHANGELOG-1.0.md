@@ -3,6 +3,10 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.9 (2020-07-22)
+    * **Issue #57:** Can't see embedded images in ticket.
+    * **Issue #56:** refresh-mailbox produces Parse Error.
+
 * 1.0.8 (2020-05-26)
     * **Misc. Updates:**
         * Added some condition to remove redundency of tickets when more conversation between customer and agent and ticket get duplicates.
@@ -23,7 +27,7 @@ This changelog references any relevant changes introduced in 1.0 minor versions.
     * **Issue #38:** Issue for imap host field when add host inside qoutes ' '.
     * **Issue #28:** Error while edit disable mailbox.
     * **Issue #50:** Email setting are not being update in production mode.
-    * **Issue #51:** Duplicate entry for ticket when running refresh command second     time.
+    * **Issue #51:** Duplicate entry for ticket when running refresh command second time.
 
 * 1.0.3 (2019-11-15)
     * **Issue #46:** IMAP not creating tickets
