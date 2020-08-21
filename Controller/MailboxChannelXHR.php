@@ -5,10 +5,10 @@ namespace Webkul\UVDesk\MailboxBundle\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 
-class MailboxChannelXHR extends Controller
+class MailboxChannelXHR extends AbstractController
 {
     public function processMailXHR(Request $request)
     {
