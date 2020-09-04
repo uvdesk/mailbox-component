@@ -9,9 +9,20 @@ use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Symfony\Component\Translation\TranslatorInterface;
 
 class MailboxChannel extends AbstractController
 {
+    private $mailboxService;
+    private $translator;
+
+    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator)
+    {
+        $this->mailboxService = $mailboxService;
+        $this->translator = $translator;
+    }
+
     public function loadMailboxes()
     {
         return $this->render('@UVDeskMailbox//listConfigurations.html.twig');
@@ -42,7 +53,7 @@ class MailboxChannel extends AbstractController
             }
 
             if (!empty($imapConfiguration) && !empty($swiftmailerConfiguration)) {
-                $mailboxService = $this->get('uvdesk.mailbox');
+                $mailboxService = $this->mailboxService;
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
                 ($mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null))
@@ -55,7 +66,7 @@ class MailboxChannel extends AbstractController
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully created.'));
+                $this->addFlash('success', $this->translator->trans('Mailbox successfully created.'));
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
         }
@@ -67,7 +78,7 @@ class MailboxChannel extends AbstractController
 
     public function updateMailboxConfiguration($id, Request $request)
     {
-        $mailboxService = $this->get('uvdesk.mailbox');
+        $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
         $swiftmailerConfigurationCollection = $this->get('swiftmailer.service')->parseSwiftMailerConfigurations();
 
@@ -129,7 +140,7 @@ class MailboxChannel extends AbstractController
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully updated.'));
+                $this->addFlash('success', $this->translator->trans('Mailbox successfully updated.'));
                 
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
