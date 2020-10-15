@@ -11,16 +11,19 @@ use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Component\Translation\TranslatorInterface;
+use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
 
 class MailboxChannel extends AbstractController
 {
     private $mailboxService;
     private $translator;
+    private $swiftMailer;
 
-    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator)
+    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
     {
         $this->mailboxService = $mailboxService;
         $this->translator = $translator;
+        $this->swiftMailer = $swiftMailer;
     }
 
     public function loadMailboxes()
@@ -30,7 +33,7 @@ class MailboxChannel extends AbstractController
     
     public function createMailboxConfiguration(Request $request)
     {
-        $swiftmailerConfigurationCollection = $this->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -80,7 +83,7 @@ class MailboxChannel extends AbstractController
     {
         $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-        $swiftmailerConfigurationCollection = $this->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
             if ($configuration->getId() == $id) {
