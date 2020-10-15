@@ -7,16 +7,22 @@ use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationRemovedEvent;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationUpdatedEvent;
+use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 
 class Swiftmailer
 {
     protected $container;
     protected $requestStack;
+    protected $swiftMailer;
+    private $mailboxService;
 
-    public final function __construct(ContainerInterface $container, RequestStack $requestStack)
+    public final function __construct(ContainerInterface $container, RequestStack $requestStack, SwiftMailerService $swiftMailer, MailboxService $mailboxService)
     {
         $this->container = $container;
         $this->requestStack = $requestStack;
+        $this->swiftMailer = $swiftMailer;
+        $this->mailboxService = $mailboxService;
     }
 
     public function onSwiftMailerConfigurationUpdated(ConfigurationUpdatedEvent $event)
@@ -32,7 +38,7 @@ class Swiftmailer
             return;
         }
 
-        $mailboxConfiguration = $this->container->get('uvdesk.mailbox')->parseMailboxConfigurations(true);
+        $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations(true);
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
             if ($existingMailbox->getSwiftmailerConfiguration()->getId() == $existingConfiguration->getId()) {
@@ -50,7 +56,7 @@ class Swiftmailer
         }
 
         if (true === $isUpdateRequiredFlag) {
-            file_put_contents($this->container->get('uvdesk.mailbox')->getPathToConfigurationFile(), (string) $mailboxConfiguration);
+            file_put_contents($this->mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
         }
         
         return;
@@ -60,7 +66,7 @@ class Swiftmailer
     {
         $isUpdateRequiredFlag = false;
         $configuration = $event->getSwiftMailerConfiguration(); 
-        $mailboxConfiguration = $this->container->get('uvdesk.mailbox')->parseMailboxConfigurations();
+        $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
                 if (null != $existingMailbox->getSwiftmailerConfiguration() && $existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
@@ -77,7 +83,7 @@ class Swiftmailer
         }
 
         if (true === $isUpdateRequiredFlag) {
-            file_put_contents($this->container->get('uvdesk.mailbox')->getPathToConfigurationFile(), (string) $mailboxConfiguration);
+            file_put_contents($this->mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
         }
 
         return;
