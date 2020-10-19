@@ -12,15 +12,18 @@ use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Component\Translation\TranslatorInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
 
 class MailboxChannel extends AbstractController
 {
     private $mailboxService;
     private $translator;
     private $swiftMailer;
+    private $userService;
 
-    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
+    public function __construct(UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
     {
+        $this->userService = $userService;
         $this->mailboxService = $mailboxService;
         $this->translator = $translator;
         $this->swiftMailer = $swiftMailer;
@@ -28,11 +31,19 @@ class MailboxChannel extends AbstractController
 
     public function loadMailboxes()
     {
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+
         return $this->render('@UVDeskMailbox//listConfigurations.html.twig');
     }
     
     public function createMailboxConfiguration(Request $request)
     {
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+
         $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
@@ -81,6 +92,10 @@ class MailboxChannel extends AbstractController
 
     public function updateMailboxConfiguration($id, Request $request)
     {
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+        
         $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
         $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
