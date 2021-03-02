@@ -304,6 +304,7 @@ class MailboxService
         }
 
         // Process Mail - References
+        $addresses['to'][0] = strtolower($addresses['to'][0]);
         $mailData['replyTo'] = $addresses['to'];
         $mailData['messageId'] = $parser->getHeader('message-id') ?: null;
         $mailData['inReplyTo'] = htmlspecialchars_decode($parser->getHeader('in-reply-to'));
