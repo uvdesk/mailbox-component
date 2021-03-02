@@ -303,6 +303,7 @@ class MailboxService
             }
         }
 
+        $addresses['to'][0] = strtolower($addresses['to'][0]);
         // Process Mail - References
         $mailData['replyTo'] = $addresses['to'];
         $mailData['messageId'] = $parser->getHeader('message-id') ?: null;
