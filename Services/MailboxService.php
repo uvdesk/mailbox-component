@@ -266,7 +266,7 @@ class MailboxService
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
             'from' => $this->getEmailAddress($from),
-            'to' => $this->parseAddress('to'),
+            'to' => !empty($this->parseAddress('to')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
             'cc' => $this->parseAddress('cc'),
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
@@ -311,10 +311,14 @@ class MailboxService
         $mailData['referenceIds'] = htmlspecialchars_decode($parser->getHeader('references'));
         $mailData['cc'] = array_filter(explode(',', $parser->getHeader('cc'))) ?: [];
         $mailData['bcc'] = array_filter(explode(',', $parser->getHeader('bcc'))) ?: [];
+
+        // User Identity
+        $from = $this->entityManager->getRepository(User::class)->findOneByEmail($addresses['from']);
+        $userinstance =  $this->entityManager->getRepository(UserInstance::class)->findOneByUser( $from);
         
         // Process Mail - User Details
         $mailData['source'] = 'email';
-        $mailData['createdBy'] = 'customer';
+        $mailData['createdBy'] = ($userinstance->getSupportRole()->getId() == 4) ? 'customer' : 'agent';
         $mailData['role'] = 'ROLE_CUSTOMER';
         $mailData['from'] = $addresses['from'];
         $mailData['name'] = trim(current(explode('@', $from[0]['display'])));
