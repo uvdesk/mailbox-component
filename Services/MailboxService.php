@@ -266,7 +266,7 @@ class MailboxService
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
             'from' => $this->getEmailAddress($from),
-            'to' => !empty($this->parseAddress('to')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
+            'to' => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
             'cc' => $this->parseAddress('cc'),
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
@@ -313,9 +313,9 @@ class MailboxService
         $mailData['bcc'] = array_filter(explode(',', $parser->getHeader('bcc'))) ?: [];
 
         // User Identity
-        $from = $this->entityManager->getRepository(User::class)->findOneByEmail($addresses['from']);
-        $userinstance =  $this->entityManager->getRepository(UserInstance::class)->findOneByUser( $from);
-        
+        $fromEmail = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($addresses['from']);
+        $userinstance =  $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:UserInstance')->findOneByUser($fromEmail);
+
         // Process Mail - User Details
         $mailData['source'] = 'email';
         $mailData['createdBy'] = ($userinstance->getSupportRole()->getId() == 4) ? 'customer' : 'agent';
