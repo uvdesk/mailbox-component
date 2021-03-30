@@ -318,7 +318,7 @@ class MailboxService
 
         // Process Mail - User Details
         $mailData['source'] = 'email';
-        $mailData['createdBy'] = ($userinstance->getSupportRole()->getId() == 4) ? 'customer' : 'agent';
+        $mailData['createdBy'] = ($userinstance && $userinstance->getSupportRole()->getId() == 4) ? 'customer' : 'agent';
         $mailData['role'] = 'ROLE_CUSTOMER';
         $mailData['from'] = $addresses['from'];
         $mailData['name'] = trim(current(explode('@', $from[0]['display'])));
