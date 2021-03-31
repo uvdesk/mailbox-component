@@ -312,13 +312,9 @@ class MailboxService
         $mailData['cc'] = array_filter(explode(',', $parser->getHeader('cc'))) ?: [];
         $mailData['bcc'] = array_filter(explode(',', $parser->getHeader('bcc'))) ?: [];
 
-        // User Identity
-        $fromEmail = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:User')->findOneByEmail($addresses['from']);
-        $userinstance =  $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:UserInstance')->findOneByUser($fromEmail);
-
         // Process Mail - User Details
         $mailData['source'] = 'email';
-        $mailData['createdBy'] = ($userinstance && $userinstance->getSupportRole()->getId() == 4) ? 'customer' : 'agent';
+        $mailData['createdBy'] = 'customer';
         $mailData['role'] = 'ROLE_CUSTOMER';
         $mailData['from'] = $addresses['from'];
         $mailData['name'] = trim(current(explode('@', $from[0]['display'])));
@@ -386,6 +382,7 @@ class MailboxService
                 
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
+                    $mailData['createdBy'] = 'agent';
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
                     // Add user as a ticket collaborator
@@ -422,17 +419,19 @@ class MailboxService
             $mailData['fullname'] = $userDetails['name'];
             
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
-
-            if ($thread->getCreatedBy() == 'customer') {
-                $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
-                    'entity' =>  $ticket,
-                ]);
-            } else {
-                $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
-                    'entity' =>  $ticket,
-                ]);
+            
+            if($thread->getThreadType() == 'reply') {
+                if ($thread->getCreatedBy() == 'customer') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                } else {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }
             }
-                
+
             // Trigger thread reply event
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         }
