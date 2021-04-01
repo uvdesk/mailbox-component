@@ -348,11 +348,12 @@ class MailboxService
             $mailData['threadType'] = 'create';
             $mailData['referenceIds'] = $mailData['messageId'];
 
-            $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+            // @Todo For same subject with same customer check
+            // $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
 
-            if(!empty($ticketSubjectRefrenceExist)) {
-                return;
-            }
+            // if(!empty($ticketSubjectRefrenceExist)) {
+            //     return;
+            // }
 
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
 
