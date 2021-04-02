@@ -3,6 +3,26 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.10 (2021-04-02)
+
+    * **Issue Fixes:**
+
+    * **Issue #58:** MailboxService fails to create new ticket when to is not canonically defined.
+    * **Issue #59:** getting exception when click on add new mailbox button.
+    * **Issue #60:** mailbox is accessible by agent using search bar.
+    * **Issue #61:** Email validation failure.
+    * **Issue #62:** Email validation failure.
+    * **Issue #64:** email are not converted into ticket as mailbox is case sensitive.
+    * **Issue #65:** email are not converted into ticket if sent from web form.
+    * **Issue #67:** The new MailboxService.php did not open ticket from emails.
+    * **Issue #68:** Emails from same sender with same subject line not created.
+
+    * **Misc. Updates:**
+        * Controller updates as per symfony version 4.3 for removing depreciation messages.
+        * Updates with precheck statement for ticket creation process.
+        * Code updates for Auto-forwording and forwording emails updates.
+        * Accept and convert both capitalize and non-capitalize email conversion.
+
 * 1.0.9 (2020-07-22)
     * **Issue #57:** Can't see embedded images in ticket.
     * **Issue #56:** refresh-mailbox produces Parse Error.
