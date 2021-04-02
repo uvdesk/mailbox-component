@@ -21,6 +21,7 @@ use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
+use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
 
 class MailboxService
 {
@@ -31,12 +32,14 @@ class MailboxService
 	private $requestStack;
     private $entityManager;
     private $mailboxCollection = [];
+    private $swiftMailer;
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager)
+    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, SwiftMailerService $swiftMailer)
     {
         $this->container = $container;
 		$this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
+        $this->swiftMailer = $swiftMailer;
     }
 
     public function getPathToConfigurationFile()
@@ -60,7 +63,7 @@ class MailboxService
 
         // Read configurations from package config.
         $mailboxConfiguration = new MailboxConfiguration();
-        $swiftmailerService = $this->container->get('swiftmailer.service');
+        $swiftmailerService = $this->swiftMailer;
         $swiftmailerConfigurations = $swiftmailerService->parseSwiftMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
@@ -263,7 +266,7 @@ class MailboxService
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
             'from' => $this->getEmailAddress($from),
-            'to' => $this->parseAddress('to'),
+            'to' => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
             'cc' => $this->parseAddress('cc'),
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
@@ -301,13 +304,14 @@ class MailboxService
         }
 
         // Process Mail - References
+        $addresses['to'][0] = strtolower($addresses['to'][0]);
         $mailData['replyTo'] = $addresses['to'];
         $mailData['messageId'] = $parser->getHeader('message-id') ?: null;
         $mailData['inReplyTo'] = htmlspecialchars_decode($parser->getHeader('in-reply-to'));
         $mailData['referenceIds'] = htmlspecialchars_decode($parser->getHeader('references'));
         $mailData['cc'] = array_filter(explode(',', $parser->getHeader('cc'))) ?: [];
         $mailData['bcc'] = array_filter(explode(',', $parser->getHeader('bcc'))) ?: [];
-        
+
         // Process Mail - User Details
         $mailData['source'] = 'email';
         $mailData['createdBy'] = 'customer';
@@ -344,11 +348,12 @@ class MailboxService
             $mailData['threadType'] = 'create';
             $mailData['referenceIds'] = $mailData['messageId'];
 
-            $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+            // @Todo For same subject with same customer check
+            // $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
 
-            if(!empty($ticketSubjectRefrenceExist)) {
-                return;
-            }
+            // if(!empty($ticketSubjectRefrenceExist)) {
+            //     return;
+            // }
 
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
 
@@ -378,6 +383,7 @@ class MailboxService
                 
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
+                    $mailData['createdBy'] = 'agent';
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
                 } else {
                     // Add user as a ticket collaborator
@@ -414,17 +420,19 @@ class MailboxService
             $mailData['fullname'] = $userDetails['name'];
             
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
-
-            if ($thread->getCreatedBy() == 'customer') {
-                $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
-                    'entity' =>  $ticket,
-                ]);
-            } else {
-                $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
-                    'entity' =>  $ticket,
-                ]);
+            
+            if($thread->getThreadType() == 'reply') {
+                if ($thread->getCreatedBy() == 'customer') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                } else {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }
             }
-                
+
             // Trigger thread reply event
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         }

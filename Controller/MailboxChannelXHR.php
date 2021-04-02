@@ -5,11 +5,22 @@ namespace Webkul\UVDesk\MailboxBundle\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Symfony\Component\Translation\TranslatorInterface;
 
-class MailboxChannelXHR extends Controller
+class MailboxChannelXHR extends AbstractController
 {
+    private $mailboxService;
+    private $translator;
+
+    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator)
+    {
+        $this->mailboxService = $mailboxService;
+        $this->translator = $translator;
+    }
+
     public function processMailXHR(Request $request)
     {
         // Return HTTP_OK Response
@@ -17,7 +28,7 @@ class MailboxChannelXHR extends Controller
         $response->send();
 
         if ("POST" == $request->getMethod() && null != $request->get('email')) {
-            $this->get('uvdesk.mailbox')->processMail($request->get('email'));
+            $this->mailboxService->processMail($request->get('email'));
         }
         
         exit(0);
@@ -31,14 +42,14 @@ class MailboxChannelXHR extends Controller
                 'name' => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
             ];
-        }, $this->get('uvdesk.mailbox')->parseMailboxConfigurations()->getMailboxes());
+        }, $this->mailboxService->parseMailboxConfigurations()->getMailboxes());
 
         return new JsonResponse($collection ?? []);
     }
 
     public function removeMailboxConfiguration($id, Request $request)
     {
-        $mailboxService = $this->get('uvdesk.mailbox');
+        $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
@@ -70,7 +81,7 @@ class MailboxChannelXHR extends Controller
 
         return new JsonResponse([
             'alertClass' => 'success',
-            'alertMessage' => $this->get('translator')->trans('Mailbox configuration removed successfully.'),
+            'alertMessage' => $this->translator->trans('Mailbox configuration removed successfully.'),
         ]);
     }
 }

@@ -6,20 +6,45 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Symfony\Component\Translation\TranslatorInterface;
+use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
 
-class MailboxChannel extends Controller
+class MailboxChannel extends AbstractController
 {
+    private $mailboxService;
+    private $translator;
+    private $swiftMailer;
+    private $userService;
+
+    public function __construct(UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
+    {
+        $this->userService = $userService;
+        $this->mailboxService = $mailboxService;
+        $this->translator = $translator;
+        $this->swiftMailer = $swiftMailer;
+    }
+
     public function loadMailboxes()
     {
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+
         return $this->render('@UVDeskMailbox//listConfigurations.html.twig');
     }
     
     public function createMailboxConfiguration(Request $request)
     {
-        $swiftmailerConfigurationCollection = $this->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -42,7 +67,7 @@ class MailboxChannel extends Controller
             }
 
             if (!empty($imapConfiguration) && !empty($swiftmailerConfiguration)) {
-                $mailboxService = $this->get('uvdesk.mailbox');
+                $mailboxService = $this->mailboxService;
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
                 ($mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null))
@@ -55,7 +80,7 @@ class MailboxChannel extends Controller
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully created.'));
+                $this->addFlash('success', $this->translator->trans('Mailbox successfully created.'));
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
         }
@@ -67,9 +92,13 @@ class MailboxChannel extends Controller
 
     public function updateMailboxConfiguration($id, Request $request)
     {
-        $mailboxService = $this->get('uvdesk.mailbox');
+        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+            return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
+        }
+        
+        $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-        $swiftmailerConfigurationCollection = $this->get('swiftmailer.service')->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
             if ($configuration->getId() == $id) {
@@ -129,7 +158,7 @@ class MailboxChannel extends Controller
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->get('translator')->trans('Mailbox successfully updated.'));
+                $this->addFlash('success', $this->translator->trans('Mailbox successfully updated.'));
                 
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
