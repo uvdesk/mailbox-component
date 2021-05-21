@@ -230,7 +230,8 @@ class MailboxService
                     // Search Criteria 3: Find ticket based on reference id
                     // Break references into ind. message id collection, and iteratively 
                     // search for existing threads for these message ids.
-                    $referenceIds = explode(' ', $criteriaValue);
+                    $separator = (str_contains($criteriaValue, ',')) ? ',' : ' ';
+                    $referenceIds = explode($separator, $criteriaValue);
 
                     foreach ($referenceIds as $messageId) {
                         $thread = $threadRepository->findOneByMessageId($messageId);
