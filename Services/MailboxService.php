@@ -167,6 +167,17 @@ class MailboxService
 
         throw new \Exception("No mailbox found for email '$email'");
     }
+	
+    public function getMailboxByToEmail($email)
+    {
+        foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
+            if ($email === $registeredMailbox['imap_server']['username']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
         
@@ -302,9 +313,15 @@ class MailboxService
                 // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
             }
         }
+	   
+        foreach($addresses['to'] as $mailboxEmail){
+            if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
+                $mailData['replyTo'] = $mailboxEmail;
+            }
+        }
 
         // Process Mail - References
-        $addresses['to'][0] = strtolower($addresses['to'][0]);
+        $addresses['to'][0] = strtolower($mailData['replyTo']) ?? strtolower($addresses['to'][0]);
         $mailData['replyTo'] = $addresses['to'];
         $mailData['messageId'] = $parser->getHeader('message-id') ?: null;
         $mailData['inReplyTo'] = htmlspecialchars_decode($parser->getHeader('in-reply-to'));
