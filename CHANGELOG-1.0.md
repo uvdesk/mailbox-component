@@ -3,6 +3,10 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.11 (2021-06-19)
+    * **Misc. Updates:**
+        * Methods added for checking mailbox email exist in multiple to address mail and       creating ticket for the same.
+
 * 1.0.10 (2021-04-02)
 
     * **Issue Fixes:**
