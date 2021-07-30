@@ -53,7 +53,7 @@ class MailboxChannel extends AbstractController
             if (!empty($params['imap']['transport'])) {
                 ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
                     ->setUsername($params['imap']['username'])
-                    ->setPassword($params['imap']['password']);
+                    ->setPassword(base64_encode($params['imap']['password']));
             }
 
             // Swiftmailer Configuration
