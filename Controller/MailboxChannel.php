@@ -73,6 +73,7 @@ class MailboxChannel extends AbstractController
                 ($mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null))
                     ->setName($params['name'])
                     ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
+                    ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
                     ->setImapConfiguration($imapConfiguration)
                     ->setSwiftMailerConfiguration($swiftmailerConfiguration);
 
@@ -117,7 +118,7 @@ class MailboxChannel extends AbstractController
             if (!empty($params['imap']['transport'])) {
                 ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
                     ->setUsername($params['imap']['username'])
-                    ->setPassword($params['imap']['password']);
+                    ->setPassword(base64_encode($params['imap']['password']));
             }
 
             // Swiftmailer Configuration
@@ -145,6 +146,7 @@ class MailboxChannel extends AbstractController
                         $mailbox
                             ->setName($params['name'])
                             ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
+                            ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
                             ->setImapConfiguration($imapConfiguration)
                             ->setSwiftMailerConfiguration($swiftmailerConfiguration);
 
