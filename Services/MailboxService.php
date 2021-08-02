@@ -386,7 +386,13 @@ class MailboxService
             $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
 
             if (!empty($thread)) {
-                // Thread with the same message id exists. Skip processing.
+                // Thread with the same message id exists. Add thread to ticket.
+                $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
+                // Trigger ticket created thread
+                $event = new GenericEvent(CoreWorkflowEvents\Ticket\CollaboratorReply::getId(), [
+                    'entity' =>  $ticket,
+                ]);
+                $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
                 return;
             }
 
