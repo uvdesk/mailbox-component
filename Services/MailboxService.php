@@ -86,6 +86,7 @@ class MailboxService
             ($mailbox = new Mailbox($id))
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
+                ->setIsDeleted($params['deleted'])
                 ->setImapConfiguration($imapConfiguration);
             
             if (!empty($swiftmailerConfiguration)) {

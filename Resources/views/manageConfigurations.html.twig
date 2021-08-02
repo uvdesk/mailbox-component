@@ -85,6 +85,22 @@
 					</label>
 				</div>
 
+				<div class="uv-element-block">
+					<label>
+						<div class="uv-checkbox">
+							{% if mailbox.isDeleted is defined and mailbox.isDeleted == true %}
+								<input name="isDeleted" type="checkbox" checked="">
+							{% else %}
+								<input name="isDeleted" type="checkbox">
+							{% endif %}
+
+							<span class="uv-checkbox-view"></span>
+						</div>
+
+						<span class="uv-checkbox-label">{{ 'Delete from Inbox'|trans }}</span>
+					</label>
+				</div>
+
 				<div class="uv-hr"></div>
 
 				{# IMAP Settings #}
