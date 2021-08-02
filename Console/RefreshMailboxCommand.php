@@ -79,11 +79,11 @@ class RefreshMailboxCommand extends Command
             }
 
             $output->writeln("\n <comment>2. Opening imap stream... </comment>");
-            $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], $mailbox['imap_server']['password'], $timestamp, $output);
+            $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], base64_decode($mailbox['imap_server']['password']), $timestamp, $output, $mailbox);
         }
     }
 
-    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output)
+    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output, $mailbox)
     {
         $imap = imap_open($server_host, $server_username, $server_password);
         $output->writeln("\n <comment>3. IMAP stream opened.</comment>");
@@ -105,10 +105,17 @@ class RefreshMailboxCommand extends Command
                     $output->writeln("\n <comment> Converting email </comment><info>$counter</info><comment> out of </comment><info>$emailCount</info><comment>.</comment>");
                     $message = imap_fetchbody($imap, $messageNumber, "");
                     $this->pushMessage($message, $useSecureConnection);
+                    if (true == $mailbox['deleted']) {
+                        imap_delete($imap, $messageNumber);
+                    }
                     $counter ++;
                 }
 
                 $output->writeln("\n <comment>Mailbox refreshed successfully !!!</comment>");
+                if (true == $mailbox['deleted']) {
+                    imap_expunge($imap);
+                    imap_close($imap,CL_EXPUNGE);
+                }
             }
         }
 

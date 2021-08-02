@@ -14,6 +14,7 @@ class Mailbox
     private $id = null;
     private $name = null;
     private $isEnabled = false;
+    private $isDeleted = false;
     private $imapConfiguration = null;
     private $swiftmailerConfiguration = null;
 
@@ -56,6 +57,19 @@ class Mailbox
         return $this->isEnabled;
     }
 
+    public function getIsDeleted() : bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted)
+    {
+        $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+
     public function setImapConfiguration(ImapConfiguration $imapConfiguration)
     {
         $this->imapConfiguration = $imapConfiguration;
@@ -94,6 +108,7 @@ class Mailbox
             '[[ id ]]' => $this->getId(),
             '[[ name ]]' => $this->getName(),
             '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
+            '[[ delete_status ]]' => $this->getIsDeleted() ? 'true' : 'false',
             '[[ swiftmailer_id ]]' => $swiftmailerConfiguration ? $swiftmailerConfiguration->getId() : '~',
             '[[ imap_host ]]' => $imapConfiguration->getHost(),
             '[[ imap_username ]]' => $imapConfiguration->getUsername(),
