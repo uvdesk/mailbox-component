@@ -396,6 +396,12 @@ class MailboxService
 
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
+            } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])){
+                $user = $ticket->getCustomer();
+
+                $mailData['user'] = $user;
+                $mailData['createdBy'] = 'collaborator';
+                $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
                 
@@ -442,6 +448,10 @@ class MailboxService
             if($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
                     $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }  else if ($thread->getCreatedBy() == 'collaborator') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CollaboratorReply::getId(), [
                         'entity' =>  $ticket,
                     ]);
                 } else {
