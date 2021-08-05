@@ -161,7 +161,7 @@ class MailboxService
     public function getMailboxByEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['imap_server']['username']) {
+            if (strtolower($email) === strtolower($registeredMailbox['imap_server']['username'])) {
                 return $registeredMailbox;
             }
         }
@@ -172,7 +172,7 @@ class MailboxService
     public function getMailboxByToEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['imap_server']['username']) {
+            if (strtolower($email) === strtolower($registeredMailbox['imap_server']['username'])) {
                 return true;
             }
         }
