@@ -397,7 +397,8 @@ class MailboxService
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])){
-                $user = $ticket->getCustomer();
+            	// Reply from collaborator
+                $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
 
                 $mailData['user'] = $user;
                 $mailData['createdBy'] = 'collaborator';
