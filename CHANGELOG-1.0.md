@@ -3,7 +3,7 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
-* 1.0.13 (2021-08-23)
+* 1.0.12 (2021-08-23)
     * **Issue #399:** Reply from collaborator gmail so collaborator name is not showing.
 
     * **Misc. Updates:**
