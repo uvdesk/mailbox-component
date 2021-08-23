@@ -41,6 +41,7 @@ class MailboxChannelXHR extends AbstractController
                 'id' => $mailbox->getId(),
                 'name' => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
+                'isDeleted' => $mailbox->getIsDeleted() ? $mailbox->getIsDeleted() : false,
             ];
         }, $this->mailboxService->parseMailboxConfigurations()->getMailboxes());
 

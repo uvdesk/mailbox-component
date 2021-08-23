@@ -86,6 +86,7 @@ class MailboxService
             ($mailbox = new Mailbox($id))
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
+                ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
                 ->setImapConfiguration($imapConfiguration);
             
             if (!empty($swiftmailerConfiguration)) {
@@ -160,7 +161,7 @@ class MailboxService
     public function getMailboxByEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['imap_server']['username']) {
+            if (strtolower($email) === strtolower($registeredMailbox['imap_server']['username'])) {
                 return $registeredMailbox;
             }
         }
@@ -171,7 +172,7 @@ class MailboxService
     public function getMailboxByToEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
-            if ($email === $registeredMailbox['imap_server']['username']) {
+            if (strtolower($email) === strtolower($registeredMailbox['imap_server']['username'])) {
                 return true;
             }
         }
@@ -385,7 +386,7 @@ class MailboxService
             $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
 
             if (!empty($thread)) {
-                // Thread with the same message id exists. Skip processing.
+                // Thread with the same message id exists skip process.
                 return;
             }
 
@@ -394,6 +395,13 @@ class MailboxService
                 $user = $ticket->getCustomer();
 
                 $mailData['user'] = $user;
+                $userDetails = $user->getCustomerInstance()->getPartialDetails();
+            } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])){
+            	// Reply from collaborator
+                $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
+
+                $mailData['user'] = $user;
+                $mailData['createdBy'] = 'collaborator';
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
@@ -441,6 +449,10 @@ class MailboxService
             if($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
                     $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }  else if ($thread->getCreatedBy() == 'collaborator') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CollaboratorReply::getId(), [
                         'entity' =>  $ticket,
                     ]);
                 } else {

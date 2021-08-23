@@ -23,6 +23,7 @@ class Configuration implements ConfigurationInterface
                         ->children()
                             ->node('name', 'scalar')->cannotBeEmpty()->end()
                             ->node('enabled', 'boolean')->defaultFalse()->end()
+                            ->node('deleted', 'boolean')->defaultFalse()->end()
                             ->node('smtp_server', 'array')
                                 ->children()
                                     ->node('mailer_id', 'scalar')->defaultValue('default')->end()

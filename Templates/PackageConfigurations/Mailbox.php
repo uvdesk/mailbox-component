@@ -4,6 +4,7 @@ return <<<TEMPLATE
         [[ id ]]:
             name: [[ name ]]
             enabled: [[ status ]]
+            deleted: [[ delete_status ]]
 
             # [SMTP] Outgoing mail server
             # Swiftmailer smtp mailer to use for sending emails through on behalf of this mailbox
