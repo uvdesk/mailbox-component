@@ -31,7 +31,7 @@ class MailboxChannelXHR extends AbstractController
         if ($rawEmail != false &&  !empty($rawEmail)) {
            $this->mailboxService->processMail($rawEmail);
         }else{
-            dump("Empty Text file not allow or check your file once");
+            dump("Empty Text file not allow");
         } 
         exit(0);
     }
