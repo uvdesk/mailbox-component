@@ -9,16 +9,31 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 class MailboxChannelXHR extends AbstractController
 {
     private $mailboxService;
     private $translator;
+    private $kernel;
 
-    public function __construct(MailboxService $mailboxService, TranslatorInterface $translator)
+    public function __construct(KernelInterface $kernel, MailboxService $mailboxService, TranslatorInterface $translator)
     {
         $this->mailboxService = $mailboxService;
         $this->translator = $translator;
+        $this->kernel = $kernel;
+    }
+
+    public function processRawContentMail(Request $request)
+    {
+        $rawEmail = file_get_contents($this->kernel->getProjectDir(). "/rawEmailContent.txt");
+
+        if ($rawEmail != false &&  !empty($rawEmail)) {
+           $this->mailboxService->processMail($rawEmail);
+        }else{
+            dump("Empty Text file not allow or check your file once");
+        } 
+        exit(0);
     }
 
     public function processMailXHR(Request $request)
