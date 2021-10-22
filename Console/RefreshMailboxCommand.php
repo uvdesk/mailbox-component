@@ -104,7 +104,7 @@ class RefreshMailboxCommand extends Command
                 foreach ($emailCollection as $id => $messageNumber) {
                     $output->writeln("\n <comment> Converting email </comment><info>$counter</info><comment> out of </comment><info>$emailCount</info><comment>.</comment>");
                     $message = imap_fetchbody($imap, $messageNumber, "");
-                    $this->pushMessage($message, $useSecureConnection);
+                    $this->pushMessage($message, $useSecureConnection, $output);
                     if (true == $mailbox['deleted']) {
                         imap_delete($imap, $messageNumber);
                     }
@@ -122,7 +122,7 @@ class RefreshMailboxCommand extends Command
         return;
     }
 
-    public function pushMessage($message, bool $secure = false)
+    public function pushMessage($message, bool $secure = false, $output)
     {
         $router = $this->container->get('router');
         $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
@@ -138,7 +138,19 @@ class RefreshMailboxCommand extends Command
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
 
         $curlResponse = curl_exec($curlHandler);
+        if ($curlResponse != 200 ) {
+            $curlResponse = $this->getTagValue($curlResponse, 'title');
+            $output->writeln("\n <comment> Error -> </comment><info>$curlResponse</info><comment></comment>");
+            exit();
+        }
         curl_close($curlHandler);
+    }
+
+    function getTagValue($string, $tag)
+    {
+        $pattern = "/<{$tag}>(.*?)<\/{$tag}>/s";
+        preg_match($pattern, $string, $matches);
+        return isset($matches[1]) ? $matches[1] : '';
     }
 
     protected function isSecureConnectionAvailable()
