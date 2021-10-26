@@ -9,8 +9,8 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $treeBuilder->root('uvdesk_mailbox')
+        $treeBuilder = new TreeBuilder('knp_doctrine_behaviors');
+        $treeBuilder->getRootNode('uvdesk_mailbox')
             ->children()
                 ->node('emails', 'array')
                     ->children()
