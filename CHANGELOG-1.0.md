@@ -3,6 +3,18 @@ CHANGELOG for 1.0.x
 
 This changelog references any relevant changes introduced in 1.0 minor versions.
 
+* 1.0.14 (2021-10-27)
+    * **Misc. Updates:**
+        * Compatibility with PHP 8. 
+        * Added Errors catch during ticket conversion using refresh mailbox command errors will show on console  in case of any errror.
+        * Added a manual check method to check ticket create process using raw content of emails. 
+
+    * **Issue #69:** upgrade php-mime-mail-parser version to 7.
+    * **Issue #71:** Use IMAP IDLE to immediately get new tickets.
+    * **Issue #72:** Error configuring CRONTAB.
+    * **Issue #80:** Mailbox component doesn't extract inline image as attachment.
+    * **Issue #81:** Received Emails not creating/updating tickets.
+
 * 1.0.13 (2021-08-23)
     * **Issue #399:** Reply from collaborator gmail so collaborator name is not showing.
 
