@@ -384,10 +384,16 @@ class MailboxService
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && !empty($mailData['inReplyTo'])) {
             $mailData['threadType'] = 'reply';
             $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
+            $ticketRef = $this->entityManager->getRepository(Ticket::class)->findById($ticket->getId());
+            $referenceIds = explode(' ', $ticketRef[0]->getReferenceIds());
 
             if (!empty($thread)) {
                 // Thread with the same message id exists skip process.
                 return;
+            }
+
+            if (in_array($mailData['messageId'], $referenceIds)) {
+                return ;
             }
 
             if ($ticket->getCustomer() && $ticket->getCustomer()->getEmail() == $mailData['from']) {
