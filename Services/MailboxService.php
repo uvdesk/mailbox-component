@@ -383,7 +383,7 @@ class MailboxService
                 'entity' =>  $thread->getTicket(),
             ]);
 
-            $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+            $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && !empty($mailData['inReplyTo'])) {
             $mailData['threadType'] = 'reply';
             $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
@@ -446,7 +446,7 @@ class MailboxService
                             'entity' => $ticket,
                         ]);
 
-                        $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+                        $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
                     }
                 }
             }
@@ -472,7 +472,7 @@ class MailboxService
             }
 
             // Trigger thread reply event
-            $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
+            $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
         }
 
         return;
