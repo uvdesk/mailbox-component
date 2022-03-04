@@ -46,7 +46,7 @@ class RefreshMailboxCommand extends Command
                 $output->writeln("\n <comment>No valid mailbox emails specified.</comment>\n");
             }
 
-            return Command::INVALID
+            return Command::INVALID;
         }
 
         // Process mailboxes
