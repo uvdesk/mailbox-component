@@ -33,7 +33,7 @@ class RefreshMailboxCommand extends Command
         $this->addOption('timestamp', 't', InputOption::VALUE_REQUIRED, "Fetch messages no older than the given timestamp");
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output):int
     {
         // Sanitize emails
         $mailboxEmailCollection = array_map(function ($email) {
@@ -46,7 +46,7 @@ class RefreshMailboxCommand extends Command
                 $output->writeln("\n <comment>No valid mailbox emails specified.</comment>\n");
             }
 
-            return;
+            return Command::INVALID
         }
 
         // Process mailboxes
@@ -80,6 +80,8 @@ class RefreshMailboxCommand extends Command
 
             $output->writeln("\n <comment>2. Opening imap stream... </comment>");
             $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], base64_decode($mailbox['imap_server']['password']), $timestamp, $output, $mailbox);
+
+            return Command::SUCCESS;
         }
     }
 
