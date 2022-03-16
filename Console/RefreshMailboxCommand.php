@@ -73,6 +73,8 @@ class RefreshMailboxCommand extends Command
             } catch (\Exception $e) {
                 if (false == $input->getOption('no-interaction')) {
                     $output->writeln("\n <comment>Mailbox for email </comment><info>$mailboxEmail</info><comment> not found.</comment>\n");
+
+                    return Command::INVALID;
                 }
 
                 continue;
