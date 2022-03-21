@@ -83,8 +83,9 @@ class RefreshMailboxCommand extends Command
             $output->writeln("\n <comment>2. Opening imap stream... </comment>");
             $this->refreshMailbox($mailbox['imap_server']['host'], $mailbox['imap_server']['username'], base64_decode($mailbox['imap_server']['password']), $timestamp, $output, $mailbox);
 
-            return Command::SUCCESS;
         }
+
+        return Command::SUCCESS;
     }
 
     public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output, $mailbox)
