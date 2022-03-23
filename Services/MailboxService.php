@@ -318,7 +318,8 @@ class MailboxService
             }
         }
 
-	$mailData['replyTo'] = '';
+        $mailData['replyTo'] = '';
+        
         foreach($addresses['to'] as $mailboxEmail){
             if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
                 $mailData['replyTo'] = $mailboxEmail;
