@@ -317,7 +317,9 @@ class MailboxService
                 // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
             }
         }
-	   
+
+        $mailData['replyTo'] = '';
+        
         foreach($addresses['to'] as $mailboxEmail){
             if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
                 $mailData['replyTo'] = $mailboxEmail;

@@ -20,10 +20,7 @@
         "psr-4": { "Webkul\\UVDesk\\MailboxBundle\\": "" }
     },
     "extra": {
-        "uvdesk-package-extension": "Webkul\\UVDesk\\MailboxBundle\\Package\\Composer",
-        "branch-alias": {
-            "dev-master": "1.1.x-dev"
-        }
+        "uvdesk-package-extension": "Webkul\\UVDesk\\MailboxBundle\\Package\\Composer"
     },
     "minimum-stability": "stable"
 }
