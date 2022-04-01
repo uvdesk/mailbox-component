@@ -34,6 +34,7 @@ class Configuration implements ConfigurationInterface
                                     ->node('host', 'scalar')->cannotBeEmpty()->end()
                                     ->node('username', 'scalar')->cannotBeEmpty()->end()
                                     ->node('password', 'scalar')->end()
+                                    ->arrayNode('aliases')->scalarPrototype()->end()
                                 ->end()
                             ->end() 
                         ->end()
