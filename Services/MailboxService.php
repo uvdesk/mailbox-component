@@ -53,7 +53,7 @@ class MailboxService
         return $configuration ?? null;
     }
 
-    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false) 
+    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false)
     {
         $path = $this->getPathToConfigurationFile();
 
@@ -76,7 +76,7 @@ class MailboxService
                     break;
                 }
             }
-            
+
             // IMAP Configuration
             ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
                 ->setUsername($params['imap_server']['username'])
@@ -88,7 +88,7 @@ class MailboxService
                 ->setIsEnabled($params['enabled'])
                 ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
                 ->setImapConfiguration($imapConfiguration);
-            
+
             if (!empty($swiftmailerConfiguration)) {
                 $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
             } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
@@ -136,7 +136,7 @@ class MailboxService
                 $mailboxCollection[] = $value;
             }
         }
-        
+
         return $mailboxCollection ?? [];
     }
 
@@ -168,7 +168,7 @@ class MailboxService
 
         throw new \Exception("No mailbox found for email '$email'");
     }
-	
+
     public function getMailboxByToEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
@@ -181,7 +181,7 @@ class MailboxService
     }
 
     private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
-        
+
         // Search Criteria: Find ticket based on subject
         if (!empty($senderEmail) && !empty($messageSubject)) {
             $threadRepository = $this->entityManager->getRepository(Thread::class);
@@ -218,7 +218,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -235,7 +235,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -243,7 +243,7 @@ class MailboxService
                     break;
                 case 'referenceIds':
                     // Search Criteria 3: Find ticket based on reference id
-                    // Break references into ind. message id collection, and iteratively 
+                    // Break references into ind. message id collection, and iteratively
                     // search for existing threads for these message ids.
                     $referenceIds = explode(' ', $criteriaValue);
 
@@ -268,11 +268,11 @@ class MailboxService
         //         return $ticket;
         //     }
         // }
-        
+
         return null;
     }
-    
-    public function processMail($rawEmail)
+
+    public function processMail($rawEmail, $mailboxEmail)
     {
         $mailData = [];
         $parser = $this->getParser();
@@ -280,55 +280,76 @@ class MailboxService
 
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
-            'from' => $this->getEmailAddress($from),
+            'from' => $from,
             'to' => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
             'cc' => $this->parseAddress('cc'),
             'delivered-to' => $this->parseAddress('delivered-to'),
+            // @TODO: Is this set even when no Reply-to is set?
+            'return-path' => $this->parseAddress('return-path'),
         ];
 
-        if (empty($addresses['from'])) {
-            return;
-        } else {
-            if (!empty($addresses['to'])) {
-                $addresses['to'] = array_map(function($address) {
-                    return $address['address'];
-                }, $addresses['to']);
-            } else if (!empty($addresses['cc'])) {
-                $addresses['to'] = array_map(function($address) {
-                    return $address['address'];
-                }, $addresses['cc']);
-            }
-            
-            // Skip email processing if no to-emails are specified
-            if (empty($addresses['to'])) {
-                return;
-            }
-
-            // Skip email processing if email is an auto-forwarded message to prevent infinite loop.
-            if ($parser->getHeader('precedence') || $parser->getHeader('x-autoreply') || $parser->getHeader('x-autorespond') || 'auto-replied' == $parser->getHeader('auto-submitted')) {
-                return;
-            }
-
-              // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
-            try {
-                $this->getMailboxByEmail($addresses['from']);
-                return;
-            } catch (\Exception $e) {
-                // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
+        // Extract only emails from addresses.
+        foreach ($addresses as &$value) {
+            if (!empty($value)) {
+                $value = array_map(function ($address) {
+                    return strtolower($address['address']);
+                }, $value);
             }
         }
 
-        $mailData['replyTo'] = '';
-        
-        foreach($addresses['to'] as $mailboxEmail){
-            if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
-                $mailData['replyTo'] = $mailboxEmail;
+        // Skip email processing for required from and to addresses.
+        foreach (array('from', 'to') as $key) {
+            if (empty($addresses[$key])) {
+                return;
             }
+        }
+
+        // Normalize from.
+        if (count($addresses['from']) != 1) {
+            return;
+        }
+        $addresses['from'] = reset($addresses['from']);
+
+        // Skip email processing if email is an auto-forwarded message to prevent infinite loop.
+        $auto_headers = [
+            'precedence',
+            'x-autoreply',
+            'x-autorespond',
+        ];
+        foreach ($auto_headers as $auto_header) {
+            if ($parser->getHeader($auto_header)) {
+                return;
+            }
+        }
+        if ('auto-replied' == $parser->getHeader('auto-submitted')) {
+            return;
+        }
+
+        // Check for self-referencing. Skip email processing if a mailbox is
+        // configured by the sender's address.
+        try {
+            $this->getMailboxByEmail($addresses['from']);
+            return;
+        } catch (\Exception $e) {
+            // An exception being thrown means no mailboxes were found from the
+            // recipient's address. Continue processing.
+        }
+
+        // Email clients like Thunderbird allow copying messages from one Inbox
+        // to another, so we cannot relay on TO, X-FORWARDED-TO, DELIVERED-TO or
+        // any other header to detect configured mailbox and there is no reason
+        // to not create tickets from those copied messages also so rely only to
+        // REQUEST parameter when setting mailbox that received the email.
+        $replyTo = [$mailboxEmail];
+        // Filter all mailbox addresses candidates by existing mailboxes.
+        $callback = array($this, 'getMailboxByToEmail');
+        $mailData['replyTo'] = array_filter($replyTo, $callback);
+        if(empty($mailData['replyTo'])) {
+            // @TODO: This should never happen under normal usage, log this.
+            return;
         }
 
         // Process Mail - References
-        $addresses['to'][0] = isset($mailData['replyTo']) ? strtolower($mailData['replyTo']) : strtolower($addresses['to'][0]);
-        $mailData['replyTo'] = $addresses['to'];
         $mailData['messageId'] = $parser->getHeader('message-id') ?: null;
         $mailData['inReplyTo'] = htmlspecialchars_decode($parser->getHeader('in-reply-to'));
         $mailData['referenceIds'] = htmlspecialchars_decode($parser->getHeader('references'));
@@ -347,13 +368,13 @@ class MailboxService
         $mailData['subject'] = $parser->getHeader('subject');
         $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
         $mailData['attachments'] = $parser->getAttachments();
-        
+
         if (!$mailData['message']) {
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
-        
+
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
            return;
         }
@@ -416,7 +437,7 @@ class MailboxService
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
-                
+
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $mailData['createdBy'] = 'agent';
@@ -443,7 +464,7 @@ class MailboxService
                         $this->entityManager->flush();
 
                         $ticket->lastCollaborator = $user;
-                        
+
                         $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
                             'entity' => $ticket,
                         ]);
@@ -454,9 +475,9 @@ class MailboxService
             }
 
             $mailData['fullname'] = $userDetails['name'];
-            
+
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
-            
+
             if($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
                     $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [

@@ -32,7 +32,7 @@ class MailboxChannelXHR extends AbstractController
            $this->mailboxService->processMail($rawEmail);
         }else{
             dump("Empty Text file not allow");
-        } 
+        }
         exit(0);
     }
 
@@ -43,12 +43,14 @@ class MailboxChannelXHR extends AbstractController
         $response->send();
 
         if ("POST" == $request->getMethod() && null != $request->get('email')) {
-            $this->mailboxService->processMail($request->get('email'));
+            $rawEmail = $request->get('email');
+            $mailboxEmail = $request->get('mailbox');
+            $this->mailboxService->processMail($rawEmail, $mailboxEmail);
         }
-        
+
         exit(0);
     }
-    
+
     public function loadMailboxesXHR(Request $request)
     {
         $collection = array_map(function ($mailbox) {
