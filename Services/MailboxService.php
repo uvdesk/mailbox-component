@@ -289,7 +289,11 @@ class MailboxService
         if (empty($addresses['from'])) {
             return;
         } else {
-            if (!empty($addresses['to'])) {
+            if (!empty($addresses['delivered-to'])) {
+                $addresses['to'] = array_map(function($address) {
+                    return $address['address'];
+                }, $addresses['delivered-to']);
+            } else if (!empty($addresses['to'])) {
                 $addresses['to'] = array_map(function($address) {
                     return $address['address'];
                 }, $addresses['to']);
