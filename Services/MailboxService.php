@@ -2,26 +2,27 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Services;
 
-use PhpMimeMailParser\Parser;
-use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
-use Symfony\Component\EventDispatcher\GenericEvent;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\Thread;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\Website;
-use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\SupportRole;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
-use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
+use PhpMimeMailParser\Parser;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Yaml\Yaml;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\SupportRole;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Thread;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\Website;
+use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 
 class MailboxService
 {
@@ -29,16 +30,24 @@ class MailboxService
 
     private $parser;
     private $container;
+    private $logger;
 	private $requestStack;
     private $entityManager;
     private $mailboxCollection = [];
     private $swiftMailer;
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, SwiftMailerService $swiftMailer)
+    public function __construct(
+        ContainerInterface $container,
+        EntityManagerInterface $entityManager,
+        LoggerInterface $logger,
+        RequestStack $requestStack,
+        SwiftMailerService $swiftMailer
+    )
     {
         $this->container = $container;
-		$this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
+        $this->logger = $logger;
+        $this->requestStack = $requestStack;
         $this->swiftMailer = $swiftMailer;
     }
 
@@ -53,7 +62,7 @@ class MailboxService
         return $configuration ?? null;
     }
 
-    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false) 
+    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false)
     {
         $path = $this->getPathToConfigurationFile();
 
@@ -76,7 +85,7 @@ class MailboxService
                     break;
                 }
             }
-            
+
             // IMAP Configuration
             ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
                 ->setUsername($params['imap_server']['username'])
@@ -88,7 +97,7 @@ class MailboxService
                 ->setIsEnabled($params['enabled'])
                 ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
                 ->setImapConfiguration($imapConfiguration);
-            
+
             if (!empty($swiftmailerConfiguration)) {
                 $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
             } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
@@ -136,7 +145,7 @@ class MailboxService
                 $mailboxCollection[] = $value;
             }
         }
-        
+
         return $mailboxCollection ?? [];
     }
 
@@ -168,7 +177,7 @@ class MailboxService
 
         throw new \Exception("No mailbox found for email '$email'");
     }
-	
+
     public function getMailboxByToEmail($email)
     {
         foreach ($this->getRegisteredMailboxes() as $registeredMailbox) {
@@ -181,7 +190,7 @@ class MailboxService
     }
 
     private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
-        
+
         // Search Criteria: Find ticket based on subject
         if (!empty($senderEmail) && !empty($messageSubject)) {
             $threadRepository = $this->entityManager->getRepository(Thread::class);
@@ -218,7 +227,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -235,7 +244,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -243,7 +252,7 @@ class MailboxService
                     break;
                 case 'referenceIds':
                     // Search Criteria 3: Find ticket based on reference id
-                    // Break references into ind. message id collection, and iteratively 
+                    // Break references into ind. message id collection, and iteratively
                     // search for existing threads for these message ids.
                     $referenceIds = explode(' ', $criteriaValue);
 
@@ -268,10 +277,10 @@ class MailboxService
         //         return $ticket;
         //     }
         // }
-        
+
         return null;
     }
-    
+
     public function processMail($rawEmail)
     {
         $mailData = [];
@@ -298,7 +307,7 @@ class MailboxService
                     return $address['address'];
                 }, $addresses['cc']);
             }
-            
+
             // Skip email processing if no to-emails are specified
             if (empty($addresses['to'])) {
                 return;
@@ -319,7 +328,7 @@ class MailboxService
         }
 
         $mailData['replyTo'] = '';
-        
+
         foreach($addresses['to'] as $mailboxEmail){
             if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
                 $mailData['replyTo'] = $mailboxEmail;
@@ -347,13 +356,13 @@ class MailboxService
         $mailData['subject'] = $parser->getHeader('subject');
         $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
         $mailData['attachments'] = $parser->getAttachments();
-        
+
         if (!$mailData['message']) {
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
-        
+
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
            return;
         }
@@ -379,6 +388,11 @@ class MailboxService
             // }
 
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
+
+            if (null === $thread) {
+                $this->logger->error('no thread created', ['mailData' => $mailData]);
+                return;
+            }
 
             // Trigger ticket created event
             $event = new GenericEvent(CoreWorkflowEvents\Ticket\Create::getId(), [
@@ -416,7 +430,7 @@ class MailboxService
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
-                
+
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $mailData['createdBy'] = 'agent';
@@ -443,7 +457,7 @@ class MailboxService
                         $this->entityManager->flush();
 
                         $ticket->lastCollaborator = $user;
-                        
+
                         $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
                             'entity' => $ticket,
                         ]);
@@ -454,9 +468,9 @@ class MailboxService
             }
 
             $mailData['fullname'] = $userDetails['name'];
-            
+
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
-            
+
             if($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
                     $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
