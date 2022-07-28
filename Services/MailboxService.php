@@ -227,7 +227,7 @@ class MailboxService
                 case 'inReplyTo':
                     // Search Criteria 2: Find ticket based on in-reply-to reference id
 
-                    $repository = $this->entityManager->getRepository('UVDeskCoreFrameworkBundle:Thread');
+                    $repository = $this->entityManager->getRepository(Thread::class);
                     $ticket = $repository->findThreadByRefrenceId($criteriaValue);
 
 
