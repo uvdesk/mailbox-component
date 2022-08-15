@@ -295,6 +295,16 @@ class MailboxService
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
 
+        // Skip email processing if detected as Spam
+        if ($parser->getHeader("X-Spam") == "Yes") {
+            $this->logger->notice('spam detected, no ticket created', [
+                'from' => $from,
+                'subject' => $parser->getHeader('subject'),
+                'spam-level' => $parser->getHeader("X-Spam-Level")
+            ]);
+            return;
+        }
+
         if (empty($addresses['from'])) {
             return;
         } else {
