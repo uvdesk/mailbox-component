@@ -287,7 +287,10 @@ class MailboxService
         ];
 
         if (empty($addresses['from'])) {
-            return;
+            return [
+                'message' => "No 'from' email address was found while processing contents of email.", 
+                'content' => [], 
+            ];
         } else {
             if (!empty($addresses['delivered-to'])) {
                 $addresses['to'] = array_map(function($address) {
@@ -305,18 +308,34 @@ class MailboxService
             
             // Skip email processing if no to-emails are specified
             if (empty($addresses['to'])) {
-                return;
+                return [
+                    'message' => "No 'to' email addresses were found in the email.", 
+                    'content' => [
+                        'from' => !empty($addresses['from']) ? $addresses['from'] : null, 
+                    ], 
+                ];
             }
 
             // Skip email processing if email is an auto-forwarded message to prevent infinite loop.
             if ($parser->getHeader('precedence') || $parser->getHeader('x-autoreply') || $parser->getHeader('x-autorespond') || 'auto-replied' == $parser->getHeader('auto-submitted')) {
-                return;
+                return [
+                    'message' => "Received an auto-forwarded email which can lead to possible infinite loop of email exchanges. Skipping email from further processing.", 
+                    'content' => [
+                        'from' => !empty($addresses['from']) ? $addresses['from'] : null, 
+                    ], 
+                ];
             }
 
-              // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
+            // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
             try {
                 $this->getMailboxByEmail($addresses['from']);
-                return;
+
+                return [
+                    'message' => "Received a self-referencing email where the sender email address matches one of the configured mailbox address. Skipping email from further processing.", 
+                    'content' => [
+                        'from' => !empty($addresses['from']) ? $addresses['from'] : null, 
+                    ], 
+                ];
             } catch (\Exception $e) {
                 // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
             }
@@ -359,7 +378,12 @@ class MailboxService
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
         
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
-           return;
+            return [
+                'message' => "Received email where the sender email address is present in the block list. Skipping this email from further processing.", 
+                'content' => [
+                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                ], 
+            ];
         }
 
         // Search for any existing tickets
@@ -398,11 +422,24 @@ class MailboxService
 
             if (!empty($thread)) {
                 // Thread with the same message id exists skip process.
-                return;
+                return [
+                    'message' => "The contents of this email has already been processed.", 
+                    'content' => [
+                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                        'thread' => $thread->getId(), 
+                        'ticket' => $ticket->getId(), 
+                    ], 
+                ];
             }
 
             if (in_array($mailData['messageId'], $referenceIds)) {
-                return ;
+                // Thread with the same message id exists skip process.
+                return [
+                    'message' => "The contents of this email has already been processed.", 
+                    'content' => [
+                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    ], 
+                ];
             }
 
             if ($ticket->getCustomer() && $ticket->getCustomer()->getEmail() == $mailData['from']) {
@@ -479,8 +516,24 @@ class MailboxService
 
             // Trigger thread reply event
             $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
+        } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && empty($mailData['inReplyTo'])) {
+            return [
+                'message' => "The contents of this email has already been processed.", 
+                'content' => [
+                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    'thread' => !empty($thread) ? $thread->getId() : null, 
+                    'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                ], 
+            ];
         }
 
-        return;
+        return [
+            'message' => "Inbound email processsed successfully.", 
+            'content' => [
+                'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                'thread' => !empty($thread) ? $thread->getId() : null, 
+                'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+            ], 
+        ];
     }
 }

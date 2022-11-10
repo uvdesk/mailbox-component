@@ -38,15 +38,43 @@ class MailboxChannelXHR extends AbstractController
 
     public function processMailXHR(Request $request)
     {
-        // Return HTTP_OK Response
-        $response = new Response(Response::HTTP_OK);
-        $response->send();
-
-        if ("POST" == $request->getMethod() && null != $request->get('email')) {
-            $this->mailboxService->processMail($request->get('email'));
+        if ("POST" != $request->getMethod()) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Request not supported.'
+            ], 500);
+        } else if (null == $request->get('email')) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Missing required email data in request content.'
+            ], 500);
         }
-        
-        exit(0);
+
+        try {
+            $processedThread = $this->mailboxService->processMail($request->get('email'));
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        $responseMessage = $processedThread['message'];
+
+        if (!empty($processedThread['content']['from'])) {
+            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
+        }
+
+        if (!empty($processedThread['content']['ticket']) && !empty($processedThread['content']['thread'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+        } else if (!empty($processedThread['content']['ticket'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
+        }
+
+        return new JsonResponse([
+            'success' => true, 
+            'message' => $responseMessage, 
+        ]);
     }
     
     public function loadMailboxesXHR(Request $request)
