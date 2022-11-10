@@ -114,7 +114,20 @@ class RefreshMailboxCommand extends Command
     {
         $output->writeln("  - Establishing connection with mailbox");
 
-        $imap = imap_open($server_host, $server_username, $server_password);
+        try {
+            $imap = imap_open($server_host, $server_username, $server_password);
+        } catch (\Exception $e) {
+            $output->writeln("  - <fg=red>Failed to establish connection with mailbox</>");
+            $output->writeln("\n  <comment>" . $e->getMessage() . "</comment>\n");
+            
+            $errorMessages = imap_errors();
+
+            foreach ($errorMessages as $id => $errorMessage) {
+                $output->writeln("  <comment>$id: $errorMessage</comment>");
+            }
+
+            return;
+        }
 
         if ($imap) {
             $timeSpan = $timestamp->format('d F Y');
