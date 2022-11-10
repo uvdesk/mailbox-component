@@ -3,6 +3,9 @@ CHANGELOG for 1.1.x
 
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
+* 1.1.2 (2022-11-10)
+    * Feature: Add improved log reports when refreshing mailboxes
+
 * 1.1.1 (2022-09-13)
     * Bug Fixes: Entity reference updates and other miscellaneous bug fixes
 
