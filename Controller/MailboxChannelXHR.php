@@ -66,7 +66,7 @@ class MailboxChannelXHR extends AbstractController
         }
 
         if (!empty($processedThread['content']['ticket']) && !empty($processedThread['content']['thread'])) {
-            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['thread'] . "]</comment>";
         } else if (!empty($processedThread['content']['ticket'])) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
         }
