@@ -11,7 +11,7 @@ use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
 
 class MailboxChannel extends AbstractController
@@ -21,7 +21,7 @@ class MailboxChannel extends AbstractController
     private $swiftMailer;
     private $userService;
 
-    public function __construct(UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
+    public function __construct(UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, MailerService $swiftMailer)
     {
         $this->userService = $userService;
         $this->mailboxService = $mailboxService;
@@ -44,7 +44,7 @@ class MailboxChannel extends AbstractController
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
-        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -99,7 +99,7 @@ class MailboxChannel extends AbstractController
         
         $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurationCollection = $this->swiftMailer->parseMailerConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
             if ($configuration->getId() == $id) {

@@ -7,7 +7,7 @@ use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationRemovedEvent;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationUpdatedEvent;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 
 class Swiftmailer
@@ -17,7 +17,7 @@ class Swiftmailer
     protected $swiftMailer;
     private $mailboxService;
 
-    public final function __construct(ContainerInterface $container, RequestStack $requestStack, SwiftMailerService $swiftMailer, MailboxService $mailboxService)
+    public final function __construct(ContainerInterface $container, RequestStack $requestStack, MailerService $swiftMailer, MailboxService $mailboxService)
     {
         $this->container = $container;
         $this->requestStack = $requestStack;

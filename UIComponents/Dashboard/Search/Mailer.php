@@ -7,7 +7,7 @@ use Symfony\Component\Translation\Translator;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\HttpFoundation\Request;
 
-class SwiftMailer implements SearchItemInterface
+class Mailer implements SearchItemInterface
 {
     CONST SVG = <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="30px" height="30px" viewBox="0 0 60 60">
@@ -22,12 +22,12 @@ SVG;
 
     public static function getTitle() : string
     {
-        return "SwiftMailer";
+        return "Mailer";
     }
 
     public static function getRouteName() : string
     {
-        return 'helpdesk_member_swiftmailer_settings';
+        return 'helpdesk_member_mailer_settings';
     }
 
     public static function getRoles() : array

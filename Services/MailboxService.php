@@ -21,7 +21,7 @@ use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 
 class MailboxService
 {
@@ -34,7 +34,7 @@ class MailboxService
     private $mailboxCollection = [];
     private $swiftMailer;
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, SwiftMailerService $swiftMailer)
+    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, MailerService $swiftMailer)
     {
         $this->container = $container;
 		$this->requestStack = $requestStack;
@@ -64,7 +64,7 @@ class MailboxService
         // Read configurations from package config.
         $mailboxConfiguration = new MailboxConfiguration();
         $swiftmailerService = $this->swiftMailer;
-        $swiftmailerConfigurations = $swiftmailerService->parseSwiftMailerConfigurations();
+        $swiftmailerConfigurations = $swiftmailerService->parseMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
             // Swiftmailer Configuration
