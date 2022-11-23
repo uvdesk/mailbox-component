@@ -32,14 +32,14 @@ class MailboxService
 	private $requestStack;
     private $entityManager;
     private $mailboxCollection = [];
-    private $swiftMailer;
+    private $mailerService;
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, MailerService $swiftMailer)
+    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, MailerService $mailerService)
     {
         $this->container = $container;
 		$this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
-        $this->swiftMailer = $swiftMailer;
+        $this->mailerService = $mailerService;
     }
 
     public function getPathToConfigurationFile()
@@ -63,16 +63,17 @@ class MailboxService
 
         // Read configurations from package config.
         $mailboxConfiguration = new MailboxConfiguration();
-        $swiftmailerService = $this->swiftMailer;
-        $swiftmailerConfigurations = $swiftmailerService->parseMailerConfigurations();
+        $mailerService = $this->mailerService;
+        $mailerConfigurations = $mailerService->parseMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
-            // Swiftmailer Configuration
-            $swiftmailerConfiguration = null;
+            // Mailer Configuration
+            $mailerConfiguration = null;
 
-            foreach ($swiftmailerConfigurations as $configuration) {
+            foreach ($mailerConfigurations as $configuration) {
                 if ($configuration->getId() == $params['smtp_server']['mailer_id']) {
-                    $swiftmailerConfiguration = $configuration;
+                    $mailerConfiguration = $configuration;
+
                     break;
                 }
             }
@@ -89,10 +90,10 @@ class MailboxService
                 ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
                 ->setImapConfiguration($imapConfiguration);
             
-            if (!empty($swiftmailerConfiguration)) {
-                $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
+            if (!empty($mailerConfiguration)) {
+                $mailbox->setMailerConfiguration($mailerConfiguration);
             } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
-                $mailbox->setSwiftMailerConfiguration($swiftmailerService->createConfiguration('smtp', $params['smtp_server']['mailer_id']));
+                $mailbox->setMailerConfiguration($mailerService->createConfiguration('smtp', $params['smtp_server']['mailer_id']));
             }
 
             $mailboxConfiguration->addMailbox($mailbox);

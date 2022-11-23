@@ -4,7 +4,7 @@ namespace Webkul\UVDesk\MailboxBundle\Utils\Mailbox;
 
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface as ImapConfiguration;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\SwiftMailer\BaseConfiguration as SwiftMailerConfiguration;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\Mailer\BaseConfiguration as MailerConfiguration;
 
 class Mailbox
 {
@@ -16,7 +16,7 @@ class Mailbox
     private $isEnabled = false;
     private $isDeleted = false;
     private $imapConfiguration = null;
-    private $swiftmailerConfiguration = null;
+    private $mailerConfiguration = null;
 
     public function __construct($id = null)
     {
@@ -82,16 +82,16 @@ class Mailbox
         return $this->imapConfiguration;
     }
 
-    public function setSwiftMailerConfiguration(SwiftMailerConfiguration $swiftmailerConfiguration)
+    public function setMailerConfiguration(MailerConfiguration $mailerConfiguration)
     {
-        $this->swiftmailerConfiguration = $swiftmailerConfiguration;
+        $this->mailerConfiguration = $mailerConfiguration;
 
         return $this;
     }
 
-    public function getSwiftMailerConfiguration() : ?SwiftMailerConfiguration
+    public function getMailerConfiguration() : ?MailerConfiguration
     {
-        return $this->swiftmailerConfiguration;
+        return $this->mailerConfiguration;
     }
 
     public function __toString()
@@ -101,15 +101,18 @@ class Mailbox
             $this->setId(sprintf("mailbox_%s", TokenGenerator::generateToken(4, self::TOKEN_RANGE)));
         }
 
+        dump('to string mailbox');
+        die;
+
         $imapConfiguration = $this->getImapConfiguration();
-        $swiftmailerConfiguration = $this->getSwiftMailerConfiguration();
+        $mailerConfiguration = $this->getMailerConfiguration();
 
         return strtr(require self::TEMPLATE, [
             '[[ id ]]' => $this->getId(),
             '[[ name ]]' => $this->getName(),
             '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
             '[[ delete_status ]]' => $this->getIsDeleted() ? 'true' : 'false',
-            '[[ swiftmailer_id ]]' => $swiftmailerConfiguration ? $swiftmailerConfiguration->getId() : '~',
+            '[[ mailer_id ]]' => $mailerConfiguration ? $mailerConfiguration->getId() : '~',
             '[[ imap_host ]]' => $imapConfiguration->getHost(),
             '[[ imap_username ]]' => $imapConfiguration->getUsername(),
             '[[ imap_password ]]' => $imapConfiguration->getPassword(),

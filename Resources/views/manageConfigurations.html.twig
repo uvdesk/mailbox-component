@@ -129,18 +129,18 @@
 
 				<div class="uv-hr"></div>
 
-				{# SwiftMailer Settings #}
+				{# Mailer Settings #}
 				<h3 class="section-heading">{{ 'Outgoing Mail (SMTP) Server'|trans }}</h3>
-				<p class="section-description">{{ 'Select a valid Swift Mailer configuration which will be used to send emails through your mailbox.'|trans }}</p>
+				<p class="section-description">{{ 'Select a valid configuration which will be used to send emails through your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
-					<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
+					<label class="uv-field-label">{{ 'Mailer ID'|trans }}</label>
 
-					{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
-						<select name="swiftmailer_id" class="uv-select">
+					{% if mailerConfigurations is defined and mailerConfigurations is not empty %}
+						<select name="mailer_id" class="uv-select">
 							<option value="none">{{ 'None Selected'|trans }}</option>
-							{% for configuration in swiftmailerConfigurations %}
-								{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
+							{% for configuration in mailerConfigurations %}
+								{% if mailbox is defined and mailbox.mailerConfiguration and mailbox.mailerConfiguration.id == configuration.id %}
 									<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
 								{% else %}
 									<option value="{{ configuration.id }}">{{ configuration.id }}</option>
@@ -148,7 +148,7 @@
 							{% endfor %}
 						</select>
 					{% else %}
-						<select name="swiftmailer_id" class="uv-select">
+						<select name="mailer_id" class="uv-select">
 							<option value="none">{{ 'None Selected'|trans }}</option>
 						</select>
 					{% endif %}
@@ -235,9 +235,9 @@
 							return "Please specify a valid name for your mailbox.";
 						}
                     },
-					swiftmailer_id: function(value) {
+					mailer_id: function(value) {
 						if (value == undefined || value == '' || value == 'none') {
-							return "Please select a valid swift-mailer configuration.";
+							return "Please select a valid mailer configuration.";
 						}
                     },
 					"imap[host]": function(value) {
