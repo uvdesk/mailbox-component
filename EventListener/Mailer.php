@@ -2,37 +2,28 @@
 
 namespace Webkul\UVDesk\MailboxBundle\EventListener;
 
-use Symfony\Component\HttpFoundation\RequestStack;
-use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationRemovedEvent;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\Event\ConfigurationUpdatedEvent;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\Event\ConfigurationRemovedEvent;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\Event\ConfigurationUpdatedEvent;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 
-class Swiftmailer
+class Mailer
 {
-    protected $container;
-    protected $requestStack;
-    protected $swiftMailer;
     private $mailboxService;
 
-    public final function __construct(ContainerInterface $container, RequestStack $requestStack, SwiftMailerService $swiftMailer, MailboxService $mailboxService)
+    public final function __construct(MailboxService $mailboxService)
     {
-        $this->container = $container;
-        $this->requestStack = $requestStack;
-        $this->swiftMailer = $swiftMailer;
         $this->mailboxService = $mailboxService;
     }
 
-    public function onSwiftMailerConfigurationUpdated(ConfigurationUpdatedEvent $event)
+    public function onMailerConfigurationUpdated(ConfigurationUpdatedEvent $event)
     {
         $isUpdateRequiredFlag = false;
-        $updatedConfiguration = $event->getUpdatedSwiftMailerConfiguration();
-        $existingConfiguration = $event->getExistingSwiftMailerConfiguration();
+        $updatedConfiguration = $event->getUpdatedMailerConfiguration();
+        $existingConfiguration = $event->getExistingMailerConfiguration();
                
         if ($updatedConfiguration->getId() == $existingConfiguration->getId()) {
-            // We only need to update if the swiftmailer configuration's id has changed
+            // We only need to update if the mailer configuration's id has changed
             // or if it has been disabled.
 
             return;
@@ -41,13 +32,13 @@ class Swiftmailer
         $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations(true);
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
-            if ($existingMailbox->getSwiftmailerConfiguration()->getId() == $existingConfiguration->getId()) {
+            if ($existingMailbox->getMailerConfiguration()->getId() == $existingConfiguration->getId()) {
                 // Disable mailbox and update configuration
                 $mailbox = new Mailbox($existingMailbox->getId());
                 $mailbox->setName($existingMailbox->getName())
                     ->setIsEnabled($existingMailbox->getIsEnabled())
                     ->setImapConfiguration($existingMailbox->getImapConfiguration())
-                    ->setSwiftMailerConfiguration($updatedConfiguration);
+                    ->setMailerConfiguration($updatedConfiguration);
                 
                 $isUpdateRequiredFlag = true;
                 $mailboxConfiguration->removeMailbox($existingMailbox);
@@ -62,14 +53,14 @@ class Swiftmailer
         return;
     }
 
-    public function onSwiftMailerConfigurationRemoved(ConfigurationRemovedEvent $event)
+    public function onMailerConfigurationRemoved(ConfigurationRemovedEvent $event)
     {
         $isUpdateRequiredFlag = false;
-        $configuration = $event->getSwiftMailerConfiguration(); 
+        $configuration = $event->getMailerConfiguration(); 
         $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
 
         foreach ($mailboxConfiguration->getMailboxes() as $existingMailbox) {
-                if (null != $existingMailbox->getSwiftmailerConfiguration() && $existingMailbox->getSwiftmailerConfiguration()->getId() == $configuration->getId()) {
+                if (null != $existingMailbox->getMailerConfiguration() && $existingMailbox->getMailerConfiguration()->getId() == $configuration->getId()) {
                     // Disable mailbox and update configuration
                     $mailbox = new Mailbox($existingMailbox->getId());
                     $mailbox->setName($existingMailbox->getName())

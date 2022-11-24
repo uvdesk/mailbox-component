@@ -11,99 +11,90 @@ use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
+use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
 
 class MailboxChannel extends AbstractController
 {
-    private $mailboxService;
-    private $translator;
-    private $swiftMailer;
-    private $userService;
-
-    public function __construct(UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
+    public function loadMailboxes(UserService $userService)
     {
-        $this->userService = $userService;
-        $this->mailboxService = $mailboxService;
-        $this->translator = $translator;
-        $this->swiftMailer = $swiftMailer;
-    }
-
-    public function loadMailboxes()
-    {
-        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
         return $this->render('@UVDeskMailbox//listConfigurations.html.twig');
     }
     
-    public function createMailboxConfiguration(Request $request)
+    public function createMailboxConfiguration(Request $request, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
     {
-        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
-        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
+        $mailerConfigurationCollection = $mailerService->parseMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
 
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
-                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
+                $imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
+                $imapConfiguration
                     ->setUsername($params['imap']['username'])
-                    ->setPassword(base64_encode($params['imap']['password']));
+                    ->setPassword(base64_encode($params['imap']['password']))
+                ;
             }
 
-            // Swiftmailer Configuration
-            if (!empty($params['swiftmailer_id'])) {
-                foreach ($swiftmailerConfigurationCollection as $configuration) {
-                    if ($configuration->getId() == $params['swiftmailer_id']) {
-                        $swiftmailerConfiguration = $configuration;
+            // Mailer Configuration
+            if (!empty($params['mailer_id'])) {
+                foreach ($mailerConfigurationCollection as $configuration) {
+                    if ($configuration->getId() == $params['mailer_id']) {
+                        $mailerConfiguration = $configuration;
                         break;
                     }
                 }
             }
 
-            if (!empty($imapConfiguration) && !empty($swiftmailerConfiguration)) {
-                $mailboxService = $this->mailboxService;
+            if (!empty($imapConfiguration) && !empty($mailerConfiguration)) {
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
-                ($mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null))
+                $mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null);
+                $mailbox
                     ->setName($params['name'])
                     ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
                     ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
                     ->setImapConfiguration($imapConfiguration)
-                    ->setSwiftMailerConfiguration($swiftmailerConfiguration);
+                    ->setMailerConfiguration($mailerConfiguration)
+                ;
 
                 $mailboxConfiguration->addMailbox($mailbox);
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->translator->trans('Mailbox successfully created.'));
+                $this->addFlash('success', $translator->trans('Mailbox successfully created.'));
+
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
         }
 
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-            'swiftmailerConfigurations' => $swiftmailerConfigurationCollection,
+            'mailerConfigurations' => $mailerConfigurationCollection,
         ]);
     }
 
-    public function updateMailboxConfiguration($id, Request $request)
+    public function updateMailboxConfiguration($id, Request $request, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
     {
-        if (!$this->userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
         
-        $mailboxService = $this->mailboxService;
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-        $swiftmailerConfigurationCollection = $this->swiftMailer->parseSwiftMailerConfigurations();
+        $mailerConfigurationCollection = $mailerService->parseMailerConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
             if ($configuration->getId() == $id) {
                 $mailbox = $configuration;
+
                 break;
             }
         }
@@ -114,25 +105,28 @@ class MailboxChannel extends AbstractController
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
+            
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
-                ($imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null))
+                $imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
+                $imapConfiguration
                     ->setUsername($params['imap']['username'])
-                    ->setPassword(base64_encode($params['imap']['password']));
+                    ->setPassword(base64_encode($params['imap']['password']))
+                ;
             }
 
-            // Swiftmailer Configuration
-            if (!empty($params['swiftmailer_id'])) {
-                foreach ($swiftmailerConfigurationCollection as $configuration) {
-                    if ($configuration->getId() == $params['swiftmailer_id']) {
-                        $swiftmailerConfiguration = $configuration;
+            // Mailer Configuration
+            if (!empty($params['mailer_id'])) {
+                foreach ($mailerConfigurationCollection as $configuration) {
+                    if ($configuration->getId() == $params['mailer_id']) {
+                        $mailerConfiguration = $configuration;
 
                         break;
                     }
                 }
             }
 
-            if (!empty($imapConfiguration) && !empty($swiftmailerConfiguration)) {
+            if (!empty($imapConfiguration) && !empty($mailerConfiguration)) {
                 $mailboxConfiguration = new MailboxConfiguration();
                 
                 foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
@@ -148,7 +142,8 @@ class MailboxChannel extends AbstractController
                             ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
                             ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
                             ->setImapConfiguration($imapConfiguration)
-                            ->setSwiftMailerConfiguration($swiftmailerConfiguration);
+                            ->setMailerConfiguration($mailerConfiguration)
+                        ;
 
                         $mailboxConfiguration->addMailbox($mailbox);
 
@@ -160,7 +155,7 @@ class MailboxChannel extends AbstractController
 
                 file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
-                $this->addFlash('success', $this->translator->trans('Mailbox successfully updated.'));
+                $this->addFlash('success', $translator->trans('Mailbox successfully updated.'));
                 
                 return new RedirectResponse($this->generateUrl('helpdesk_member_mailbox_settings'));
             }
@@ -168,7 +163,7 @@ class MailboxChannel extends AbstractController
 
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
             'mailbox' => $mailbox ?? null,
-            'swiftmailerConfigurations' => $swiftmailerConfigurationCollection,
+            'mailerConfigurations' => $mailerConfigurationCollection,
         ]);
     }
 }

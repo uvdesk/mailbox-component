@@ -152,7 +152,7 @@
         </div>	
 	</script>
 
-	<script id="swiftmailer_configuration_item_template" type="text/template">
+	<script id="mailer_configuration_item_template" type="text/template">
 		<div class="uv-app-list-brick-rt" title="<%- id %>" style="width: 100%;">
 			<p style="line-height: 1.4em; margin: unset; margin-bottom: 4px;">
 				<span style="font-weight: 700; text-transform: uppercase;"><%- id %></span>
@@ -231,7 +231,7 @@
 			var ConfigurationView = Backbone.View.extend({
 				tagName: "div",
 				className: "uv-app-list-brick",
-				template: _.template($("#swiftmailer_configuration_item_template").html()),
+				template: _.template($("#mailer_configuration_item_template").html()),
 				events: {
 					'click .delete-type' : "confirmRemove"
 				},

@@ -12,7 +12,7 @@ uvdesk_mailbox:
         #     enabled: true
         
         #     # [SMTP] Outgoing mail server
-        #     # Swiftmailer smtp mailer to use for sending emails through on behalf of this mailbox
+        #     # Mailer configurations to use for sending emails through on behalf of this mailbox
         #     smtp_server:
         #         mailer_id: ~
         
