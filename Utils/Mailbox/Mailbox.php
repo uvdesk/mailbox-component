@@ -101,9 +101,6 @@ class Mailbox
             $this->setId(sprintf("mailbox_%s", TokenGenerator::generateToken(4, self::TOKEN_RANGE)));
         }
 
-        dump('to string mailbox');
-        die;
-
         $imapConfiguration = $this->getImapConfiguration();
         $mailerConfiguration = $this->getMailerConfiguration();
 
