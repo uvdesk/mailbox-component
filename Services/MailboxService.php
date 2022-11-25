@@ -22,6 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 class MailboxService
 {
@@ -77,18 +78,29 @@ class MailboxService
                     break;
                 }
             }
-            
+
             // IMAP Configuration
-            ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
-                ->setUsername($params['imap_server']['username'])
-                ->setPassword($params['imap_server']['password']);
+            $imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']);
+
+            if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                $imapConfiguration
+                    ->setUsername($params['imap_server']['username'])
+                ;
+            } else {
+                $imapConfiguration
+                    ->setUsername($params['imap_server']['username'])
+                    ->setPassword($params['imap_server']['password'])
+                ;
+            }
 
             // Mailbox Configuration
-            ($mailbox = new Mailbox($id))
+            $mailbox = new Mailbox($id);
+            $mailbox
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
                 ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
-                ->setImapConfiguration($imapConfiguration);
+                ->setImapConfiguration($imapConfiguration)
+            ;
             
             if (!empty($mailerConfiguration)) {
                 $mailbox->setMailerConfiguration($mailerConfiguration);

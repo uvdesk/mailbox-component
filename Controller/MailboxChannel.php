@@ -13,6 +13,7 @@ use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 class MailboxChannel extends AbstractController
 {
@@ -39,10 +40,17 @@ class MailboxChannel extends AbstractController
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
                 $imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
-                $imapConfiguration
-                    ->setUsername($params['imap']['username'])
-                    ->setPassword(base64_encode($params['imap']['password']))
-                ;
+                
+                if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                    $imapConfiguration
+                        ->setUsername($params['imap']['username'])
+                    ;
+                } else {
+                    $imapConfiguration
+                        ->setUsername($params['imap']['username'])
+                        ->setPassword(base64_encode($params['imap']['password']))
+                    ;
+                }
             }
 
             // Mailer Configuration

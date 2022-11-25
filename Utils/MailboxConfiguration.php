@@ -3,22 +3,26 @@
 namespace Webkul\UVDesk\MailboxBundle\Utils;
 
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 final class MailboxConfiguration
 {
     const DEFAULT_TEMPLATE = __DIR__ . "/../Templates/config.yaml";
-    const CONFIGURATION_TEMPLATE = __DIR__ . "/../Templates/PackageConfigurations/Template.php";
+    const CONFIGURATION_TEMPLATE = __DIR__ . "/../Templates/Mailbox/Mailbox.php";
 
     private $collection = [];
 
     public function addMailbox(Mailbox $mailbox)
     {
-        if (preg_match('/"/', $mailbox->getImapConfiguration()->getHost())) {
-            $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), '"')); 
-        }
+        if (!$mailbox->getImapConfiguration() instanceof SimpleConfigurationInterface) {
+            if (preg_match('/"/', $mailbox->getImapConfiguration()->getHost())) {
+                $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), '"')); 
+            }
+    
+            if (preg_match("/'/", $mailbox->getImapConfiguration()->getHost())) {
+                $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), "'")); 
+            }
 
-        if (preg_match("/'/", $mailbox->getImapConfiguration()->getHost())) {
-            $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), "'")); 
         }
 
         $this->collection[] = $mailbox;

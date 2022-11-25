@@ -31,7 +31,14 @@ final class Configuration
                 try {
                     $reflectionClass = new \ReflectionClass($classPath);
     
-                    if ($reflectionClass->isInstantiable() && ($reflectionClass->implementsInterface(ResolvedConfigurationInterface::class) || $reflectionClass->implementsInterface(CustomConfigurationInterface::class))) {
+                    if (
+                        $reflectionClass->isInstantiable() 
+                        && (
+                            $reflectionClass->implementsInterface(SimpleConfigurationInterface::class) 
+                            || $reflectionClass->implementsInterface(ResolvedConfigurationInterface::class) 
+                            || $reflectionClass->implementsInterface(CustomConfigurationInterface::class) 
+                        )
+                    ) {
                         self::$reflectedDefinitions[] = $reflectionClass;
                     }
                 } catch (\ReflectionException $exception) {
@@ -52,24 +59,27 @@ final class Configuration
         }, self::getAvailableDefinitions());
     }
 
-    public static function guessTransportDefinition($host) : ConfigurationInterface
+    public static function guessTransportDefinition(array $params) : ConfigurationInterface
     {
         foreach (self::getAvailableDefinitions() as $reflectedImapDefinition) {
+            // Use custom configuration only when no other transport type matches the provided configs
             if (true === $reflectedImapDefinition->implementsInterface(CustomConfigurationInterface::class)) {
                 $customConfigurationReflection = $reflectedImapDefinition;
                 continue;
             }
 
-            if ($reflectedImapDefinition->getName()::getHost() == $host) {
+            if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
+                return $reflectedImapDefinition->newInstance();
+            } else if (empty($params['host']) && true === $reflectedImapDefinition->implementsInterface(SimpleConfigurationInterface::class)) {
                 return $reflectedImapDefinition->newInstance();
             }
         }
 
         if (!empty($customConfigurationReflection)) {
-            return $customConfigurationReflection->newInstance($host);
+            return $customConfigurationReflection->newInstance($params['host']);
         }
 
-        throw new \Exception('No matching imap definition found for host address "' . $host . '".');
+        throw new \Exception('No matching imap definition found for host address "' . $params['host'] . '".');
     }
 
     public static function createTransportDefinition($transportCode, $host = null) : ConfigurationInterface
