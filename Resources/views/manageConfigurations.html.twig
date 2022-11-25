@@ -115,6 +115,7 @@
 							<option value="gmail" {% if mailbox.imapConfiguration.code == 'gmail' %}selected{% endif %}>{{ 'Gmail'|trans }}</option>
 							<option value="custom" {% if mailbox.imapConfiguration.code == 'custom' %}selected{% endif %}>{{ 'IMAP'|trans }}</option>
 							<option value="outlook" {% if mailbox.imapConfiguration.code == 'outlook' %}selected{% endif %}>{{ 'Outlook'|trans }}</option>
+							<option value="outlook_oauth" {% if mailbox.imapConfiguration.code == 'outlook_oauth' %}selected{% endif %}>{{ 'Outlook Modern Auth'|trans }}</option>
 							<option value="webhook" {% if mailbox.imapConfiguration.code == 'webhook' %}selected{% endif %}>{{ 'Webhook'|trans }}</option>
 							<option value="yahoo" {% if mailbox.imapConfiguration.code == 'yahoo' %}selected{% endif %}>{{ 'Yahoo'|trans }}</option>
 						</select>
@@ -123,6 +124,7 @@
 							<option value="gmail">{{ 'Gmail'|trans }}</option>
 							<option value="custom" selected>{{ 'IMAP'|trans }}</option>
 							<option value="outlook">{{ 'Outlook'|trans }}</option>
+							<option value="outlook_oauth">{{ 'Outlook Modern Auth'|trans }}</option>
 							<option value="webhook">{{ 'Webhook'|trans }}</option>
 							<option value="yahoo">{{ 'Yahoo'|trans }}</option>
 						</select>
@@ -279,6 +281,48 @@
 		</div>
 	</script>
 
+	<script id="outlook_oauth_imap_configuration_template" type="text/template">
+		<div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Microsoft App'|trans }}</label>
+
+            {% if microsoftAppCollection is defined and microsoftAppCollection is not empty %}
+                <select name="app" class="uv-select">
+                    {% for microsoftApp in microsoftAppCollection %}
+                        <option value="{{ microsoftApp.id }}" selected>{{ microsoftApp.name }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="app" class="uv-select" disabled>
+                    <option selected>{{ 'No configured microsoft app currently available'|trans }}</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <p class="uv-field-info">Continue by signing in through microsoft to add a new account.</p>
+
+        <a href="{{ path('uvdesk_member_core_framework_integrations_microsoft_apps_add_account', { appId: '1', origin: 'helpdesk_member_mailbox_create_configuration' }) }}" class="uv-btn" style="background-color: #00a1f1;">Continue with Microsoft</a>
+
+        <div class="uv-hr"></div>
+
+        <p class="uv-field-info">Or select from one of the previously configured microsoft accounts.</p>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            {% if microsoftAccountCollection is defined and microsoftAccountCollection is not empty %}
+                <select name="imap[username]" class="uv-select">
+                    {% for microsoftAccount in microsoftAccountCollection %}
+                        <option value="{{ microsoftAccount.id }}" selected>{{ microsoftAccount.email }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="imap[username]" class="uv-select" disabled>
+                    <option selected>{{ 'No microsoft account currently available'|trans }}</option>
+                </select>
+            {% endif %}
+        </div>
+	</script>
+
 	<script id="webhook_imap_configuration_template" type="text/template">
 		<div class="uv-element-block">
 			<label class="uv-field-label">{{ 'Username'|trans }}</label>
@@ -321,18 +365,17 @@
                             }
                         }
                     },
-                    "imap[username]": [
-                        {
-                            required: true,
-                            msg: 'Please specify a valid email address.'
-                        },
-                        {
-                            pattern: /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-                            msg: 'Please specify a valid email address.'
+                    "imap[username]": function(value) {
+                        if ('outlook_oauth' != this.get('transport')) {
+                            if (value == undefined || value == '') {
+                                return "Please enter a valid email address";
+                            } else if (/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) == false) {
+                                return "Please specify a valid email address";
+                            }
                         }
-                    ],
+                    },
                     "imap[password]": function(value) {
-                        if ((value == undefined || value == '') && this.attributes['imap[transport]'] != 'webhook') {
+                        if ((value == undefined || value == '') && this.attributes['imap[transport]'] != 'webhook' && this.attributes['imap[transport]'] != 'outlook_oauth') {
                             return "Please enter the associated account password.";
                         }
                     }
@@ -344,6 +387,7 @@
                 gmail_imap_configuration_template: _.template($("#gmail_imap_configuration_template").html()),
 				yahoo_imap_configuration_template: _.template($("#yahoo_imap_configuration_template").html()),
 				outlook_imap_configuration_template: _.template($("#outlook_imap_configuration_template").html()),
+				outlook_oauth_imap_configuration_template: _.template($("#outlook_oauth_imap_configuration_template").html()),
 				webhook_imap_configuration_template: _.template($("#webhook_imap_configuration_template").html()),
 				events: {
                     'change #mailboxTransportType': 'changeTransportType',
@@ -373,6 +417,9 @@
                             break;
 						case 'outlook':
                             $('.imap-setting-references').html(this.outlook_imap_configuration_template(this.model.attributes));
+                            break;
+						case 'outlook_oauth':
+                            $('.imap-setting-references').html(this.outlook_oauth_imap_configuration_template(this.model.attributes));
                             break;
 						case 'webhook':
                             $('.imap-setting-references').html(this.webhook_imap_configuration_template(this.model.attributes));

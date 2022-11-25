@@ -2,6 +2,7 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -13,7 +14,10 @@ use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftApp;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftAccount;
 
 class MailboxChannel extends AbstractController
 {
@@ -26,7 +30,7 @@ class MailboxChannel extends AbstractController
         return $this->render('@UVDeskMailbox//listConfigurations.html.twig');
     }
     
-    public function createMailboxConfiguration(Request $request, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
+    public function createMailboxConfiguration(Request $request, EntityManagerInterface $entityManager, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
     {
         if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
@@ -34,14 +38,62 @@ class MailboxChannel extends AbstractController
 
         $mailerConfigurationCollection = $mailerService->parseMailerConfigurations();
 
+        $microsoftAppCollection = $entityManager->getRepository(MicrosoftApp::class)->findBy(['isEnabled' => true, 'isVerified' => true]);
+        $microsoftAccountCollection = $entityManager->getRepository(MicrosoftAccount::class)->findAll();
+
+        $microsoftAppCollection = array_map(function ($microsoftApp) {
+            return [
+                'id' => $microsoftApp->getId(), 
+                'name' => $microsoftApp->getName(), 
+            ];
+        }, $microsoftAppCollection);
+
+        $microsoftAccountCollection = array_map(function ($microsoftAccount) {
+            return [
+                'id' => $microsoftAccount->getId(), 
+                'name' => $microsoftAccount->getName(), 
+                'email' => $microsoftAccount->getEmail(), 
+            ];
+        }, $microsoftAccountCollection);
+
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
 
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
                 $imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
-                
-                if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+
+                if ($imapConfiguration instanceof AppConfigurationInterface) {
+                    if ($params['imap']['transport'] == 'outlook_oauth') {
+                        $microsoftAccount = $entityManager->getRepository(MicrosoftAccount::class)->findOneById($params['imap']['username']);
+        
+                        if (empty($microsoftAccount)) {
+                            $this->addFlash('warning', 'No configuration details were found for the provided microsoft account.');
+        
+                            return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                                'mailerConfigurations' => $mailerConfigurationCollection, 
+                                'microsoftAppCollection' => $microsoftAppCollection, 
+                                'microsoftAccountCollection' => $microsoftAccountCollection, 
+                            ]);
+                        }
+        
+                        $params['imap']['username'] = $microsoftAccount->getEmail();
+                        $params['imap']['client'] = $microsoftAccount->getMicrosoftApp()->getClientId();
+                        
+                        $imapConfiguration
+                            ->setClient($params['imap']['client'])
+                            ->setUsername($params['imap']['username'])
+                        ;
+                    } else {
+                        $this->addFlash('warning', 'The resolved IMAP configuration is not configured for any valid available app.');
+        
+                        return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                            'mailerConfigurations' => $mailerConfigurationCollection, 
+                            'microsoftAppCollection' => $microsoftAppCollection, 
+                            'microsoftAccountCollection' => $microsoftAccountCollection, 
+                        ]);
+                    }
+                } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
                     $imapConfiguration
                         ->setUsername($params['imap']['username'])
                     ;
@@ -58,6 +110,7 @@ class MailboxChannel extends AbstractController
                 foreach ($mailerConfigurationCollection as $configuration) {
                     if ($configuration->getId() == $params['mailer_id']) {
                         $mailerConfiguration = $configuration;
+
                         break;
                     }
                 }
@@ -86,11 +139,13 @@ class MailboxChannel extends AbstractController
         }
 
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-            'mailerConfigurations' => $mailerConfigurationCollection,
+            'mailerConfigurations' => $mailerConfigurationCollection, 
+            'microsoftAppCollection' => $microsoftAppCollection, 
+            'microsoftAccountCollection' => $microsoftAccountCollection, 
         ]);
     }
 
-    public function updateMailboxConfiguration($id, Request $request, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
+    public function updateMailboxConfiguration($id, Request $request, EntityManagerInterface $entityManager, UserService $userService, MailboxService $mailboxService, MailerService $mailerService, TranslatorInterface $translator)
     {
         if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
@@ -110,6 +165,24 @@ class MailboxChannel extends AbstractController
         if (empty($mailbox)) {
             return new Response('', 404);
         }
+
+        $microsoftAppCollection = $entityManager->getRepository(MicrosoftApp::class)->findBy(['isEnabled' => true, 'isVerified' => true]);
+        $microsoftAccountCollection = $entityManager->getRepository(MicrosoftAccount::class)->findAll();
+
+        $microsoftAppCollection = array_map(function ($microsoftApp) {
+            return [
+                'id' => $microsoftApp->getId(), 
+                'name' => $microsoftApp->getName(), 
+            ];
+        }, $microsoftAppCollection);
+
+        $microsoftAccountCollection = array_map(function ($microsoftAccount) {
+            return [
+                'id' => $microsoftAccount->getId(), 
+                'name' => $microsoftAccount->getName(), 
+                'email' => $microsoftAccount->getEmail(), 
+            ];
+        }, $microsoftAccountCollection);
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -170,8 +243,10 @@ class MailboxChannel extends AbstractController
         }
 
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-            'mailbox' => $mailbox ?? null,
-            'mailerConfigurations' => $mailerConfigurationCollection,
+            'mailbox' => $mailbox ?? null, 
+            'mailerConfigurations' => $mailerConfigurationCollection, 
+            'microsoftAppCollection' => $microsoftAppCollection, 
+            'microsoftAccountCollection' => $microsoftAccountCollection, 
         ]);
     }
 }

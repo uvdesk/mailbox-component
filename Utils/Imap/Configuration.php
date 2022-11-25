@@ -34,7 +34,8 @@ final class Configuration
                     if (
                         $reflectionClass->isInstantiable() 
                         && (
-                            $reflectionClass->implementsInterface(SimpleConfigurationInterface::class) 
+                            $reflectionClass->implementsInterface(AppConfigurationInterface::class) 
+                            || $reflectionClass->implementsInterface(SimpleConfigurationInterface::class) 
                             || $reflectionClass->implementsInterface(ResolvedConfigurationInterface::class) 
                             || $reflectionClass->implementsInterface(CustomConfigurationInterface::class) 
                         )
@@ -70,8 +71,10 @@ final class Configuration
 
             if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
                 return $reflectedImapDefinition->newInstance();
-            } else if (empty($params['host']) && true === $reflectedImapDefinition->implementsInterface(SimpleConfigurationInterface::class)) {
-                return $reflectedImapDefinition->newInstance();
+            } else if (empty($params['host'])) {
+                if (true === $reflectedImapDefinition->implementsInterface(AppConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleConfigurationInterface::class)) {
+                    return $reflectedImapDefinition->newInstance();
+                }
             }
         }
 

@@ -22,6 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 class MailboxService
@@ -82,7 +83,12 @@ class MailboxService
             // IMAP Configuration
             $imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']);
 
-            if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+            if ($imapConfiguration instanceof AppConfigurationInterface) {
+                $imapConfiguration
+                    ->setClient($params['imap_server']['client'])
+                    ->setUsername($params['imap_server']['username'])
+                ;
+            } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
                 $imapConfiguration
                     ->setUsername($params['imap_server']['username'])
                 ;

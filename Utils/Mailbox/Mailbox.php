@@ -5,14 +5,18 @@ namespace Webkul\UVDesk\MailboxBundle\Utils\Mailbox;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\Mailer\BaseConfiguration as MailerConfiguration;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 class Mailbox
 {
     CONST TOKEN_RANGE = '12345';
-    const MAILBOX_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/MailboxSettings.php";
-    const DEFAULT_IMAP_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/Imap/Default.php";
-    const SIMPLE_IMAP_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/Imap/SimpleImap.php";
+    
+    const APP_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/Imap/AppConfiguration.php";
+    const DEFAULT_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/Imap/DefaultConfiguration.php";
+    const SIMPLE_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/Imap/SimpleConfiguration.php";
+
+    const MAILBOX_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/MailboxSettings.php";
 
     private $id = null;
     private $name = null;
@@ -108,19 +112,24 @@ class Mailbox
 
         $imapTemplate = '';
 
-        if ($imapConfiguration instanceof SimpleConfigurationInterface) {
-            $imapTemplate = strtr(require self::SIMPLE_IMAP_TEMPLATE, [
+        if ($imapConfiguration instanceof AppConfigurationInterface) {
+            $imapTemplate = strtr(require self::APP_CONFIGURATION_TEMPLATE, [
+                '[[ imap_client ]]' => $imapConfiguration->getClient(),
+                '[[ imap_username ]]' => $imapConfiguration->getUsername(), 
+            ]);
+        } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+            $imapTemplate = strtr(require self::SIMPLE_CONFIGURATION_TEMPLATE, [
                 '[[ imap_username ]]' => $imapConfiguration->getUsername(),
             ]);
         } else {
-            $imapTemplate = strtr(require self::DEFAULT_IMAP_TEMPLATE, [
+            $imapTemplate = strtr(require self::DEFAULT_CONFIGURATION_TEMPLATE, [
                 '[[ imap_host ]]' => $imapConfiguration->getHost(),
                 '[[ imap_username ]]' => $imapConfiguration->getUsername(),
                 '[[ imap_password ]]' => $imapConfiguration->getPassword(),
             ]);
         }
 
-        return strtr(require self::MAILBOX_TEMPLATE, [
+        return strtr(require self::MAILBOX_CONFIGURATION_TEMPLATE, [
             '[[ id ]]' => $this->getId(),
             '[[ name ]]' => $this->getName(),
             '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',

@@ -33,6 +33,7 @@ class Configuration implements ConfigurationInterface
                                 ->children()
                                     ->node('host', 'scalar')->cannotBeEmpty()->end()
                                     ->node('username', 'scalar')->cannotBeEmpty()->end()
+                                    ->node('client', 'scalar')->end()
                                     ->node('password', 'scalar')->end()
                                 ->end()
                             ->end() 
