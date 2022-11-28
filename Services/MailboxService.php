@@ -22,6 +22,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
 
 class MailboxService
 {
@@ -77,18 +79,34 @@ class MailboxService
                     break;
                 }
             }
-            
+
             // IMAP Configuration
-            ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
-                ->setUsername($params['imap_server']['username'])
-                ->setPassword($params['imap_server']['password']);
+            $imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']);
+
+            if ($imapConfiguration instanceof AppConfigurationInterface) {
+                $imapConfiguration
+                    ->setClient($params['imap_server']['client'])
+                    ->setUsername($params['imap_server']['username'])
+                ;
+            } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                $imapConfiguration
+                    ->setUsername($params['imap_server']['username'])
+                ;
+            } else {
+                $imapConfiguration
+                    ->setUsername($params['imap_server']['username'])
+                    ->setPassword($params['imap_server']['password'])
+                ;
+            }
 
             // Mailbox Configuration
-            ($mailbox = new Mailbox($id))
+            $mailbox = new Mailbox($id);
+            $mailbox
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
                 ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
-                ->setImapConfiguration($imapConfiguration);
+                ->setImapConfiguration($imapConfiguration)
+            ;
             
             if (!empty($mailerConfiguration)) {
                 $mailbox->setMailerConfiguration($mailerConfiguration);
@@ -224,6 +242,16 @@ class MailboxService
                             return $thread->getTicket();
                         }
                     }
+                    
+                    break;
+                case 'outlookConversationId':
+                    // Search Criteria 1: Find ticket by unique message id
+                    $ticket = $ticketRepository->findOneByOutlookConversationId($criteriaValue);
+
+                    if (!empty($ticket)) {
+                        return $ticket;
+                    }
+                    
                     break;
                 case 'inReplyTo':
                     // Search Criteria 2: Find ticket based on in-reply-to reference id
@@ -241,6 +269,7 @@ class MailboxService
                             return $thread->getTicket();
                         }
                     }
+                    
                     break;
                 case 'referenceIds':
                     // Search Criteria 3: Find ticket based on reference id
@@ -255,6 +284,7 @@ class MailboxService
                             return $thread->getTicket();
                         }
                     }
+
                     break;
                 default:
                     break;
@@ -520,6 +550,258 @@ class MailboxService
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && empty($mailData['inReplyTo'])) {
             return [
                 'message' => "The contents of this email has already been processed.", 
+                'content' => [
+                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    'thread' => !empty($thread) ? $thread->getId() : null, 
+                    'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                ], 
+            ];
+        }
+
+        return [
+            'message' => "Inbound email processsed successfully.", 
+            'content' => [
+                'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                'thread' => !empty($thread) ? $thread->getId() : null, 
+                'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+            ], 
+        ];
+    }
+
+    public function processOutlookMail(array $outlookEmail)
+    {
+        $mailData = [];
+        $senderName = null;
+        $senderAddress = null;
+
+        if (!empty($outlookEmail['from']['emailAddress']['address'])) {
+            $senderName = $outlookEmail['from']['emailAddress']['name'];
+            $senderAddress = $outlookEmail['from']['emailAddress']['address'];
+        } else if (!empty($outlookEmail['sender']['emailAddress']['address'])) {
+            $senderName = $outlookEmail['sender']['emailAddress']['name'];
+            $senderAddress = $outlookEmail['sender']['emailAddress']['address'];
+        } else {
+            return [
+                'message' => "No 'from' email address was found while processing contents of email.", 
+                'content' => [], 
+            ];
+        }
+
+        $toRecipients = array_map(function ($recipient) { return $recipient['emailAddress']['address']; }, $outlookEmail['toRecipients']);
+        $ccRecipients = array_map(function ($recipient) { return $recipient['emailAddress']['address']; }, $outlookEmail['ccRecipients'] ?? []);
+        $bccRecipients = array_map(function ($recipient) { return $recipient['emailAddress']['address']; }, $outlookEmail['bccRecipients'] ?? []);
+
+        $addresses = [
+            'from' => $senderAddress, 
+            'to' => $toRecipients, 
+            'cc' => $ccRecipients, 
+        ];
+        
+        // Skip email processing if no to-emails are specified
+        if (empty($addresses['to'])) {
+            return [
+                'message' => "No 'to' email addresses were found in the email.", 
+                'content' => [
+                    'from' => $senderAddress ?? null, 
+                ], 
+            ];
+        }
+
+        // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
+        try {
+            $this->getMailboxByEmail($senderAddress);
+
+            return [
+                'message' => "Received a self-referencing email where the sender email address matches one of the configured mailbox address. Skipping email from further processing.", 
+                'content' => [
+                    'from' => $senderAddress ?? null, 
+                ], 
+            ];
+        } catch (\Exception $e) {
+            // An exception being thrown means no mailboxes were found from the recipient's address. Continue processing.
+        }
+
+        // Process Mail - References
+        // $addresses['to'][0] = isset($mailData['replyTo']) ? strtolower($mailData['replyTo']) : strtolower($addresses['to'][0]);
+        $mailData['replyTo'] = $addresses['to'];
+
+        $mailData['messageId'] = $outlookEmail['internetMessageId'];
+        $mailData['outlookConversationId'] = $outlookEmail['conversationId'];
+        $mailData['inReplyTo'] = $outlookEmail['conversationId'];
+        // $mailData['inReplyTo'] = htmlspecialchars_decode($parser->getHeader('in-reply-to'));
+        $mailData['referenceIds'] = '';
+        // $mailData['referenceIds'] = htmlspecialchars_decode($parser->getHeader('references'));
+        $mailData['cc'] = $ccRecipients;
+        $mailData['bcc'] = $bccRecipients;
+
+        // Process Mail - User Details
+        $mailData['source'] = 'email';
+        $mailData['createdBy'] = 'customer';
+        $mailData['role'] = 'ROLE_CUSTOMER';
+        $mailData['from'] = $senderAddress;
+        $mailData['name'] = trim($senderName);
+
+        // Process Mail - Content
+        $htmlFilter = new HTMLFilter();
+        $mailData['subject'] = $outlookEmail['subject'];
+        $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($outlookEmail['body']['content']));
+
+        $mailData['attachments'] = [];
+        // $mailData['attachments'] = $parser->getAttachments();
+
+        $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
+        
+        if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
+            return [
+                'message' => "Received email where the sender email address is present in the block list. Skipping this email from further processing.", 
+                'content' => [
+                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                ], 
+            ];
+        }
+
+        // return [
+        //     'outlookConversationId' => $mailData['outlookConversationId'],
+        //     'message' => "No 'to' email addresses were found in the email.", 
+        //     'content' => [
+        //         'outlookConversationId' => $mailData['outlookConversationId'],
+        //     ], 
+        // ];
+
+        // Search for any existing tickets
+        $ticket = $this->searchExistingTickets([
+            'messageId' => $mailData['messageId'],
+            'inReplyTo' => $mailData['inReplyTo'],
+            'referenceIds' => $mailData['referenceIds'],
+            'from' => $mailData['from'],
+            'subject' => $mailData['subject'], 
+            'outlookConversationId' => $mailData['outlookConversationId'],
+        ]);
+
+        if (empty($ticket)) {
+            $mailData['threadType'] = 'create';
+            $mailData['referenceIds'] = $mailData['messageId'];
+
+            // @Todo For same subject with same customer check
+            // $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+
+            // if(!empty($ticketSubjectRefrenceExist)) {
+            //     return;
+            // }
+
+            $thread = $this->container->get('ticket.service')->createTicket($mailData);
+
+            // Trigger ticket created event
+            $event = new GenericEvent(CoreWorkflowEvents\Ticket\Create::getId(), [
+                'entity' =>  $thread->getTicket(),
+            ]);
+
+            $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
+        } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && !empty($mailData['inReplyTo'])) {
+            $mailData['threadType'] = 'reply';
+            $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
+            $ticketRef = $this->entityManager->getRepository(Ticket::class)->findById($ticket->getId());
+            $referenceIds = explode(' ', $ticketRef[0]->getReferenceIds());
+
+            if (!empty($thread)) {
+                // Thread with the same message id exists skip process.
+                return [
+                    'message' => "The contents of this email has already been processed 1.", 
+                    'content' => [
+                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                        'thread' => $thread->getId(), 
+                        'ticket' => $ticket->getId(), 
+                    ], 
+                ];
+            }
+
+            if (in_array($mailData['messageId'], $referenceIds)) {
+                // Thread with the same message id exists skip process.
+                return [
+                    'message' => "The contents of this email has already been processed 2.", 
+                    'content' => [
+                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    ], 
+                ];
+            }
+
+            if ($ticket->getCustomer() && $ticket->getCustomer()->getEmail() == $mailData['from']) {
+                // Reply from customer
+                $user = $ticket->getCustomer();
+
+                $mailData['user'] = $user;
+                $userDetails = $user->getCustomerInstance()->getPartialDetails();
+            } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])){
+            	// Reply from collaborator
+                $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
+
+                $mailData['user'] = $user;
+                $mailData['createdBy'] = 'collaborator';
+                $userDetails = $user->getCustomerInstance()->getPartialDetails();
+            } else {
+                $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
+                
+                if (!empty($user) && null != $user->getAgentInstance()) {
+                    $mailData['user'] = $user;
+                    $mailData['createdBy'] = 'agent';
+                    $userDetails = $user->getAgentInstance()->getPartialDetails();
+                } else {
+                    // Add user as a ticket collaborator
+                    if (empty($user)) {
+                        // Create a new user instance with customer support role
+                        $role = $this->entityManager->getRepository(SupportRole::class)->findOneByCode('ROLE_CUSTOMER');
+
+                        $user = $this->container->get('user.service')->createUserInstance($mailData['from'], $mailData['name'], $role, [
+                            'source' => 'email',
+                            'active' => true
+                        ]);
+                    }
+
+                    $mailData['user'] = $user;
+                    $userDetails = $user->getCustomerInstance()->getPartialDetails();
+
+                    if (false == $this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])) {
+                        $ticket->addCollaborator($user);
+
+                        $this->entityManager->persist($ticket);
+                        $this->entityManager->flush();
+
+                        $ticket->lastCollaborator = $user;
+                        
+                        $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
+                            'entity' => $ticket,
+                        ]);
+
+                        $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
+                    }
+                }
+            }
+
+            $mailData['fullname'] = $userDetails['name'];
+            
+            $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
+            
+            if($thread->getThreadType() == 'reply') {
+                if ($thread->getCreatedBy() == 'customer') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }  else if ($thread->getCreatedBy() == 'collaborator') {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CollaboratorReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                } else {
+                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
+                        'entity' =>  $ticket,
+                    ]);
+                }
+            }
+
+            // Trigger thread reply event
+            $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
+        } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && empty($mailData['inReplyTo'])) {
+            return [
+                'message' => "The contents of this email has already been processed 3.", 
                 'content' => [
                     'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
                     'thread' => !empty($thread) ? $thread->getId() : null, 

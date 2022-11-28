@@ -10,15 +10,26 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftApp;
+use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftAccount;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\Microsoft\Graph as MicrosoftGraph;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\CoreFrameworkBundle\Services\MicrosoftIntegration;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 
 class RefreshMailboxCommand extends Command
 {
     private $endpoint;
+    private $outlookEndpoint;
 
-    public function __construct(ContainerInterface $container, EntityManagerInterface $entityManager)
+    public function __construct(ContainerInterface $container, EntityManagerInterface $entityManager, MicrosoftIntegration $microsoftIntegration, MailboxService $mailboxService)
     {
         $this->container = $container;
         $this->entityManager = $entityManager;
+        $this->microsoftIntegration = $microsoftIntegration;
+        $this->mailboxService = $mailboxService;
 
         parent::__construct();
     }
@@ -34,13 +45,14 @@ class RefreshMailboxCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $router = $this->container->get('router');
+        $this->router = $this->container->get('router');
         $useSecureConnection = $this->isSecureConnectionAvailable();
 
-        $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
-        $router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
+        $this->router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
+        $this->router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
 
-        $this->endpoint = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->endpoint = $this->router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->outlookEndpoint = $this->router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -92,14 +104,41 @@ class RefreshMailboxCommand extends Command
             }
 
             try {
-                $this->refreshMailbox(
-                    $mailbox['imap_server']['host'], 
-                    $mailbox['imap_server']['username'], 
-                    base64_decode($mailbox['imap_server']['password']), 
-                    $timestamp, 
-                    $output, 
-                    $mailbox
-                );
+                $imapConfiguration = ImapConfiguration::guessTransportDefinition($mailbox['imap_server']);
+    
+                if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                    $output->writeln("  <comment>Cannot fetch emails for mailboxes of type simple configuration.</comment>");
+                } else if ($imapConfiguration instanceof AppConfigurationInterface) {
+                    $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($mailbox['imap_server']['client']);
+
+                    if (empty($microsoftApp)) {
+                        $output->writeln("  <comment>No microsoft app was found for configured client id '" . $mailbox['imap_server']['client'] . "'.</comment>");
+
+                        continue;
+                    } else {
+                        $microsoftAccount = $this->entityManager->getRepository(MicrosoftAccount::class)->findOneBy([
+                            'email' => $mailbox['imap_server']['username'], 
+                            'microsoftApp' => $microsoftApp, 
+                        ]);
+
+                        if (empty($microsoftAccount)) {
+                            $output->writeln("  <comment>No microsoft account was found with email '" . $mailbox['imap_server']['username'] . "' for configured client id '" . $mailbox['imap_server']['client'] . "'.</comment>");
+
+                            continue;
+                        }
+                    }
+
+                    $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output, $mailbox);
+                } else {
+                    $this->refreshMailbox(
+                        $mailbox['imap_server']['host'], 
+                        $mailbox['imap_server']['username'], 
+                        base64_decode($mailbox['imap_server']['password']), 
+                        $timestamp, 
+                        $output, 
+                        $mailbox
+                    );
+                }
             } catch (\Exception $e) {
                 $output->writeln("  <comment>An unexpected error occurred: " . $e->getMessage() . "</comment>");
             }
@@ -164,7 +203,7 @@ class RefreshMailboxCommand extends Command
                         imap_delete($imap, $messageNumber);
                     }
                     
-                    $counter ++;
+                    $counter++;
                 }
 
                 $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
@@ -179,6 +218,83 @@ class RefreshMailboxCommand extends Command
         return;
     }
 
+    public function refreshOutlookMailbox($microsoftApp, $microsoftAccount, \DateTime $timestamp, OutputInterface $output, $mailbox)
+    {
+        $timeSpan = $timestamp->format('Y-m-d');
+        $credentials = json_decode($microsoftAccount->getCredentials(), true);
+        $redirectEndpoint = str_replace('http', 'https', $this->router->generate('uvdesk_member_core_framework_integrations_microsoft_apps_oauth_login', [], UrlGeneratorInterface::ABSOLUTE_URL));
+
+        $filters = [
+            'ReceivedDateTime' => [
+                'operation' => '>', 
+                'value' => $timeSpan, 
+            ], 
+        ];
+        
+        $response = MicrosoftGraph\Me::messages($credentials['access_token'], $filters);
+
+        if (!empty($response['error'])) {
+            if (!empty($response['error']['code']) && $response['error']['code'] == 'InvalidAuthenticationToken') {
+                $tokenResponse = $this->microsoftIntegration->refreshAccessToken($microsoftApp, $credentials['refresh_token']);
+
+                if (!empty($tokenResponse['access_token'])) {
+                    $microsoftAccount->setCredentials(json_encode($tokenResponse));
+    
+                    $this->entityManager->persist($microsoftAccount);
+                    $this->entityManager->flush();
+
+                    $response = MicrosoftGraph\Me::messages($credentials['access_token'], $filters);
+                } else {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>Failed to retrieve a valid access token.</>\n");
+
+                    return;
+                }
+            } else {
+                if (!empty($response['error']['code'])) {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>An unexpected api error occurred of type '" . $response['error']['code'] . "'.</>\n");
+                } else {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>An unexpected api error occurred.</>\n");
+                }
+
+                return;
+            }
+        }
+
+
+        if (!empty($response['value'])) {
+            $emailCount = $response['@odata.count'] ?? 'NA';
+
+            $output->writeln("  - Found a total of <info>$emailCount</info> emails in mailbox since <comment>$timeSpan</comment>");
+            $output->writeln("\n  # Processing all found emails iteratively:");
+            $output->writeln("\n    <bg=black;fg=bright-white>API</> <options=underscore>" . $this->outlookEndpoint . "</>\n");
+
+            $counter = 1;
+
+            foreach ($response['value'] as $message) {
+                $output->writeln("    - <comment>Processing email</comment> <info>$counter</info> <comment>of</comment> <info>$emailCount</info>:");
+
+                $detailedMessage = MicrosoftGraph\Me::message($message['id'], $credentials['access_token']);
+                list($response, $responseCode, $responseErrorMessage) = $this->parseOutlookInboundEmail($detailedMessage, $output);
+
+                if ($responseCode == 200) {
+                    $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
+                } else {
+                    if (!empty($responseErrorMessage)) {
+                        $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>$responseErrorMessage</>\n");
+                    } else {
+                        $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>" . $response['message'] . "</>\n");
+                    }
+                }
+
+                $counter++;
+            }
+
+            $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
+        }
+
+        return;
+    }
+
     public function parseInboundEmail($message, $output)
     {
         $curlHandler = curl_init();
@@ -188,6 +304,31 @@ class RefreshMailboxCommand extends Command
         curl_setopt($curlHandler, CURLOPT_POST, 1);
         curl_setopt($curlHandler, CURLOPT_URL, $this->endpoint);
         curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
+
+        $curlResponse = curl_exec($curlHandler);
+        
+        $response = json_decode($curlResponse, true);
+        $responseCode = curl_getinfo($curlHandler, CURLINFO_HTTP_CODE);
+        $responseErrorMessage = null;
+
+        if (curl_errno($curlHandler) || $responseCode != 200) {
+            $responseErrorMessage = curl_error($curlHandler);
+        }
+
+        curl_close($curlHandler);
+
+        return [$response, $responseCode, $responseErrorMessage];
+    }
+
+    public function parseOutlookInboundEmail($detailedMessage, $output)
+    {
+        $curlHandler = curl_init();
+        
+        curl_setopt($curlHandler, CURLOPT_HEADER, 0);
+        curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curlHandler, CURLOPT_POST, 1);
+        curl_setopt($curlHandler, CURLOPT_URL, $this->outlookEndpoint);
+        curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $detailedMessage]));
 
         $curlResponse = curl_exec($curlHandler);
         
