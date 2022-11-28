@@ -1,3 +1,7 @@
 helpdesk_member_mailbox_notification:
     path:     /mailbox/listener
     controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::processMailXHR
+
+helpdesk_member_outlook_mailbox_notification:
+    path:     /mailbox/outlook/listener
+    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::processOutlookMailXHR
