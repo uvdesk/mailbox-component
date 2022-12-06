@@ -20,10 +20,12 @@ use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
+use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
+// use Webkul\UVDesk\MailboxBundle\Utils\SMTP\Configuration as SmtpConfiguration;
+// use Webkul\UVDesk\MailboxBundle\Utils\SMTP\AppConfigurationInterface as SmtpAppConfigurationInterface;
 
 class MailboxService
 {
@@ -69,26 +71,15 @@ class MailboxService
         $mailerConfigurations = $mailerService->parseMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
-            // Mailer Configuration
-            $mailerConfiguration = null;
-
-            foreach ($mailerConfigurations as $configuration) {
-                if ($configuration->getId() == $params['smtp_server']['mailer_id']) {
-                    $mailerConfiguration = $configuration;
-
-                    break;
-                }
-            }
-
             // IMAP Configuration
-            $imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']);
+            $imapConfiguration = IMAP\Configuration::guessTransportDefinition($params['imap_server']);
 
-            if ($imapConfiguration instanceof AppConfigurationInterface) {
+            if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
                 $imapConfiguration
                     ->setClient($params['imap_server']['client'])
                     ->setUsername($params['imap_server']['username'])
                 ;
-            } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+            } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
                 $imapConfiguration
                     ->setUsername($params['imap_server']['username'])
                 ;
@@ -99,13 +90,37 @@ class MailboxService
                 ;
             }
 
+            // SMTP Configuration
+            $smtpConfiguration = SMTP\Configuration::guessTransportDefinition($params['smtp_server']);
+
+            if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
+                $smtpConfiguration
+                    ->setClient($params['smtp_server']['client'])
+                    ->setUsername($params['smtp_server']['username'])
+                ;
+            } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
+                $smtpConfiguration
+                    ->setUsername($params['smtp_server']['username'])
+                    ->setPassword($params['smtp_server']['password'])
+                ;
+            }  else {
+                $smtpConfiguration
+                    ->setHost($params['smtp_server']['host'])
+                    ->setPort($params['smtp_server']['port'])
+                    ->setUsername($params['smtp_server']['username'])
+                    ->setPassword($params['smtp_server']['password'])
+                ;
+            }
+
             // Mailbox Configuration
             $mailbox = new Mailbox($id);
             $mailbox
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
-                ->setIsDeleted(empty($params['deleted']) ? false : $params['deleted'])
+                ->setIsEmailDeliveryDisabled(empty($params['disable_outbound_emails']) ? false : $params['disable_outbound_emails'])
+                ->setIsStrictModeEnabled(empty($params['use_strict_mode']) ? false : $params['use_strict_mode'])
                 ->setImapConfiguration($imapConfiguration)
+                ->setSmtpConfiguration($smtpConfiguration)
             ;
             
             if (!empty($mailerConfiguration)) {
@@ -199,7 +214,7 @@ class MailboxService
         return false;
     }
 
-    private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
+    private function searchticketSubjectRefrence($senderEmail, $messageSubject) {
         
         // Search Criteria: Find ticket based on subject
         if (!empty($senderEmail) && !empty($messageSubject)) {

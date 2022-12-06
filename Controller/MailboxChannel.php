@@ -9,13 +9,15 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Configuration as ImapConfiguration;
+use Webkul\UVDesk\MailboxBundle\Utils\SMTP\Configuration as SmtpConfiguration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\UserService;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\AppConfigurationInterface as ImapAppConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\SimpleConfigurationInterface as ImapSimpleConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\SMTP\AppConfigurationInterface as SmtpAppConfigurationInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftApp;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftAccount;
 
@@ -35,8 +37,6 @@ class MailboxChannel extends AbstractController
         if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
-
-        $mailerConfigurationCollection = $mailerService->parseMailerConfigurations();
 
         $microsoftAppCollection = $entityManager->getRepository(MicrosoftApp::class)->findBy(['isEnabled' => true, 'isVerified' => true]);
         $microsoftAccountCollection = $entityManager->getRepository(MicrosoftAccount::class)->findAll();
@@ -59,11 +59,26 @@ class MailboxChannel extends AbstractController
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
 
+            // SMTP Configuration
+            if (!empty($params['smtp']['transport'])) {
+                $smtpConfiguration = SmtpConfiguration::createTransportDefinition($params['smtp']['transport'], !empty($params['smtp']['host']) ? trim($params['smtp']['host'], '"') : null);
+
+                if ($smtpConfiguration instanceof SmtpAppConfigurationInterface) {
+                    dump($smtpConfiguration);
+                    die;
+                } else {
+                    $smtpConfiguration
+                        ->setUsername($params['smtp']['username'])
+                        ->setPassword(urlencode($params['smtp']['password']))
+                    ;
+                }
+            }
+
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
                 $imapConfiguration = ImapConfiguration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
 
-                if ($imapConfiguration instanceof AppConfigurationInterface) {
+                if ($imapConfiguration instanceof ImapAppConfigurationInterface) {
                     if ($params['imap']['transport'] == 'outlook_oauth') {
                         $microsoftAccount = $entityManager->getRepository(MicrosoftAccount::class)->findOneById($params['imap']['username']);
         
@@ -71,7 +86,6 @@ class MailboxChannel extends AbstractController
                             $this->addFlash('warning', 'No configuration details were found for the provided microsoft account.');
         
                             return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-                                'mailerConfigurations' => $mailerConfigurationCollection, 
                                 'microsoftAppCollection' => $microsoftAppCollection, 
                                 'microsoftAccountCollection' => $microsoftAccountCollection, 
                             ]);
@@ -88,44 +102,32 @@ class MailboxChannel extends AbstractController
                         $this->addFlash('warning', 'The resolved IMAP configuration is not configured for any valid available app.');
         
                         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-                            'mailerConfigurations' => $mailerConfigurationCollection, 
                             'microsoftAppCollection' => $microsoftAppCollection, 
                             'microsoftAccountCollection' => $microsoftAccountCollection, 
                         ]);
                     }
-                } else if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                } else if ($imapConfiguration instanceof ImapSimpleConfigurationInterface) {
                     $imapConfiguration
                         ->setUsername($params['imap']['username'])
                     ;
                 } else {
                     $imapConfiguration
                         ->setUsername($params['imap']['username'])
-                        ->setPassword(base64_encode($params['imap']['password']))
+                        ->setPassword(urlencode($params['imap']['password']))
                     ;
                 }
             }
 
-            // Mailer Configuration
-            if (!empty($params['mailer_id'])) {
-                foreach ($mailerConfigurationCollection as $configuration) {
-                    if ($configuration->getId() == $params['mailer_id']) {
-                        $mailerConfiguration = $configuration;
-
-                        break;
-                    }
-                }
-            }
-
-            if (!empty($imapConfiguration) && !empty($mailerConfiguration)) {
+            if (!empty($imapConfiguration) && !empty($smtpConfiguration)) {
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
                 $mailbox = new Mailbox(!empty($params['id']) ? $params['id'] : null);
                 $mailbox
                     ->setName($params['name'])
                     ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
-                    ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
+                    ->setIsEmailDeliveryDisabled(!empty($params['isEmailDeliveryDisabled']) && 'on' == $params['isEmailDeliveryDisabled'] ? true : false)
                     ->setImapConfiguration($imapConfiguration)
-                    ->setMailerConfiguration($mailerConfiguration)
+                    ->setSmtpConfiguration($smtpConfiguration)
                 ;
 
                 $mailboxConfiguration->addMailbox($mailbox);
@@ -139,7 +141,6 @@ class MailboxChannel extends AbstractController
         }
 
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-            'mailerConfigurations' => $mailerConfigurationCollection, 
             'microsoftAppCollection' => $microsoftAppCollection, 
             'microsoftAccountCollection' => $microsoftAccountCollection, 
         ]);
@@ -152,7 +153,6 @@ class MailboxChannel extends AbstractController
         }
         
         $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-        $mailerConfigurationCollection = $mailerService->parseMailerConfigurations();
 
         foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
             if ($configuration->getId() == $id) {
@@ -196,18 +196,7 @@ class MailboxChannel extends AbstractController
                 ;
             }
 
-            // Mailer Configuration
-            if (!empty($params['mailer_id'])) {
-                foreach ($mailerConfigurationCollection as $configuration) {
-                    if ($configuration->getId() == $params['mailer_id']) {
-                        $mailerConfiguration = $configuration;
-
-                        break;
-                    }
-                }
-            }
-
-            if (!empty($imapConfiguration) && !empty($mailerConfiguration)) {
+            if (!empty($imapConfiguration) && !empty($smtpConfiguration)) {
                 $mailboxConfiguration = new MailboxConfiguration();
                 
                 foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
@@ -223,7 +212,7 @@ class MailboxChannel extends AbstractController
                             ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false)
                             ->setIsDeleted(!empty($params['isDeleted']) && 'on' == $params['isDeleted'] ? true : false)
                             ->setImapConfiguration($imapConfiguration)
-                            ->setMailerConfiguration($mailerConfiguration)
+                            ->setSmtpConfiguration($smtpConfiguration)
                         ;
 
                         $mailboxConfiguration->addMailbox($mailbox);
@@ -242,9 +231,11 @@ class MailboxChannel extends AbstractController
             }
         }
 
+        // dump($mailbox->getSmtpConfiguration()->getCode());
+        // die;
+
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
             'mailbox' => $mailbox ?? null, 
-            'mailerConfigurations' => $mailerConfigurationCollection, 
             'microsoftAppCollection' => $microsoftAppCollection, 
             'microsoftAccountCollection' => $microsoftAccountCollection, 
         ]);

@@ -1,11 +1,11 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap\Transport;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ResolvedConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\ResolvedTransportConfigurationInterface;
 
-class Yahoo implements ConfigurationInterface, ResolvedConfigurationInterface
+class Yahoo implements TransportConfigurationInterface, ResolvedTransportConfigurationInterface
 {
     CONST CODE = 'yahoo';
     CONST NAME = 'Yahoo';
@@ -27,16 +27,6 @@ class Yahoo implements ConfigurationInterface, ResolvedConfigurationInterface
     public static function getHost()
     {
         return self::HOST;
-    }
-
-    public static function getTransportCode()
-    {
-        return self::TRANSPORT_CODE;
-    }
-
-    public static function getTransportName()
-    {
-        return self::TRANSPORT_NAME;
     }
 
     public function setUsername($username)

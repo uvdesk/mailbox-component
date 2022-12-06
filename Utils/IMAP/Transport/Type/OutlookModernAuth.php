@@ -1,11 +1,11 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap\Transport;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\AppTransportConfigurationInterface;
 
-class OutlookModernAuth implements ConfigurationInterface, AppConfigurationInterface
+class OutlookModernAuth implements TransportConfigurationInterface, AppTransportConfigurationInterface
 {
     CONST CODE = 'outlook_oauth';
     CONST NAME = 'Outlook Modern Auth';

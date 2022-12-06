@@ -1,11 +1,11 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap\Transport;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\SimpleTransportConfigurationInterface;
 
-class Webhook implements ConfigurationInterface, SimpleConfigurationInterface
+class Webhook implements TransportConfigurationInterface, SimpleTransportConfigurationInterface
 {
     CONST CODE = 'webhook';
     CONST NAME = 'Webhook';

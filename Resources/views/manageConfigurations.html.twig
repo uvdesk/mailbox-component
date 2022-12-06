@@ -85,19 +85,20 @@
 					</label>
 				</div>
 
+				{# Delivery Status #}
 				<div class="uv-element-block">
 					<label>
 						<div class="uv-checkbox">
-							{% if mailbox.isDeleted is defined and mailbox.isDeleted == true %}
-								<input name="isDeleted" type="checkbox" checked="">
+							{% if mailbox.isEmailDeliveryDisabled is defined and mailbox.isEmailDeliveryDisabled == true %}
+								<input name="isEmailDeliveryDisabled" type="checkbox" checked="">
 							{% else %}
-								<input name="isDeleted" type="checkbox">
+								<input name="isEmailDeliveryDisabled" type="checkbox">
 							{% endif %}
 
 							<span class="uv-checkbox-view"></span>
 						</div>
 
-						<span class="uv-checkbox-label">{{ 'Permanently delete emails from mailbox'|trans }}</span>
+						<span class="uv-checkbox-label">{{ 'Disable email delivery'|trans }}</span>
 					</label>
 				</div>
 
@@ -111,7 +112,7 @@
 					<label class="uv-field-label">{{ 'Transport'|trans }}</label>
 
 					{% if mailbox is defined %}
-						<select name="imap[transport]" id="mailboxTransportType" class="uv-select">
+						<select name="imap[transport]" id="mailboxIncomingTransportType" class="uv-select">
 							<option value="gmail" {% if mailbox.imapConfiguration.code == 'gmail' %}selected{% endif %}>{{ 'Gmail'|trans }}</option>
 							<option value="custom" {% if mailbox.imapConfiguration.code == 'custom' %}selected{% endif %}>{{ 'IMAP'|trans }}</option>
 							<option value="outlook" {% if mailbox.imapConfiguration.code == 'outlook' %}selected{% endif %}>{{ 'Outlook'|trans }}</option>
@@ -120,7 +121,7 @@
 							<option value="yahoo" {% if mailbox.imapConfiguration.code == 'yahoo' %}selected{% endif %}>{{ 'Yahoo'|trans }}</option>
 						</select>
 					{% else %}
-						<select name="imap[transport]" id="mailboxTransportType" class="uv-select">
+						<select name="imap[transport]" id="mailboxIncomingTransportType" class="uv-select">
 							<option value="gmail">{{ 'Gmail'|trans }}</option>
 							<option value="custom" selected>{{ 'IMAP'|trans }}</option>
 							<option value="outlook">{{ 'Outlook'|trans }}</option>
@@ -135,36 +136,33 @@
 
 				<div class="uv-hr"></div>
 
-				{# Mailer Settings #}
+				{# SMTP Settings #}
 				<h3 class="section-heading">{{ 'Outbound Emails'|trans }}</h3>
-				<p class="section-description">
-					{{ 
-						'Select a valid configuration from %someVariable% to be used for reverting to emails from your mailbox.'|trans({
-							'%someVariable%': "<a href='" ~ path('helpdesk_member_mailer_settings') ~ "' target='_blank'>mailer settings</a>"
-						})|raw 
-					}}
-				</p>
+				<p class="section-description">{{ 'Manage how you wish to send emails from your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
-					<label class="uv-field-label">{{ 'Mailer ID'|trans }}</label>
+					<label class="uv-field-label">{{ 'Transport'|trans }}</label>
 
-					{% if mailerConfigurations is defined and mailerConfigurations is not empty %}
-						<select name="mailer_id" class="uv-select">
-							<option value="none">{{ 'None Selected'|trans }}</option>
-							{% for configuration in mailerConfigurations %}
-								{% if mailbox is defined and mailbox.mailerConfiguration and mailbox.mailerConfiguration.id == configuration.id %}
-									<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
-								{% else %}
-									<option value="{{ configuration.id }}">{{ configuration.id }}</option>
-								{% endif %}
-							{% endfor %}
+					{% if mailbox is defined %}
+						<select name="smtp[transport]" id="mailboxOutgoingTransportType" class="uv-select">
+							<option value="smtp" {% if mailbox.smtpConfiguration.transportCode == 'smtp' %}selected{% endif %}>{{ 'SMTP'|trans }}</option>
+							<option value="gmail" {% if mailbox.smtpConfiguration.transportCode == 'gmail' %}selected{% endif %}>{{ 'Gmail'|trans }}</option>
+							<option value="yahoo" {% if mailbox.smtpConfiguration.transportCode == 'yahoo' %}selected{% endif %}>{{ 'Yahoo'|trans }} </option>
+							<option value="outlook" {% if mailbox.smtpConfiguration.transportCode == 'outlook' %}selected{% endif %}>{{ 'Outlook'|trans }} </option>
+							<option value="outlook_oauth" {% if mailbox.smtpConfiguration.transportCode == 'outlook_oauth' %}selected{% endif %}>{{ 'Outlook Modern Auth'|trans }} </option>
 						</select>
 					{% else %}
-						<select name="mailer_id" class="uv-select">
-							<option value="none">{{ 'None Selected'|trans }}</option>
+						<select name="smtp[transport]" id="mailboxOutgoingTransportType" class="uv-select">
+							<option value="smtp" selected>{{ 'SMTP'|trans }}</option>
+							<option value="gmail">{{ 'Gmail'|trans }}</option>
+							<option value="yahoo">{{ 'Yahoo'|trans }}</option>
+							<option value="outlook">{{ 'Outlook'|trans }} </option>
+							<option value="outlook_oauth">{{ 'Outlook Modern Auth'|trans }} </option>
 						</select>
 					{% endif %}
 				</div>
+
+				<div class="smtp-setting-references"></div>
 
 				<div class="uv-hr"></div>
 				
@@ -343,6 +341,160 @@
 		</div>
 	</script>
 
+	<script id="default_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Server'|trans }}</label>
+
+            <div class="uv-field-block">
+                <% if (typeof(host) != 'undefined' && host != '') { %>
+                    <input type="text" name="smtp[host]" class="uv-field" value="<%- host %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[host]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+            
+            <div class="uv-field-block">
+                <% if (typeof(username) != 'undefined' && username != '') { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="<%- username %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Password'|trans }}</label>
+            
+            <div class="uv-field-block">
+                <input type="password" name="smtp[password]" class="uv-field" value="" placeholder="Associated Password" />
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Port'|trans }}</label>
+            
+            <div class="uv-field-block">
+                <% if (typeof(port) != 'undefined' && port != '') { %>
+                    <input type="text" name="smtp[port]" class="uv-field" value="<%- port %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[port]" class="uv-field" value="465" />
+                <% } %>
+            </div>
+        </div>
+	</script>
+
+    <script id="gmail_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            <div class="uv-field-block">
+                <% if (typeof(username) != 'undefined' && username != '') { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="<%- username %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Password'|trans }}</label>
+
+            <div class="uv-field-block">
+                <input type="password" name="smtp[password]" class="uv-field" value="" placeholder="Associated Password" />
+            </div>
+        </div>
+	</script>
+
+    <script id="yahoo_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            <div class="uv-field-block">
+                <% if (typeof(username) != 'undefined' && username != '') { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="<%- username %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Password'|trans }}</label>
+
+            <div class="uv-field-block">
+                <input type="password" name="smtp[password]" class="uv-field" value="" placeholder="Associated Password" />
+            </div>
+        </div>
+	</script>
+
+    <script id="outlook_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            <div class="uv-field-block">
+                <% if (typeof(username) != 'undefined' && username != '') { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="<%- username %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Password'|trans }}</label>
+
+            <div class="uv-field-block">
+                <input type="password" name="smtp[password]" class="uv-field" value="" placeholder="Associated Password" />
+            </div>
+        </div>
+	</script>
+
+    <script id="outlook_oauth_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Microsoft App'|trans }}</label>
+
+            {% if microsoftAppCollection is defined and microsoftAppCollection is not empty %}
+                <select name="app" class="uv-select">
+                    {% for microsoftApp in microsoftAppCollection %}
+                        <option value="{{ microsoftApp.id }}" selected>{{ microsoftApp.name }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="app" class="uv-select" disabled>
+                    <option selected>{{ 'No configured microsoft app currently available'|trans }}</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <p class="uv-field-info">Continue by signing in through microsoft to add a new account.</p>
+
+        <a href="{{ path('uvdesk_member_core_framework_integrations_microsoft_apps_add_account', { appId: '1', origin: 'helpdesk_member_mailer_create_mailer_configuration' }) }}" class="uv-btn" style="background-color: #00a1f1;">Continue with Microsoft</a>
+
+        <div class="uv-hr"></div>
+
+        <p class="uv-field-info">Or select from one of the previously configured microsoft accounts.</p>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            {% if microsoftAccountCollection is defined and microsoftAccountCollection is not empty %}
+                <select name="smtp[username]" class="uv-select">
+                    {% for microsoftAccount in microsoftAccountCollection %}
+                        <option value="{{ microsoftAccount.id }}" selected>{{ microsoftAccount.email }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="smtp[username]" class="uv-select" disabled>
+                    <option selected>{{ 'No microsoft account currently available'|trans }}</option>
+                </select>
+            {% endif %}
+        </div>
+	</script>
+
 	<script type="text/javascript">
 		$(function () {
 			var MailboxConfigurationModel = Backbone.Model.extend({
@@ -353,20 +505,19 @@
 							return "Please specify a valid name for your mailbox.";
 						}
                     },
-					mailer_id: function(value) {
-						if (value == undefined || value == '' || value == 'none') {
-							return "Please select a valid mailer configuration.";
-						}
-                    },
 					"imap[host]": function(value) {
-                        if ('custom' == this.get('transport') || 'imap' == this.get('transport')) {
+						let incomingEmailSettings = this.get('incoming');
+
+                        if ('custom' == incomingEmailSettings.transport || 'imap' == incomingEmailSettings.transport) {
                             if (value == undefined || value == '') {
                                 return "Please specify a valid host address.";
                             }
                         }
                     },
                     "imap[username]": function(value) {
-                        if ('outlook_oauth' != this.get('transport')) {
+						let incomingEmailSettings = this.get('incoming');
+
+                        if ('outlook_oauth' != incomingEmailSettings.transport) {
                             if (value == undefined || value == '') {
                                 return "Please enter a valid email address";
                             } else if (/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) == false) {
@@ -377,6 +528,44 @@
                     "imap[password]": function(value) {
                         if ((value == undefined || value == '') && this.attributes['imap[transport]'] != 'webhook' && this.attributes['imap[transport]'] != 'outlook_oauth') {
                             return "Please enter the associated account password.";
+                        }
+                    },
+					"smtp[username]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('outlook_oauth' != outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please enter a valid email address";
+                            } else if (/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) == false) {
+                                return "Please specify a valid email address";
+                            }
+                        }
+                    },
+                    "smtp[password]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+						
+                        if ('outlook_oauth' != outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please enter the password associated with your email address";
+                            }
+                        }
+                    },
+                    "smtp[host]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('smtp' == outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please enter your server host address";
+                            }
+                        }
+                    },
+                    "smtp[port]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('smtp' == outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please specify a port number to connect with your mail server";
+                            }
                         }
                     }
 				}
@@ -389,40 +578,96 @@
 				outlook_imap_configuration_template: _.template($("#outlook_imap_configuration_template").html()),
 				outlook_oauth_imap_configuration_template: _.template($("#outlook_oauth_imap_configuration_template").html()),
 				webhook_imap_configuration_template: _.template($("#webhook_imap_configuration_template").html()),
+				default_smtp_configuration_template: _.template($("#default_smtp_configuration_template").html()),
+                gmail_smtp_configuration_template: _.template($("#gmail_smtp_configuration_template").html()),
+                yahoo_smtp_configuration_template: _.template($("#yahoo_smtp_configuration_template").html()),
+                outlook_smtp_configuration_template: _.template($("#outlook_smtp_configuration_template").html()),
+                outlook_oauth_smtp_configuration_template: _.template($("#outlook_oauth_smtp_configuration_template").html()),
 				events: {
-                    'change #mailboxTransportType': 'changeTransportType',
+                    'change #mailboxIncomingTransportType': 'changeIncomingTransportType',
+					'change #mailboxOutgoingTransportType': 'changeOutgoingTransportType',
 					'click #saveConfigurationSettings' : "submitConfigurationSettings",
 				},
 				initialize: function() {
                     Backbone.Validation.bind(this);
-                    this.renderTransportConfigurations();
+
+                    this.renderIncomingTransportConfigurations();
+					this.renderOutgoingTransportConfigurations();
 				},
-                changeTransportType: function(e) {
+                changeIncomingTransportType: function(e) {
+					let transport = $(e.target).val();
+					let incomingEmailSettings = this.model.get('incoming');
+					
+					incomingEmailSettings.transport = transport;
+					this.model.set('incoming', incomingEmailSettings);
+
+					console.log('changeIncomingTransportType model:', incomingEmailSettings);
+
+                    this.renderIncomingTransportConfigurations();
+                },
+				changeOutgoingTransportType: function(e) {
+					let transport = $(e.target).val();
+					let outgoingEmailSettings = this.model.get('outgoing');
+					
+					outgoingEmailSettings.transport = transport;
+					this.model.set('outgoing', outgoingEmailSettings);
+
+					console.log('changeOutgoingTransportType model:', this.model);
+
                     if (true) {
                         this.model.set('transport', $(e.target).val());
                     }
 
-                    this.renderTransportConfigurations();
+                    this.renderOutgoingTransportConfigurations();
                 },
-                renderTransportConfigurations: function() {
-                    switch (this.model.get('transport')) {
+                renderIncomingTransportConfigurations: function() {
+					let incomingEmailSettings = this.model.get('incoming');
+
+					console.log('renderIncomingTransportConfigurations:', incomingEmailSettings);
+
+                    switch (incomingEmailSettings.transport) {
                         case 'custom':
-                            $('.imap-setting-references').html(this.default_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.default_imap_configuration_template(incomingEmailSettings));
                             break;
                         case 'gmail':
-                            $('.imap-setting-references').html(this.gmail_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.gmail_imap_configuration_template(incomingEmailSettings));
                             break;
                         case 'yahoo':
-                            $('.imap-setting-references').html(this.yahoo_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.yahoo_imap_configuration_template(incomingEmailSettings));
                             break;
 						case 'outlook':
-                            $('.imap-setting-references').html(this.outlook_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.outlook_imap_configuration_template(incomingEmailSettings));
                             break;
 						case 'outlook_oauth':
-                            $('.imap-setting-references').html(this.outlook_oauth_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.outlook_oauth_imap_configuration_template(incomingEmailSettings));
                             break;
 						case 'webhook':
-                            $('.imap-setting-references').html(this.webhook_imap_configuration_template(this.model.attributes));
+                            $('.imap-setting-references').html(this.webhook_imap_configuration_template(incomingEmailSettings));
+                            break;
+                        default:
+                            break;
+                    }
+                },
+				renderOutgoingTransportConfigurations: function() {
+					let outgoingEmailSettings = this.model.get('outgoing');
+
+					console.log('renderOutgoingTransportConfigurations:', outgoingEmailSettings);
+
+                    switch (outgoingEmailSettings.transport) {
+						case 'smtp':
+                            $('.smtp-setting-references').html(this.default_smtp_configuration_template(outgoingEmailSettings));
+                            break;
+                        case 'gmail':
+                            $('.smtp-setting-references').html(this.gmail_smtp_configuration_template(outgoingEmailSettings));
+                            break;
+                        case 'yahoo':
+                            $('.smtp-setting-references').html(this.yahoo_smtp_configuration_template(outgoingEmailSettings));
+                            break;
+						case 'outlook':
+                            $('.smtp-setting-references').html(this.outlook_smtp_configuration_template(outgoingEmailSettings));
+                            break;
+						case 'outlook_oauth':
+                            $('.smtp-setting-references').html(this.outlook_oauth_smtp_configuration_template(outgoingEmailSettings));
                             break;
                         default:
                             break;
@@ -430,6 +675,7 @@
                 },
                 submitConfigurationSettings: function(e) {
                     e.preventDefault();
+
                     this.model.set(this.$el.serializeObject());
 
 			        if (this.model.isValid(true)) {
@@ -439,29 +685,25 @@
 			});
 
             {% if mailbox is defined %}
-				{% if mailbox.imapConfiguration.host is defined and mailbox.imapConfiguration.host is not empty %}
-					new MailboxConfigurationView({
-						el: $("#mailbox-settings-view"),
-						model: new MailboxConfigurationModel({
-							transport: "{{ mailbox.imapConfiguration.code }}",
-							host: "{{ mailbox.imapConfiguration.host is defined }}",
-							username: "{{ mailbox.imapConfiguration.username }}",
-						})
-					});
-				{% else %}
-					new MailboxConfigurationView({
-						el: $("#mailbox-settings-view"),
-						model: new MailboxConfigurationModel({
-							transport: "{{ mailbox.imapConfiguration.code }}",
-							host: "{{ mailbox.imapConfiguration.host is defined }}",
-							username: "{{ mailbox.imapConfiguration.username }}",
-						})
-					});
-				{% endif %}
+				new MailboxConfigurationView({
+					el: $("#mailbox-settings-view"),
+					model: new MailboxConfigurationModel({
+						incoming: {
+							transport: "{{ mailbox.imapConfiguration.code is defined and mailbox.imapConfiguration.code is not empty ? mailbox.imapConfiguration.code : 'custom' }}",
+							host: "{{ mailbox.imapConfiguration.host is defined and mailbox.imapConfiguration.host is not empty ? mailbox.imapConfiguration.host : '' }}",
+							username: "{{ mailbox.imapConfiguration.username is defined and mailbox.imapConfiguration.username is not empty ? mailbox.imapConfiguration.username : '' }}",
+						},
+						outgoing: {
+							transport: "{{ mailbox.smtpConfiguration.transportCode is defined and mailbox.smtpConfiguration.transportCode is not empty ? mailbox.smtpConfiguration.transportCode : 'smtp' }}",
+							host: "{{ mailbox.smtpConfiguration.host is defined and mailbox.smtpConfiguration.host is not empty ? mailbox.smtpConfiguration.host : '' }}",
+							username: "{{ mailbox.smtpConfiguration.username is defined and mailbox.smtpConfiguration.username is not empty ? mailbox.smtpConfiguration.username : '' }}",
+						}
+					})
+				});
             {% else %}
                 new MailboxConfigurationView({
                     el: $("#mailbox-settings-view"),
-                    model: new MailboxConfigurationModel({ transport: 'custom' })
+                    model: new MailboxConfigurationModel({ incoming: { transport: 'custom' }, outgoing: { transport: 'smtp' } })
                 });
             {% endif %}
 		});

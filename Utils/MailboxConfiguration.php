@@ -3,8 +3,7 @@
 namespace Webkul\UVDesk\MailboxBundle\Utils;
 
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 
 final class MailboxConfiguration
 {
@@ -16,8 +15,8 @@ final class MailboxConfiguration
     public function addMailbox(Mailbox $mailbox)
     {
         if (
-            !$mailbox->getImapConfiguration() instanceof AppConfigurationInterface 
-            && !$mailbox->getImapConfiguration() instanceof SimpleConfigurationInterface
+            !$mailbox->getImapConfiguration() instanceof IMAP\Transport\AppTransportConfigurationInterface 
+            && !$mailbox->getImapConfiguration() instanceof IMAP\Transport\SimpleTransportConfigurationInterface
         ) {
             if (preg_match('/"/', $mailbox->getImapConfiguration()->getHost())) {
                 $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), '"')); 

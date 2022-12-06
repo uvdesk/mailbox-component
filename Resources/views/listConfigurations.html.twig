@@ -170,6 +170,12 @@
 				<% } %>
 			</p>
 
+			<p style="line-height: 1.4em; margin-bottom: 10px;">
+				<% if (isEmailDeliveryDisabled) { %>
+					<span class="uv-app-list-flag-inactive">Delivery Disabled</span>
+				<% } %>
+			</p>
+
 			<div class="uv-app-list-actions">
 				<a href="{{ path('helpdesk_member_mailbox_update_configuration', {'id': '' }) }}/<%- id %>"  class="edit-mailbox">
 					{{ "Edit"|trans }}
