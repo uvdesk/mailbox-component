@@ -3,8 +3,9 @@
 return <<<TEMPLATE
         [[ id ]]:
             name: [[ name ]]
-            enabled: [[ status ]]
+            default: [[ default ]]
             disable_outbound_emails: [[ disable_outbound_emails ]]
+            enabled: [[ status ]]
             use_strict_mode: [[ use_strict_mode ]]
 
             # Incoming email settings

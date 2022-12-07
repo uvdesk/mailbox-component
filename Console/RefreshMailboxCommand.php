@@ -10,14 +10,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftApp;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\MicrosoftAccount;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\Microsoft\Graph as MicrosoftGraph;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP\AppConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP\SimpleConfigurationInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Services\MicrosoftIntegration;
 use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 
 class RefreshMailboxCommand extends Command
 {
@@ -104,11 +102,11 @@ class RefreshMailboxCommand extends Command
             }
 
             try {
-                $imapConfiguration = ImapConfiguration::guessTransportDefinition($mailbox['imap_server']);
+                $imapConfiguration = IMAP\Configuration::guessTransportDefinition($mailbox['imap_server']);
     
-                if ($imapConfiguration instanceof SimpleConfigurationInterface) {
+                if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
                     $output->writeln("  <comment>Cannot fetch emails for mailboxes of type simple configuration.</comment>");
-                } else if ($imapConfiguration instanceof AppConfigurationInterface) {
+                } else if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
                     $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($mailbox['imap_server']['client']);
 
                     if (empty($microsoftApp)) {

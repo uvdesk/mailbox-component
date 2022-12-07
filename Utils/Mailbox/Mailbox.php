@@ -21,6 +21,7 @@ class Mailbox
 
     private $id = null;
     private $name = null;
+    private $isDefault = false;
     private $isEnabled = false;
     private $isEmailDeliveryDisabled = false;
     private $isStrictModeEnabled = false;
@@ -52,6 +53,18 @@ class Mailbox
     public function getName()
     {
         return $this->name;
+    }
+
+    public function setIsDefault(bool $isDefault)
+    {
+        $this->isDefault = $isDefault;
+
+        return $this;
+    }
+
+    public function getIsDefault() : bool
+    {
+        return $this->isDefault;
     }
 
     public function setIsEnabled(bool $isEnabled)
@@ -145,10 +158,11 @@ class Mailbox
 
         $smtpTemplate = '';
 
-        if ($smtpConfiguration instanceof SMTP\Transport\AppConfigurationInterface) {
+        if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
             $smtpTemplate = strtr(require self::SMTP_APP_CONFIGURATION_TEMPLATE, [
                 '[[ client ]]' => $smtpConfiguration->getClient(),
                 '[[ username ]]' => $smtpConfiguration->getUsername(), 
+                '[[ type ]]' => $smtpConfiguration->getType(), 
             ]);
         } else {
             $smtpTemplate = strtr(require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE, [
@@ -161,8 +175,9 @@ class Mailbox
         return strtr(require self::MAILBOX_CONFIGURATION_TEMPLATE, [
             '[[ id ]]' => $this->getId(),
             '[[ name ]]' => $this->getName(),
-            '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
+            '[[ default ]]' => $this->getIsDefault() ? 'true' : 'false',
             '[[ disable_outbound_emails ]]' => $this->getIsEmailDeliveryDisabled() ? 'true' : 'false',
+            '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
             '[[ use_strict_mode ]]' => $this->getIsStrictModeEnabled() ? 'true' : 'false',
             '[[ smtp_settings ]]' => $smtpTemplate,
             '[[ imap_settings ]]' => $imapTemplate,

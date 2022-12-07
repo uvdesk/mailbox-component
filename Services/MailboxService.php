@@ -20,12 +20,9 @@ use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
-use Webkul\UVDesk\CoreFrameworkBundle\Mailer\MailerService;
 
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
-// use Webkul\UVDesk\MailboxBundle\Utils\SMTP\Configuration as SmtpConfiguration;
-// use Webkul\UVDesk\MailboxBundle\Utils\SMTP\AppConfigurationInterface as SmtpAppConfigurationInterface;
 
 class MailboxService
 {
@@ -36,14 +33,12 @@ class MailboxService
 	private $requestStack;
     private $entityManager;
     private $mailboxCollection = [];
-    private $mailerService;
 
-    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, MailerService $mailerService)
+    public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager)
     {
         $this->container = $container;
 		$this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
-        $this->mailerService = $mailerService;
     }
 
     public function getPathToConfigurationFile()
@@ -67,8 +62,6 @@ class MailboxService
 
         // Read configurations from package config.
         $mailboxConfiguration = new MailboxConfiguration();
-        $mailerService = $this->mailerService;
-        $mailerConfigurations = $mailerService->parseMailerConfigurations();
 
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
             // IMAP Configuration
@@ -116,18 +109,13 @@ class MailboxService
             $mailbox = new Mailbox($id);
             $mailbox
                 ->setName($params['name'])
+                ->setIsDefault($params['default'])
                 ->setIsEnabled($params['enabled'])
                 ->setIsEmailDeliveryDisabled(empty($params['disable_outbound_emails']) ? false : $params['disable_outbound_emails'])
                 ->setIsStrictModeEnabled(empty($params['use_strict_mode']) ? false : $params['use_strict_mode'])
                 ->setImapConfiguration($imapConfiguration)
                 ->setSmtpConfiguration($smtpConfiguration)
             ;
-            
-            if (!empty($mailerConfiguration)) {
-                $mailbox->setMailerConfiguration($mailerConfiguration);
-            } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
-                $mailbox->setMailerConfiguration($mailerService->createConfiguration('smtp', $params['smtp_server']['mailer_id']));
-            }
 
             $mailboxConfiguration->addMailbox($mailbox);
         }

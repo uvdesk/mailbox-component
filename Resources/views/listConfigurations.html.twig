@@ -161,6 +161,10 @@
 			<p style="line-height: 1.4em; margin-bottom: 10px;">
 				<%- name %> 
 			</p>
+
+			<% if (isDefault) { %>
+				<span class="uv-app-list-flag-active">Default</span>
+			<% } %>
 			
 			<p style="line-height: 1.4em; margin-bottom: 10px;">
 				<% if (isEnabled) { %>

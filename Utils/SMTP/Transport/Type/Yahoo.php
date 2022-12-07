@@ -7,9 +7,8 @@ use Webkul\UVDesk\MailboxBundle\Utils\SMTP\Transport\ResolvedTransportConfigurat
 
 class Yahoo implements TransportConfigurationInterface, ResolvedTransportConfigurationInterface
 {
-    CONST TRANSPORT_CODE = 'yahoo';
-    CONST TRANSPORT_NAME = 'Yahoo';
-
+    CONST CODE = 'yahoo';
+    CONST NAME = 'Yahoo';
     CONST HOST = 'smtp.mail.yahoo.com';
     CONST PORT = '587';
 

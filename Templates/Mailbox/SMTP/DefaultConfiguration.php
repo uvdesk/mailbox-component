@@ -5,6 +5,7 @@ return <<<TEMPLATE
                 host: '[[ host ]]'
                 username: [[ username ]]
                 password: [[ password ]]
+
 TEMPLATE;
 
 ?>
