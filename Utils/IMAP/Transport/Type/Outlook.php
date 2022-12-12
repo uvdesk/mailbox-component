@@ -1,26 +1,19 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap\Transport;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\CustomConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\ResolvedTransportConfigurationInterface;
 
-class Custom implements ConfigurationInterface, CustomConfigurationInterface
+class Outlook implements TransportConfigurationInterface, ResolvedTransportConfigurationInterface
 {
-    CONST CODE = 'custom';
-    CONST NAME = 'Custom';
+    CONST CODE = 'outlook';
+    CONST NAME = 'Outlook';
+    CONST HOST = '{outlook.office365.com:993/imap/ssl}INBOX';
 
-    private $host;
     private $username;
     private $password;
-
-    public function __construct($host)
-    {
-        $this->setHost($host);
-
-        return $this;
-    }
-
+    
     public static function getCode()
     {
         return self::CODE;
@@ -31,16 +24,9 @@ class Custom implements ConfigurationInterface, CustomConfigurationInterface
         return self::NAME;
     }
 
-    public function setHost($host)
+    public static function getHost()
     {
-        $this->host = $host;
-
-        return $this;
-    }
-
-    public function getHost()
-    {
-        return $this->host;
+        return self::HOST;
     }
 
     public function setUsername($username)

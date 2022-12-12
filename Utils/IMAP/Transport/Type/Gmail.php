@@ -1,11 +1,11 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap\Transport;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\ResolvedConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\ResolvedTransportConfigurationInterface;
 
-class Gmail implements ConfigurationInterface, ResolvedConfigurationInterface
+class Gmail implements TransportConfigurationInterface, ResolvedTransportConfigurationInterface
 {
     CONST CODE = 'gmail';
     CONST NAME = 'Gmail';

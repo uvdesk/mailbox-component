@@ -3,8 +3,7 @@
 namespace Webkul\UVDesk\MailboxBundle\Utils;
 
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\AppConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\SimpleConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 
 final class MailboxConfiguration
 {
@@ -12,12 +11,13 @@ final class MailboxConfiguration
     const CONFIGURATION_TEMPLATE = __DIR__ . "/../Templates/Mailbox/Mailbox.php";
 
     private $collection = [];
+    private $defaultMailbox = null;
 
     public function addMailbox(Mailbox $mailbox)
     {
         if (
-            !$mailbox->getImapConfiguration() instanceof AppConfigurationInterface 
-            && !$mailbox->getImapConfiguration() instanceof SimpleConfigurationInterface
+            !$mailbox->getImapConfiguration() instanceof IMAP\Transport\AppTransportConfigurationInterface 
+            && !$mailbox->getImapConfiguration() instanceof IMAP\Transport\SimpleTransportConfigurationInterface
         ) {
             if (preg_match('/"/', $mailbox->getImapConfiguration()->getHost())) {
                 $mailbox->getImapConfiguration()->setHost(trim($mailbox->getImapConfiguration()->getHost(), '"')); 
@@ -54,9 +54,37 @@ final class MailboxConfiguration
         return $this;
     }
 
-    public function getMailboxes() : array
+    public function getMailboxes(): array
     {
         return $this->collection;
+    }
+
+    public function getMailbox($mailboxEmail): ?Mailbox
+    {
+        foreach ($this->collection as $mailbox) {
+            $smtpConfiguration = $mailbox->getSmtpConfiguration();
+
+            if (!empty($smtpConfiguration) && $smtpConfiguration->getUsername() == $mailboxEmail) {
+                return $mailbox;
+            }
+        }
+
+        return null;
+    }
+
+    public function getDefaultMailbox(): ?Mailbox
+    {
+        if (empty($this->defaultMailbox)) {
+            foreach ($this->collection as $mailbox) {
+                if ($mailbox->getIsDefault()) {
+                    $this->defaultMailbox = $mailbox;
+    
+                    break;
+                }
+            }
+        }
+
+        return $this->defaultMailbox ?? null;
     }
 
     public function __toString()

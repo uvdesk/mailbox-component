@@ -1,6 +1,12 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP;
+
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\AppTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\CustomTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\ResolvedTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\SimpleTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
 
 final class Configuration
 {
@@ -11,7 +17,7 @@ final class Configuration
         // Force prevent instantiation
     }
 
-    private static function getAvailableDefinitions(bool $ignoreCache = false) : array
+    private static function getAvailableDefinitions(bool $ignoreCache = false): array
     {
         if (empty(self::$reflectedDefinitions) || true === $ignoreCache) {
             if (true === $ignoreCache) {
@@ -20,26 +26,18 @@ final class Configuration
             }
 
             // Scan all php files within the target namespace directory
-            $scannedFiles = array_filter(scandir(__DIR__ . "/Transport"), function($path) {
+            $scannedFiles = array_filter(scandir(__DIR__ . "/Transport/Type"), function($path) {
                 return ('.' != $path && '..' != $path) ? (bool) ('php' === substr($path, strpos($path, '.') + 1)) : false;
             });
-    
+
             // Filter invalid\unsupported classes
             foreach ($scannedFiles as $fileName) {
-                $classPath = sprintf("%s\Transport\%s", __NAMESPACE__, substr($fileName, 0, strpos($fileName, '.')));
+                $classPath = sprintf("%s\Transport\Type\%s", __NAMESPACE__, substr($fileName, 0, strpos($fileName, '.')));
     
                 try {
                     $reflectionClass = new \ReflectionClass($classPath);
     
-                    if (
-                        $reflectionClass->isInstantiable() 
-                        && (
-                            $reflectionClass->implementsInterface(AppConfigurationInterface::class) 
-                            || $reflectionClass->implementsInterface(SimpleConfigurationInterface::class) 
-                            || $reflectionClass->implementsInterface(ResolvedConfigurationInterface::class) 
-                            || $reflectionClass->implementsInterface(CustomConfigurationInterface::class) 
-                        )
-                    ) {
+                    if ($reflectionClass->isInstantiable() && $reflectionClass->implementsInterface(TransportConfigurationInterface::class)) {
                         self::$reflectedDefinitions[] = $reflectionClass;
                     }
                 } catch (\ReflectionException $exception) {
@@ -53,26 +51,27 @@ final class Configuration
         return self::$reflectedDefinitions;
     }
 
-    public static function getSupportedTransportTypes() : array
+    public static function getSupportedTransportTypes(): array
     {
-        return array_map(function ($imapDefinition) {
-            return $imapDefinition->getName()::getCode();
+        return array_map(function ($reflectionClass) {
+            return $reflectionClass->getName()::getCode();
         }, self::getAvailableDefinitions());
     }
 
-    public static function guessTransportDefinition(array $params) : ConfigurationInterface
+    public static function guessTransportDefinition(array $params): TransportConfigurationInterface
     {
         foreach (self::getAvailableDefinitions() as $reflectedImapDefinition) {
             // Use custom configuration only when no other transport type matches the provided configs
-            if (true === $reflectedImapDefinition->implementsInterface(CustomConfigurationInterface::class)) {
+            if (true === $reflectedImapDefinition->implementsInterface(CustomTransportConfigurationInterface::class)) {
                 $customConfigurationReflection = $reflectedImapDefinition;
+
                 continue;
             }
 
             if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
                 return $reflectedImapDefinition->newInstance();
             } else if (empty($params['host'])) {
-                if (true === $reflectedImapDefinition->implementsInterface(AppConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleConfigurationInterface::class)) {
+                if (true === $reflectedImapDefinition->implementsInterface(AppTransportConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleTransportConfigurationInterface::class)) {
                     return $reflectedImapDefinition->newInstance();
                 }
             }
@@ -85,7 +84,7 @@ final class Configuration
         throw new \Exception('No matching imap definition found for host address "' . $params['host'] . '".');
     }
 
-    public static function createTransportDefinition($transportCode, $host = null) : ConfigurationInterface
+    public static function createTransportDefinition($transportCode, $host = null): TransportConfigurationInterface
     {
         if (false == in_array($transportCode, self::getSupportedTransportTypes(), true)) {
             throw new \Exception('No imap definition found for transport type "' . $transportCode . '".');
@@ -96,7 +95,7 @@ final class Configuration
                 continue;
             }
 
-            if (true === $reflectedImapDefinition->implementsInterface(CustomConfigurationInterface::class)) {
+            if (true === $reflectedImapDefinition->implementsInterface(CustomTransportConfigurationInterface::class)) {
                 return $reflectedImapDefinition->newInstance($host);
             }
 

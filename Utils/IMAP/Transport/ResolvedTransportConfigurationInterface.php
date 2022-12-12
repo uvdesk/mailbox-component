@@ -1,8 +1,8 @@
 <?php
 
-namespace Webkul\UVDesk\MailboxBundle\Utils\Imap;
+namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport;
 
-interface ResolvedConfigurationInterface
+interface ResolvedTransportConfigurationInterface
 {
     public static function getCode();
     

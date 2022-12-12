@@ -19,7 +19,3 @@ helpdesk_member_mailbox_remove_configuration_xhr:
     path:     /settings/mailbox/remove/{id}
     controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::removeMailboxConfiguration
     defaults: { id: ''}
-
-helpdesk_member_mailbox_direct_convert_mail:
-    path:     /processRawEmail
-    controller: Webkul\UVDesk\MailboxBundle\Controller\MailboxChannelXHR::processRawContentMail

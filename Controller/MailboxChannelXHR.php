@@ -13,30 +13,60 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 class MailboxChannelXHR extends AbstractController
 {
-    private $mailboxService;
-    private $translator;
-    private $kernel;
-
-    public function __construct(KernelInterface $kernel, MailboxService $mailboxService, TranslatorInterface $translator)
+    public function loadMailboxesXHR(Request $request, MailboxService $mailboxService)
     {
-        $this->mailboxService = $mailboxService;
-        $this->translator = $translator;
-        $this->kernel = $kernel;
+        $collection = array_map(function ($mailbox) {
+            return [
+                'id' => $mailbox->getId(),
+                'name' => $mailbox->getName(),
+                'isEnabled' => $mailbox->getIsEnabled(),
+                'isDefault' => $mailbox->getIsDefault(),
+                'isEmailDeliveryDisabled' => $mailbox->getIsEmailDeliveryDisabled() ? $mailbox->getIsEmailDeliveryDisabled() : false,
+            ];
+        }, $mailboxService->parseMailboxConfigurations()->getMailboxes());
+
+        return new JsonResponse($collection ?? []);
     }
 
-    public function processRawContentMail(Request $request)
+    public function removeMailboxConfiguration($id, Request $request, MailboxService $mailboxService, TranslatorInterface $translator)
     {
-        $rawEmail = file_get_contents($this->kernel->getProjectDir(). "/rawEmailContent.txt");
+        $mailbox = null;
+        $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
-        if ($rawEmail != false &&  !empty($rawEmail)) {
-           $this->mailboxService->processMail($rawEmail);
-        }else{
-            dump("Empty Text file not allow");
-        } 
-        exit(0);
+        foreach ($mailboxConfiguration->getMailboxes() as $configuredMailbox) {
+            if ($configuredMailbox->getId() == $id) {
+                $mailbox = $configuredMailbox;
+
+                break;
+            }
+        }
+
+        if (empty($mailbox)) {
+            return new JsonResponse([
+                'alertClass' => 'danger',
+                'alertMessage' => "No mailbox configuration was found for id '$id'.",
+            ], 404);
+        }
+
+        $updatedMailboxConfiguration = new MailboxConfiguration();
+
+        foreach ($mailboxConfiguration->getMailboxes() as $configuredMailbox) {
+            if ($configuredMailbox->getId() == $id) {
+                continue;
+            }
+
+            $updatedMailboxConfiguration->addMailbox($configuredMailbox);
+        }
+
+        file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $updatedMailboxConfiguration);
+
+        return new JsonResponse([
+            'alertClass' => 'success',
+            'alertMessage' => $translator->trans('Mailbox configuration removed successfully.'),
+        ]);
     }
 
-    public function processMailXHR(Request $request)
+    public function processMailXHR(Request $request, MailboxService $mailboxService)
     {
         if ("POST" != $request->getMethod()) {
             return new JsonResponse([
@@ -51,7 +81,7 @@ class MailboxChannelXHR extends AbstractController
         }
 
         try {
-            $processedThread = $this->mailboxService->processMail($request->get('email'));
+            $processedThread = $mailboxService->processMail($request->get('email'));
         } catch (\Exception $e) {
             return new JsonResponse([
                 'success' => false, 
@@ -77,7 +107,7 @@ class MailboxChannelXHR extends AbstractController
         ]);
     }
 
-    public function processOutlookMailXHR(Request $request)
+    public function processOutlookMailXHR(Request $request, MailboxService $mailboxService)
     {
         if ("POST" != $request->getMethod()) {
             return new JsonResponse([
@@ -92,7 +122,7 @@ class MailboxChannelXHR extends AbstractController
         }
 
         try {
-            $processedThread = $this->mailboxService->processOutlookMail($request->get('email'));
+            $processedThread = $mailboxService->processOutlookMail($request->get('email'));
         } catch (\Exception $e) {
             return new JsonResponse([
                 'success' => false, 
@@ -116,58 +146,6 @@ class MailboxChannelXHR extends AbstractController
         return new JsonResponse([
             'success' => true, 
             'message' => $responseMessage, 
-        ]);
-    }
-    
-    public function loadMailboxesXHR(Request $request)
-    {
-        $collection = array_map(function ($mailbox) {
-            return [
-                'id' => $mailbox->getId(),
-                'name' => $mailbox->getName(),
-                'isEnabled' => $mailbox->getIsEnabled(),
-                'isDeleted' => $mailbox->getIsDeleted() ? $mailbox->getIsDeleted() : false,
-            ];
-        }, $this->mailboxService->parseMailboxConfigurations()->getMailboxes());
-
-        return new JsonResponse($collection ?? []);
-    }
-
-    public function removeMailboxConfiguration($id, Request $request)
-    {
-        $mailboxService = $this->mailboxService;
-        $existingMailboxConfiguration = $mailboxService->parseMailboxConfigurations();
-
-        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
-            if ($configuration->getId() == $id) {
-                $mailbox = $configuration;
-
-                break;
-            }
-        }
-
-        if (empty($mailbox)) {
-            return new JsonResponse([
-                'alertClass' => 'danger',
-                'alertMessage' => "No mailbox found with id '$id'.",
-            ], 404);
-        }
-
-        $mailboxConfiguration = new MailboxConfiguration();
-
-        foreach ($existingMailboxConfiguration->getMailboxes() as $configuration) {
-            if ($configuration->getId() == $id) {
-                continue;
-            }
-
-            $mailboxConfiguration->addMailbox($configuration);
-        }
-
-        file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
-
-        return new JsonResponse([
-            'alertClass' => 'success',
-            'alertMessage' => $this->translator->trans('Mailbox configuration removed successfully.'),
         ]);
     }
 }
