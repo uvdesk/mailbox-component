@@ -69,58 +69,58 @@ class RefreshMailboxCommand extends Command
             return Command::INVALID;
         }
 
+        $mailboxConfigurations = $this->mailboxService->parseMailboxConfigurations();
+
         // Process mailboxes
         $timestamp = new \DateTime(sprintf("-%u minutes", (int) ($input->getOption('timestamp') ?: 1440)));
         
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             $output->writeln("\n# Retrieving mailbox configuration details for <info>$mailboxEmail</info>:\n");
 
-            try {
-                $mailbox = $this->container->get('uvdesk.mailbox')->getMailboxByEmail($mailboxEmail);
+            $mailbox = $mailboxConfigurations->getMailbox($mailboxEmail);
 
-                if (false == $mailbox['enabled']) {
-                    if (false === $input->getOption('no-interaction')) {
-                        $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>");
-                    }
-    
-                    continue;
-                } else if (empty($mailbox['imap_server'])) {
-                    if (false === $input->getOption('no-interaction')) {
-                        $output->writeln("  <comment>Error: No imap configurations defined for email </comment><info>$mailboxEmail</info><comment>.</comment>");
-                    }
-    
-                    continue;
-                }
-            } catch (\Exception $e) {
-                if (false == $input->getOption('no-interaction')) {
+            if (empty($mailbox)) {
+                if (false === $input->getOption('no-interaction')) {
                     $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> not found.</comment>");
-
-                    // return Command::INVALID;
                 }
 
                 continue;
+            } else if (false == $mailbox->getIsEnabled()) {
+                if (false === $input->getOption('no-interaction')) {
+                    $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>");
+                }
+    
+                continue;
+            } else {
+                $imapConfiguration = $mailbox->getImapConfiguration();
+
+                if (empty($imapConfiguration)) {
+                    if (false === $input->getOption('no-interaction')) {
+                        $output->writeln("  <comment>Error: No imap configurations defined for email </comment><info>$mailboxEmail</info><comment>.</comment>");
+                    }
+
+                    continue;
+                }
             }
 
             try {
-                $imapConfiguration = IMAP\Configuration::guessTransportDefinition($mailbox['imap_server']);
-    
                 if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
                     $output->writeln("  <comment>Cannot fetch emails for mailboxes of type simple configuration.</comment>");
                 } else if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
-                    $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($mailbox['imap_server']['client']);
+                    $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($imapConfiguration->getClient());
 
                     if (empty($microsoftApp)) {
-                        $output->writeln("  <comment>No microsoft app was found for configured client id '" . $mailbox['imap_server']['client'] . "'.</comment>");
+                        $output->writeln("  <comment>No microsoft app was found for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
 
                         continue;
                     } else {
                         $microsoftAccount = $this->entityManager->getRepository(MicrosoftAccount::class)->findOneBy([
-                            'email' => $mailbox['imap_server']['username'], 
+                            'email' => $imapConfiguration->getUsername(), 
                             'microsoftApp' => $microsoftApp, 
                         ]);
 
                         if (empty($microsoftAccount)) {
-                            $output->writeln("  <comment>No microsoft account was found with email '" . $mailbox['imap_server']['username'] . "' for configured client id '" . $mailbox['imap_server']['client'] . "'.</comment>");
+                            $output->writeln("  <comment>No microsoft account was found with email '" . $imapConfiguration->getUsername() . "' for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
 
                             continue;
                         }
@@ -129,9 +129,9 @@ class RefreshMailboxCommand extends Command
                     $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output, $mailbox);
                 } else {
                     $this->refreshMailbox(
-                        $mailbox['imap_server']['host'], 
-                        $mailbox['imap_server']['username'], 
-                        base64_decode($mailbox['imap_server']['password']), 
+                        $imapConfiguration->getHost(), 
+                        $imapConfiguration->getUsername(), 
+                        urldecode($imapConfiguration->getPassword()), 
                         $timestamp, 
                         $output, 
                         $mailbox
@@ -205,11 +205,6 @@ class RefreshMailboxCommand extends Command
                 }
 
                 $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
-
-                if (true == $mailbox['deleted']) {
-                    imap_expunge($imap);
-                    imap_close($imap,CL_EXPUNGE);
-                }
             }
         }
 
@@ -280,7 +275,7 @@ class RefreshMailboxCommand extends Command
                     if (!empty($responseErrorMessage)) {
                         $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>$responseErrorMessage</>\n");
                     } else {
-                        $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>" . $response['message'] . "</>\n");
+                        $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>" . ($response['message'] ?? 'Null response received') . "</>\n");
                     }
                 }
 

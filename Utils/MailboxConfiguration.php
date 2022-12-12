@@ -11,6 +11,7 @@ final class MailboxConfiguration
     const CONFIGURATION_TEMPLATE = __DIR__ . "/../Templates/Mailbox/Mailbox.php";
 
     private $collection = [];
+    private $defaultMailbox = null;
 
     public function addMailbox(Mailbox $mailbox)
     {
@@ -53,9 +54,37 @@ final class MailboxConfiguration
         return $this;
     }
 
-    public function getMailboxes() : array
+    public function getMailboxes(): array
     {
         return $this->collection;
+    }
+
+    public function getMailbox($mailboxEmail): ?Mailbox
+    {
+        foreach ($this->collection as $mailbox) {
+            $smtpConfiguration = $mailbox->getSmtpConfiguration();
+
+            if (!empty($smtpConfiguration) && $smtpConfiguration->getUsername() == $mailboxEmail) {
+                return $mailbox;
+            }
+        }
+
+        return null;
+    }
+
+    public function getDefaultMailbox(): ?Mailbox
+    {
+        if (empty($this->defaultMailbox)) {
+            foreach ($this->collection as $mailbox) {
+                if ($mailbox->getIsDefault()) {
+                    $this->defaultMailbox = $mailbox;
+    
+                    break;
+                }
+            }
+        }
+
+        return $this->defaultMailbox ?? null;
     }
 
     public function __toString()

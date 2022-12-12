@@ -216,13 +216,95 @@ class MailboxChannel extends AbstractController
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
             
+            // SMTP Configuration
+            if (!empty($params['smtp']['transport'])) {
+                $smtpConfiguration = SMTP\Configuration::createTransportDefinition($params['smtp']['transport'], !empty($params['smtp']['host']) ? trim($params['smtp']['host'], '"') : null);
+
+                if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
+                    if ($params['smtp']['transport'] == 'outlook_oauth') {
+                        $microsoftAccount = $entityManager->getRepository(MicrosoftAccount::class)->findOneById($params['smtp']['username']);
+        
+                        if (empty($microsoftAccount)) {
+                            $this->addFlash('warning', 'No configuration details were found for the provided microsoft account.');
+        
+                            return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                                'microsoftAppCollection' => $microsoftAppCollection, 
+                                'microsoftAccountCollection' => $microsoftAccountCollection, 
+                            ]);
+                        }
+        
+                        $params['smtp']['username'] = $microsoftAccount->getEmail();
+                        $params['smtp']['client'] = $microsoftAccount->getMicrosoftApp()->getClientId();
+                        
+                        $smtpConfiguration
+                            ->setClient($params['smtp']['client'])
+                            ->setUsername($params['smtp']['username'])
+                        ;
+                    } else {
+                        $this->addFlash('warning', 'The resolved SMTP configuration is not configured for any valid available app.');
+        
+                        return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                            'microsoftAppCollection' => $microsoftAppCollection, 
+                            'microsoftAccountCollection' => $microsoftAccountCollection, 
+                        ]);
+                    }
+                } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
+                    $smtpConfiguration
+                        ->setUsername($params['smtp']['username'])
+                        ->setPassword(urlencode($params['smtp']['password']))
+                    ;
+                } else {
+                    $smtpConfiguration
+                        ->setHost($params['smtp']['host'])
+                        ->setPort($params['smtp']['port'])
+                        ->setUsername($params['smtp']['username'])
+                        ->setPassword(urlencode($params['smtp']['password']))
+                    ;
+                }
+            }
+
             // IMAP Configuration
             if (!empty($params['imap']['transport'])) {
                 $imapConfiguration = IMAP\Configuration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
-                $imapConfiguration
-                    ->setUsername($params['imap']['username'])
-                    ->setPassword(base64_encode($params['imap']['password']))
-                ;
+
+                if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
+                    if ($params['imap']['transport'] == 'outlook_oauth') {
+                        $microsoftAccount = $entityManager->getRepository(MicrosoftAccount::class)->findOneById($params['imap']['username']);
+        
+                        if (empty($microsoftAccount)) {
+                            $this->addFlash('warning', 'No configuration details were found for the provided microsoft account.');
+        
+                            return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                                'microsoftAppCollection' => $microsoftAppCollection, 
+                                'microsoftAccountCollection' => $microsoftAccountCollection, 
+                            ]);
+                        }
+        
+                        $params['imap']['username'] = $microsoftAccount->getEmail();
+                        $params['imap']['client'] = $microsoftAccount->getMicrosoftApp()->getClientId();
+                        
+                        $imapConfiguration
+                            ->setClient($params['imap']['client'])
+                            ->setUsername($params['imap']['username'])
+                        ;
+                    } else {
+                        $this->addFlash('warning', 'The resolved IMAP configuration is not configured for any valid available app.');
+        
+                        return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
+                            'microsoftAppCollection' => $microsoftAppCollection, 
+                            'microsoftAccountCollection' => $microsoftAccountCollection, 
+                        ]);
+                    }
+                } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
+                    $imapConfiguration
+                        ->setUsername($params['imap']['username'])
+                    ;
+                } else {
+                    $imapConfiguration
+                        ->setUsername($params['imap']['username'])
+                        ->setPassword(urlencode($params['imap']['password']))
+                    ;
+                }
             }
 
             if (!empty($imapConfiguration) && !empty($smtpConfiguration)) {
