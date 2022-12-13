@@ -34,20 +34,21 @@ class RefreshMailboxCommand extends Command
 
     protected function configure()
     {
-        $this->setName('uvdesk:refresh-mailbox');
-        $this->setDescription('Check if any new emails have been received and process them into tickets');
-
-        $this->addArgument('emails', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, "Email address of the mailboxes you wish to update");
-        $this->addOption('timestamp', 't', InputOption::VALUE_REQUIRED, "Fetch messages no older than the given timestamp");
+        $this
+            ->setName('uvdesk:refresh-mailbox')
+            ->setDescription('Check if any new emails have been received and process them into tickets')
+            ->addArgument('emails', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, "Email address of the mailboxes you wish to update")
+            ->addOption('timestamp', 't', InputOption::VALUE_REQUIRED, "Fetch messages no older than the given timestamp")
+            ->addOption('secure', null, InputOption::VALUE_NONE, "Use HTTTPS for communicating with required api endpoints")
+        ;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->router = $this->container->get('router');
-        $useSecureConnection = $this->isSecureConnectionAvailable();
 
         $this->router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
-        $this->router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
+        $this->router->getContext()->setScheme((bool) $input->getOption('secure') ? 'https' : 'http');
 
         $this->endpoint = $this->router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->outlookEndpoint = $this->router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -325,19 +326,5 @@ class RefreshMailboxCommand extends Command
         curl_close($curlHandler);
 
         return [$response, $responseCode, $responseErrorMessage];
-    }
-
-    protected function isSecureConnectionAvailable()
-    {
-        $headers = [CURLOPT_NOBODY => true, CURLOPT_HEADER => false];
-        $curlHandler = curl_init('https://' . $this->container->getParameter('uvdesk.site_url'));
-
-        curl_setopt_array($curlHandler, $headers);
-        curl_exec($curlHandler);
-
-        $isSecureRequestAvailable = curl_errno($curlHandler) === 0 ? true : false;
-        curl_close($curlHandler);
-
-        return $isSecureRequestAvailable;
     }
 }
