@@ -126,16 +126,9 @@ class RefreshMailboxCommand extends Command
                         }
                     }
 
-                    $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output, $mailbox);
+                    $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output);
                 } else {
-                    $this->refreshMailbox(
-                        $imapConfiguration->getHost(), 
-                        $imapConfiguration->getUsername(), 
-                        urldecode($imapConfiguration->getPassword()), 
-                        $timestamp, 
-                        $output, 
-                        $mailbox
-                    );
+                    $this->refreshMailbox($imapConfiguration->getHost(), $imapConfiguration->getUsername(), urldecode($imapConfiguration->getPassword()), $timestamp, $output);
                 }
             } catch (\Exception $e) {
                 $output->writeln("  <comment>An unexpected error occurred: " . $e->getMessage() . "</comment>");
@@ -147,7 +140,7 @@ class RefreshMailboxCommand extends Command
         return Command::SUCCESS;
     }
 
-    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output, $mailbox)
+    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output)
     {
         $output->writeln("  - Establishing connection with mailbox");
 
@@ -197,10 +190,6 @@ class RefreshMailboxCommand extends Command
                         }
                     }
                     
-                    if (true == $mailbox['deleted']) {
-                        imap_delete($imap, $messageNumber);
-                    }
-                    
                     $counter++;
                 }
 
@@ -211,7 +200,7 @@ class RefreshMailboxCommand extends Command
         return;
     }
 
-    public function refreshOutlookMailbox($microsoftApp, $microsoftAccount, \DateTime $timestamp, OutputInterface $output, $mailbox)
+    public function refreshOutlookMailbox($microsoftApp, $microsoftAccount, \DateTime $timestamp, OutputInterface $output)
     {
         $timeSpan = $timestamp->format('Y-m-d');
         $credentials = json_decode($microsoftAccount->getCredentials(), true);
