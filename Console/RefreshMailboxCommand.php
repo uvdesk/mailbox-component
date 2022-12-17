@@ -78,7 +78,7 @@ class RefreshMailboxCommand extends Command
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             $output->writeln("\n# Retrieving mailbox configuration details for <info>$mailboxEmail</info>:\n");
 
-            $mailbox = $mailboxConfigurations->getMailbox($mailboxEmail);
+            $mailbox = $mailboxConfigurations->getMailboxByEmailAddress($mailboxEmail);
 
             if (empty($mailbox)) {
                 if (false === $input->getOption('no-interaction')) {

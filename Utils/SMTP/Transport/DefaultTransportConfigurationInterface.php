@@ -19,4 +19,8 @@ interface DefaultTransportConfigurationInterface
     public function setPassword($password);
     
     public function getPassword();
+
+    public function setSenderAddress($senderAddress);
+    
+    public function getSenderAddress();
 }

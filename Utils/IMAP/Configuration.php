@@ -3,7 +3,7 @@
 namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\AppTransportConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\CustomTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\DefaultTransportConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\ResolvedTransportConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\SimpleTransportConfigurationInterface;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
@@ -61,24 +61,24 @@ final class Configuration
     public static function guessTransportDefinition(array $params): TransportConfigurationInterface
     {
         foreach (self::getAvailableDefinitions() as $reflectedImapDefinition) {
-            // Use custom configuration only when no other transport type matches the provided configs
-            if (true === $reflectedImapDefinition->implementsInterface(CustomTransportConfigurationInterface::class)) {
-                $customConfigurationReflection = $reflectedImapDefinition;
+            // Use default configuration only when no other transport type matches the provided configs
+            if (true === $reflectedImapDefinition->implementsInterface(DefaultTransportConfigurationInterface::class)) {
+                $defaultConfigurationReflection = $reflectedImapDefinition;
 
                 continue;
             }
 
-            if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
-                return $reflectedImapDefinition->newInstance();
-            } else if (empty($params['host'])) {
-                if (true === $reflectedImapDefinition->implementsInterface(AppTransportConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleTransportConfigurationInterface::class)) {
+            if ($reflectedImapDefinition->implementsInterface(AppTransportConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleTransportConfigurationInterface::class)) {
+                if (empty($params['host'])) {
                     return $reflectedImapDefinition->newInstance();
                 }
+            } else if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
+                return $reflectedImapDefinition->newInstance();
             }
         }
 
-        if (!empty($customConfigurationReflection)) {
-            return $customConfigurationReflection->newInstance($params['host']);
+        if (!empty($defaultConfigurationReflection)) {
+            return $defaultConfigurationReflection->newInstance($params['host']);
         }
 
         throw new \Exception('No matching imap definition found for host address "' . $params['host'] . '".');
@@ -95,7 +95,7 @@ final class Configuration
                 continue;
             }
 
-            if (true === $reflectedImapDefinition->implementsInterface(CustomTransportConfigurationInterface::class)) {
+            if (true === $reflectedImapDefinition->implementsInterface(DefaultTransportConfigurationInterface::class)) {
                 return $reflectedImapDefinition->newInstance($host);
             }
 

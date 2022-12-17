@@ -21,8 +21,7 @@ class Mailbox
 
     private $id = null;
     private $name = null;
-    private $isDefault = false;
-    private $isEnabled = false;
+    private $isEnabled = true;
     private $isEmailDeliveryDisabled = false;
     private $isStrictModeEnabled = false;
     private $imapConfiguration = null;
@@ -30,7 +29,7 @@ class Mailbox
 
     public function __construct($id = null)
     {
-        $this->id = $id;
+        $this->setId($id ?? sprintf("mailbox_%s", TokenGenerator::generateToken(4, self::TOKEN_RANGE)));
     }
 
     private function setId($id)
@@ -53,18 +52,6 @@ class Mailbox
     public function getName()
     {
         return $this->name;
-    }
-
-    public function setIsDefault(bool $isDefault)
-    {
-        $this->isDefault = $isDefault;
-
-        return $this;
-    }
-
-    public function getIsDefault() : bool
-    {
-        return $this->isDefault;
     }
 
     public function setIsEnabled(bool $isEnabled)
@@ -129,58 +116,44 @@ class Mailbox
 
     public function __toString()
     {
-        if (null == $this->getId()) {
-            // Set random id
-            $this->setId(sprintf("mailbox_%s", TokenGenerator::generateToken(4, self::TOKEN_RANGE)));
-        }
-
         $imapConfiguration = $this->getImapConfiguration();
         $smtpConfiguration = $this->getSmtpConfiguration();
 
         $imapTemplate = '';
 
-        if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
-            $imapTemplate = strtr(require self::IMAP_APP_CONFIGURATION_TEMPLATE, [
-                '[[ imap_client ]]' => $imapConfiguration->getClient(),
-                '[[ imap_username ]]' => $imapConfiguration->getUsername(), 
-            ]);
-        } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
-            $imapTemplate = strtr(require self::IMAP_SIMPLE_CONFIGURATION_TEMPLATE, [
-                '[[ imap_username ]]' => $imapConfiguration->getUsername(),
-            ]);
-        } else {
-            $imapTemplate = strtr(require self::IMAP_DEFAULT_CONFIGURATION_TEMPLATE, [
-                '[[ imap_host ]]' => $imapConfiguration->getHost(),
-                '[[ imap_username ]]' => $imapConfiguration->getUsername(),
-                '[[ imap_password ]]' => $imapConfiguration->getPassword(),
-            ]);
+        if (!empty($imapConfiguration)) {
+            if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
+                $imapTemplate = strtr(require self::IMAP_APP_CONFIGURATION_TEMPLATE, [
+                    '[[ imap_client ]]' => $imapConfiguration->getClient(),
+                    '[[ imap_username ]]' => $imapConfiguration->getUsername(), 
+                ]);
+            } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
+                $imapTemplate = strtr(require self::IMAP_SIMPLE_CONFIGURATION_TEMPLATE, [
+                    '[[ imap_username ]]' => $imapConfiguration->getUsername(),
+                ]);
+            } else {
+                $imapTemplate = strtr(require self::IMAP_DEFAULT_CONFIGURATION_TEMPLATE, [
+                    '[[ imap_host ]]' => $imapConfiguration->getHost(),
+                    '[[ imap_username ]]' => $imapConfiguration->getUsername(),
+                    '[[ imap_password ]]' => $imapConfiguration->getPassword(),
+                ]);
+            }
         }
 
         $smtpTemplate = '';
 
-        if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
-            $smtpTemplate = strtr(require self::SMTP_APP_CONFIGURATION_TEMPLATE, [
-                '[[ client ]]' => $smtpConfiguration->getClient(),
-                '[[ username ]]' => $smtpConfiguration->getUsername(), 
-                '[[ type ]]' => $smtpConfiguration->getType(), 
-            ]);
-        } else {
-            $smtpTemplate = strtr(require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE, [
-                '[[ host ]]' => $smtpConfiguration->getHost(),
-                '[[ username ]]' => $smtpConfiguration->getUsername(),
-                '[[ password ]]' => $smtpConfiguration->getPassword(),
-            ]);
+        if (!empty($smtpConfiguration)) {
+            if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
+                $smtpTemplate = strtr(require self::SMTP_APP_CONFIGURATION_TEMPLATE, [
+                    '[[ client ]]' => $smtpConfiguration->getClient(),
+                    '[[ username ]]' => $smtpConfiguration->getUsername(), 
+                    '[[ type ]]' => $smtpConfiguration->getType(), 
+                ]);
+            } else {
+                $smtpTemplate = require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE;
+            }
         }
 
-        return strtr(require self::MAILBOX_CONFIGURATION_TEMPLATE, [
-            '[[ id ]]' => $this->getId(),
-            '[[ name ]]' => $this->getName(),
-            '[[ default ]]' => $this->getIsDefault() ? 'true' : 'false',
-            '[[ disable_outbound_emails ]]' => $this->getIsEmailDeliveryDisabled() ? 'true' : 'false',
-            '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
-            '[[ use_strict_mode ]]' => $this->getIsStrictModeEnabled() ? 'true' : 'false',
-            '[[ smtp_settings ]]' => $smtpTemplate,
-            '[[ imap_settings ]]' => $imapTemplate,
-        ]);
+        return require self::MAILBOX_CONFIGURATION_TEMPLATE;
     }
 }

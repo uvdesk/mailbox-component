@@ -3,12 +3,12 @@
 namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\Type;
 
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\TransportConfigurationInterface;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\CustomTransportConfigurationInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport\DefaultTransportConfigurationInterface;
 
-class Custom implements TransportConfigurationInterface, CustomTransportConfigurationInterface
+class IMAP implements TransportConfigurationInterface, DefaultTransportConfigurationInterface
 {
-    CONST CODE = 'custom';
-    CONST NAME = 'Custom';
+    CONST CODE = 'imap';
+    CONST NAME = 'IMAP';
 
     private $host;
     private $username;
