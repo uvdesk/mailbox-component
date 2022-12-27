@@ -68,12 +68,14 @@ final class Configuration
                 continue;
             }
 
-            if ($reflectedImapDefinition->implementsInterface(AppTransportConfigurationInterface::class) || true === $reflectedImapDefinition->implementsInterface(SimpleTransportConfigurationInterface::class)) {
+            $imapInstance = $reflectedImapDefinition->newInstance();
+
+            if ($imapInstance instanceof AppTransportConfigurationInterface || $imapInstance instanceof SimpleTransportConfigurationInterface) {
                 if (empty($params['host'])) {
-                    return $reflectedImapDefinition->newInstance();
+                    return $imapInstance;
                 }
-            } else if (!empty($params['host']) && $reflectedImapDefinition->getName()::getHost() == $params['host']) {
-                return $reflectedImapDefinition->newInstance();
+            } else if (!empty($params['host']) && $imapInstance->getHost() == $params['host']) {
+                return $imapInstance;
             }
         }
 

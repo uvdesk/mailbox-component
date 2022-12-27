@@ -67,12 +67,14 @@ final class Configuration
                 continue;
             }
 
-            if ($reflectedSmtpDefinition->implementsInterface(AppTransportConfigurationInterface::class)) {
-                if (empty($params['host']) && !empty($params['type']) && $reflectedSmtpDefinition->getName()::getType() == $params['type']) {
-                    return $reflectedSmtpDefinition->newInstance();
+            $smtpInstance = $reflectedSmtpDefinition->newInstance();
+
+            if ($smtpInstance instanceof AppTransportConfigurationInterface) {
+                if (empty($params['host']) && !empty($params['type']) && $smtpInstance->getType() == $params['type']) {
+                    return $smtpInstance;
                 }
-            } else if (!empty($params['host']) && $reflectedSmtpDefinition->getName()::getHost() == $params['host']) {
-                return $reflectedSmtpDefinition->newInstance();
+            } else if (!empty($params['host']) && $smtpInstance->getHost() == $params['host']) {
+                return $smtpInstance;
             }
         }
 

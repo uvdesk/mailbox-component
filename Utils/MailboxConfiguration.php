@@ -101,6 +101,24 @@ final class MailboxConfiguration
         return null;
     }
 
+    public function getIncomingMailboxByEmailAddress($mailboxEmail): ?Mailbox
+    {
+        foreach ($this->collection as $mailbox) {
+            $imapConfiguration = $mailbox->getImapConfiguration();
+
+            if (!empty($imapConfiguration) && $imapConfiguration->getUsername() == $mailboxEmail) {
+                return $mailbox;
+            }
+        }
+
+        return null;
+    }
+
+    public function getOutgoingMailboxByEmailAddress($mailboxEmail): ?Mailbox
+    {
+        return $this->getMailboxByEmailAddress($mailboxEmail);
+    }
+
     public function __toString()
     {
         if (!empty($this->collection)) {
