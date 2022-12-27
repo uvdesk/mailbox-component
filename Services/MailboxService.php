@@ -267,10 +267,7 @@ class MailboxService
                     break;
                 case 'inReplyTo':
                     // Search Criteria 2: Find ticket based on in-reply-to reference id
-
-                    $repository = $this->entityManager->getRepository(Thread::class);
-                    $ticket = $repository->findThreadByRefrenceId($criteriaValue);
-
+                    $ticket = $this->entityManager->getRepository(Thread::class)->findThreadByRefrenceId($criteriaValue);
 
                     if (!empty($ticket)) {
                         return $ticket;
