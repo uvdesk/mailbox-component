@@ -216,12 +216,12 @@ class RefreshMailboxCommand extends Command
         
         // Lookup id for the 'inbox' folder
         $mailboxFolderId = null;
-        $mailboxFolderCollection = $this->getOutlookMailboxFolders($credentials['access_token'], $credentials['refresh_token']);
+        $mailboxFolderCollection = $this->getOutlookMailboxFolders($credentials['access_token'], $credentials['refresh_token'], $output);
         
         foreach ($mailboxFolderCollection as $mailboxFolder) {
             if ($mailboxFolder['displayName'] == 'Inbox') {
                 $mailboxFolderId = $mailboxFolder['id'];
-                
+
                 break;
             }
         }
@@ -254,10 +254,12 @@ class RefreshMailboxCommand extends Command
                 return;
             }
         }
+        
+        $emailCount = $response['@odata.count'] ?? 'NA';
+
+        $output->writeln("  - Found a total of <info>$emailCount</info> emails in mailbox since <comment>$timeSpan</comment>");
 
         if (!empty($response['value'])) {
-            $emailCount = $response['@odata.count'] ?? 'NA';
-
             $output->writeln("  - Found a total of <info>$emailCount</info> emails in mailbox since <comment>$timeSpan</comment>");
             $output->writeln("\n  # Processing all found emails iteratively:");
             $output->writeln("\n    <bg=black;fg=bright-white>API</> <options=underscore>" . $this->outlookEndpoint . "</>\n");
