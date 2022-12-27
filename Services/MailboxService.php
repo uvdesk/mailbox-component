@@ -61,61 +61,89 @@ class MailboxService
         }
 
         // Read configurations from package config.
-        $mailboxConfiguration = new MailboxConfiguration();
+        $mailboxes = $this->container->getParameter('uvdesk.mailboxes');
+        $defaultMailbox = $this->container->getParameter('uvdesk.default_mailbox');
+        
+        $mailboxConfiguration = new MailboxConfiguration($defaultMailbox);
 
-        foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
+        foreach ($mailboxes as $id) {
+            $params = $this->container->getParameter("uvdesk.mailboxes.$id");
+
             // IMAP Configuration
-            $imapConfiguration = IMAP\Configuration::guessTransportDefinition($params['imap_server']);
+            $imapConfiguration = null;
 
-            if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
-                $imapConfiguration
-                    ->setClient($params['imap_server']['client'])
-                    ->setUsername($params['imap_server']['username'])
-                ;
-            } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
-                $imapConfiguration
-                    ->setUsername($params['imap_server']['username'])
-                ;
-            } else {
-                $imapConfiguration
-                    ->setUsername($params['imap_server']['username'])
-                    ->setPassword($params['imap_server']['password'])
-                ;
+            if (!empty($params['imap_server'])) {
+                $imapConfiguration = IMAP\Configuration::guessTransportDefinition($params['imap_server']);
+    
+                if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
+                    $imapConfiguration
+                        ->setClient($params['imap_server']['client'])
+                        ->setUsername($params['imap_server']['username'])
+                    ;
+                } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
+                    $imapConfiguration
+                        ->setUsername($params['imap_server']['username'])
+                    ;
+                } else {
+                    $imapConfiguration
+                        ->setUsername($params['imap_server']['username'])
+                        ->setPassword($params['imap_server']['password'])
+                    ;
+                }
             }
 
             // SMTP Configuration
-            $smtpConfiguration = SMTP\Configuration::guessTransportDefinition($params['smtp_server']);
+            $smtpConfiguration = null;
 
-            if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
-                $smtpConfiguration
-                    ->setClient($params['smtp_server']['client'])
-                    ->setUsername($params['smtp_server']['username'])
-                ;
-            } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
-                $smtpConfiguration
-                    ->setUsername($params['smtp_server']['username'])
-                    ->setPassword($params['smtp_server']['password'])
-                ;
-            }  else {
-                $smtpConfiguration
-                    ->setHost($params['smtp_server']['host'])
-                    ->setPort($params['smtp_server']['port'])
-                    ->setUsername($params['smtp_server']['username'])
-                    ->setPassword($params['smtp_server']['password'])
-                ;
+            if (!empty($params['smtp_server'])) {
+                $smtpConfiguration = SMTP\Configuration::guessTransportDefinition($params['smtp_server']);
+    
+                if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
+                    $smtpConfiguration
+                        ->setClient($params['smtp_server']['client'])
+                        ->setUsername($params['smtp_server']['username'])
+                    ;
+                } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
+                    $smtpConfiguration
+                        ->setUsername($params['smtp_server']['username'])
+                        ->setPassword($params['smtp_server']['password'])
+                    ;
+                }  else {
+                    $smtpConfiguration
+                        ->setHost($params['smtp_server']['host'])
+                        ->setPort($params['smtp_server']['port'])
+                        ->setUsername($params['smtp_server']['username'])
+                        ->setPassword($params['smtp_server']['password'])
+                    ;
+
+                    if (!empty($params['smtp_server']['sender_address'])) {
+                        $smtpConfiguration
+                            ->setSenderAddress($params['smtp_server']['sender_address'])
+                        ;
+                    }
+                }
             }
 
             // Mailbox Configuration
             $mailbox = new Mailbox($id);
             $mailbox
                 ->setName($params['name'])
-                ->setIsDefault($params['default'])
                 ->setIsEnabled($params['enabled'])
                 ->setIsEmailDeliveryDisabled(empty($params['disable_outbound_emails']) ? false : $params['disable_outbound_emails'])
                 ->setIsStrictModeEnabled(empty($params['use_strict_mode']) ? false : $params['use_strict_mode'])
-                ->setImapConfiguration($imapConfiguration)
-                ->setSmtpConfiguration($smtpConfiguration)
             ;
+
+            if (!empty($imapConfiguration)) {
+                $mailbox
+                    ->setImapConfiguration($imapConfiguration)
+                ;
+            }
+
+            if (!empty($smtpConfiguration)) {
+                $mailbox
+                    ->setSmtpConfiguration($smtpConfiguration)
+                ;
+            }
 
             $mailboxConfiguration->addMailbox($mailbox);
         }
@@ -141,25 +169,6 @@ class MailboxService
         }
 
         return $this->mailboxCollection;
-    }
-
-    public function getRegisteredMailboxesById()
-    {
-        // Fetch existing content in file
-        $filePath = $this->getPathToConfigurationFile();
-        $file_content = file_get_contents($filePath);
-
-        // Convert yaml file content into array and merge existing mailbox and new mailbox
-        $file_content_array = Yaml::parse($file_content, 6);
-
-        if ($file_content_array['uvdesk_mailbox']['mailboxes']) {
-            foreach ($file_content_array['uvdesk_mailbox']['mailboxes'] as $key => $value) {
-                $value['mailbox_id'] = $key;
-                $mailboxCollection[] = $value;
-            }
-        }
-        
-        return $mailboxCollection ?? [];
     }
 
     public function parseAddress($type)

@@ -15,15 +15,19 @@ class MailboxChannelXHR extends AbstractController
 {
     public function loadMailboxesXHR(Request $request, MailboxService $mailboxService)
     {
-        $collection = array_map(function ($mailbox) {
+        $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
+
+        $defaultMailbox = $mailboxConfiguration->getDefaultMailbox();
+
+        $collection = array_map(function ($mailbox) use ($defaultMailbox) {
             return [
                 'id' => $mailbox->getId(),
                 'name' => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
-                'isDefault' => $mailbox->getIsDefault(),
+                'isDefault' => !empty($defaultMailbox) && $defaultMailbox->getId() == $mailbox->getId(),
                 'isEmailDeliveryDisabled' => $mailbox->getIsEmailDeliveryDisabled() ? $mailbox->getIsEmailDeliveryDisabled() : false,
             ];
-        }, $mailboxService->parseMailboxConfigurations()->getMailboxes());
+        }, array_values($mailboxConfiguration->getMailboxes()));
 
         return new JsonResponse($collection ?? []);
     }

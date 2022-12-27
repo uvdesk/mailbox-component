@@ -12,8 +12,9 @@ class SMTP implements TransportConfigurationInterface, DefaultTransportConfigura
     
     private $host = null;
     private $port = null;
-    protected $username = null;
-    protected $password = null;
+    private $username = null;
+    private $password = null;
+    private $senderAddress = null;
 
     public static function getCode()
     {
@@ -28,6 +29,8 @@ class SMTP implements TransportConfigurationInterface, DefaultTransportConfigura
     public function setHost($host)
     {
         $this->host = $host;
+
+        return $this;
     }
 
     public function getHost()
@@ -38,6 +41,8 @@ class SMTP implements TransportConfigurationInterface, DefaultTransportConfigura
     public function setPort($port)
     {
         $this->port = $port;
+
+        return $this;
     }
 
     public function getPort()
@@ -48,6 +53,8 @@ class SMTP implements TransportConfigurationInterface, DefaultTransportConfigura
     public function setUsername($username)
     {
         $this->username = $username;
+
+        return $this;
     }
 
     public function getUsername()
@@ -58,10 +65,24 @@ class SMTP implements TransportConfigurationInterface, DefaultTransportConfigura
     public function setPassword($password)
     {
         $this->password = $password;
+
+        return $this;
     }
 
     public function getPassword()
     {
         return $this->password;
+    }
+
+    public function setSenderAddress($senderAddress)
+    {
+        $this->senderAddress = $senderAddress;
+
+        return $this;
+    }
+
+    public function getSenderAddress()
+    {
+        return $this->senderAddress;
     }
 }

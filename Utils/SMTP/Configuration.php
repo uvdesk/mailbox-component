@@ -60,27 +60,26 @@ final class Configuration
     public static function guessTransportDefinition(array $params): TransportConfigurationInterface
     {
         foreach (self::getAvailableDefinitions() as $reflectedSmtpDefinition) {
-            // Use custom configuration only when no other transport type matches the provided configs
+            // Use default configuration only when no other transport type matches the provided configs
             if (true === $reflectedSmtpDefinition->implementsInterface(DefaultTransportConfigurationInterface::class)) {
                 $defaultConfigurationReflection = $reflectedSmtpDefinition;
 
                 continue;
             }
 
-            if (!empty($params['host']) && $reflectedSmtpDefinition->getName()::getHost() == $params['host']) {
-                return $reflectedSmtpDefinition->newInstance();
-            } else if (
-                empty($params['host']) 
-                && !empty($params['type']) 
-                && true === $reflectedSmtpDefinition->implementsInterface(AppTransportConfigurationInterface::class) 
-                && $reflectedSmtpDefinition->getName()::getType() == $params['type']
-            ) {
-                return $reflectedSmtpDefinition->newInstance();
+            $smtpInstance = $reflectedSmtpDefinition->newInstance();
+
+            if ($smtpInstance instanceof AppTransportConfigurationInterface) {
+                if (empty($params['host']) && !empty($params['type']) && $smtpInstance->getType() == $params['type']) {
+                    return $smtpInstance;
+                }
+            } else if (!empty($params['host']) && $smtpInstance->getHost() == $params['host']) {
+                return $smtpInstance;
             }
         }
 
         if (!empty($defaultConfigurationReflection)) {
-            return $defaultConfigurationReflection->newInstance($params['host']);
+            return $defaultConfigurationReflection->newInstance();
         }
 
         throw new \Exception('No matching smtp definition found for host address "' . $params['host'] . '".');

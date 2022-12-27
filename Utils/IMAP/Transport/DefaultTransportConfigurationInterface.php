@@ -2,7 +2,7 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Utils\IMAP\Transport;
 
-interface CustomTransportConfigurationInterface
+interface DefaultTransportConfigurationInterface
 {
     public function __construct($host);
 

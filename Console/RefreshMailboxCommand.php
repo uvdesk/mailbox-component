@@ -74,11 +74,11 @@ class RefreshMailboxCommand extends Command
 
         // Process mailboxes
         $timestamp = new \DateTime(sprintf("-%u minutes", (int) ($input->getOption('timestamp') ?: 1440)));
-        
+
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             $output->writeln("\n# Retrieving mailbox configuration details for <info>$mailboxEmail</info>:\n");
 
-            $mailbox = $mailboxConfigurations->getMailbox($mailboxEmail);
+            $mailbox = $mailboxConfigurations->getIncomingMailboxByEmailAddress($mailboxEmail);
 
             if (empty($mailbox)) {
                 if (false === $input->getOption('no-interaction')) {
@@ -106,7 +106,7 @@ class RefreshMailboxCommand extends Command
 
             try {
                 if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
-                    $output->writeln("  <comment>Cannot fetch emails for mailboxes of type simple configuration.</comment>");
+                    $output->writeln("  <comment>Cannot fetch emails from mailboxes with simple transport configurations.</comment>");
                 } else if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
                     $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($imapConfiguration->getClient());
 
@@ -214,7 +214,19 @@ class RefreshMailboxCommand extends Command
             ], 
         ];
         
-        $response = MicrosoftGraph\Me::messages($credentials['access_token'], $filters);
+        // Lookup id for the 'inbox' folder
+        $mailboxFolderId = null;
+        $mailboxFolderCollection = $this->getOutlookMailboxFolders($credentials['access_token'], $credentials['refresh_token']);
+        
+        foreach ($mailboxFolderCollection as $mailboxFolder) {
+            if ($mailboxFolder['displayName'] == 'Inbox') {
+                $mailboxFolderId = $mailboxFolder['id'];
+                
+                break;
+            }
+        }
+
+        $response = MicrosoftGraph\Me::messages($credentials['access_token'], $mailboxFolderId, $filters);
 
         if (!empty($response['error'])) {
             if (!empty($response['error']['code']) && $response['error']['code'] == 'InvalidAuthenticationToken') {
@@ -242,7 +254,6 @@ class RefreshMailboxCommand extends Command
                 return;
             }
         }
-
 
         if (!empty($response['value'])) {
             $emailCount = $response['@odata.count'] ?? 'NA';
@@ -276,6 +287,40 @@ class RefreshMailboxCommand extends Command
         }
 
         return;
+    }
+
+    private function getOutlookMailboxFolders($accessToken, $refreshToken, OutputInterface $output)
+    {
+        $response = MicrosoftGraph\Me::mailFolders($accessToken);
+
+        if (!empty($response['error'])) {
+            if (!empty($response['error']['code']) && $response['error']['code'] == 'InvalidAuthenticationToken') {
+                $tokenResponse = $this->microsoftIntegration->refreshAccessToken($microsoftApp, $refreshToken);
+
+                if (!empty($tokenResponse['access_token'])) {
+                    $microsoftAccount->setCredentials(json_encode($tokenResponse));
+    
+                    $this->entityManager->persist($microsoftAccount);
+                    $this->entityManager->flush();
+
+                    $response = MicrosoftGraph\Me::mailFolders($accessToken);
+                } else {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>Failed to retrieve a valid access token.</>\n");
+
+                    return [];
+                }
+            } else {
+                if (!empty($response['error']['code'])) {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>An unexpected api error occurred of type '" . $response['error']['code'] . "'.</>\n");
+                } else {
+                    $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>An unexpected api error occurred.</>\n");
+                }
+
+                return [];
+            }
+        }
+
+        return !empty($response['value']) ? $response['value'] : [];
     }
 
     public function parseInboundEmail($message, $output)

@@ -26,25 +26,26 @@ class UVDeskExtension extends Extension
 
         // Load bundle configurations
         $configuration = $this->getConfiguration($configs, $container);
+
         foreach ($this->processConfiguration($configuration, $configs) as $param => $value) {
             switch ($param) {
                 case 'emails':
                     foreach ($value as $field => $fieldValue) {
                         $container->setParameter("uvdesk.emails.$field", $fieldValue);
                     }
+
+                    break;
+                case 'default_mailbox':
+                    $container->setParameter("uvdesk.default_mailbox", $value);
+
                     break;
                 case 'mailboxes':
                     $container->setParameter("uvdesk.mailboxes", array_keys($value));
 
                     foreach ($value as $mailboxId => $mailboxDetails) {
-                        $mailboxDetails['email'] = $mailboxDetails['imap_server']['username'];
-
-                        if (!empty($mailboxDetails['imap_server']['client'])) {
-                            $mailboxDetails['client'] = $mailboxDetails['imap_server']['client'];
-                        }
-                        
                         $container->setParameter("uvdesk.mailboxes.$mailboxId", $mailboxDetails);
                     }
+
                     break;
                 default:
                     break;
