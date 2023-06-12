@@ -3,6 +3,9 @@ CHANGELOG for 1.1.x
 
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
+* 1.1.x
+    * Update: Dropped dependency on uvdesk/composer-plugin in support of symfony/flex
+
 * 1.1.2 (2022-11-10)
     * Feature: Add improved log reports when refreshing mailboxes
 
