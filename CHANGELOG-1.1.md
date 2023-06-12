@@ -3,7 +3,7 @@ CHANGELOG for 1.1.x
 
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
-* 1.1.x
+* 1.1.3 (2023-06-12)
     * Update: Dropped dependency on uvdesk/composer-plugin in support of symfony/flex
 
 * 1.1.2 (2022-11-10)
