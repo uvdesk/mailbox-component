@@ -407,7 +407,7 @@ class MailboxService
 
         // Process Mail - Content
         $htmlFilter = new HTMLFilter();
-        $mailData['subject'] = $parser->getHeader('subject');
+        $mailData['subject'] = $parser->getHeader('subject') !== null ? $parser->getHeader('subject') : 'No Subject';
         $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
         $mailData['attachments'] = $parser->getAttachments();
         
