@@ -470,6 +470,11 @@ class MailboxService
                         'ticket' => $ticket->getId(), 
                     ], 
                 ];
+            }else {
+                // if ticket is not empty but thread is empty by Niijimasama
+                $mailData['threadType'] = 'create';
+                //$mailData['referenceIds'] = $mailData['messageId'];
+                $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
             }
 
             if (in_array($mailData['messageId'], $referenceIds)) {
