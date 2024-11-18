@@ -79,14 +79,17 @@ class MailboxChannelXHR extends AbstractController
     
     public function loadMailboxesXHR(Request $request)
     {
-        $collection = array_map(function ($mailbox) {
+        $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
+
+        $defaultMailbox = $mailboxConfiguration->getDefaultMailbox();
+
+        $collection = array_map(function ($mailbox) use ($defaultMailbox) {
             return [
                 'id' => $mailbox->getId(),
                 'name' => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
-                'isDeleted' => $mailbox->getIsDeleted() ? $mailbox->getIsDeleted() : false,
             ];
-        }, $this->mailboxService->parseMailboxConfigurations()->getMailboxes());
+        }, array_values($mailboxConfiguration->getMailboxes()));
 
         return new JsonResponse($collection ?? []);
     }
