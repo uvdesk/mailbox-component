@@ -45,13 +45,14 @@ class RefreshMailboxCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->router = $this->container->get('router');
+        $router = $this->container->get('router');
+        $useSecureConnection = $this->isSecureConnectionAvailable();
 
-        $this->router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
-        $this->router->getContext()->setScheme((bool) $input->getOption('secure') ? 'https' : 'http');
+        $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
+        $router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
 
-        $this->endpoint = $this->router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
-        $this->outlookEndpoint = $this->router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->endpoint = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->outlookEndpoint = $router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -60,7 +61,7 @@ class RefreshMailboxCommand extends Command
         $mailboxEmailCollection = array_map(function ($email) {
             return filter_var($email, FILTER_SANITIZE_EMAIL);
         }, $input->getArgument('emails'));
-       
+
         // Stop execution if no valid emails have been specified
         if (empty($mailboxEmailCollection)) {
             if (false === $input->getOption('no-interaction')) {
@@ -72,117 +73,74 @@ class RefreshMailboxCommand extends Command
 
         // Process mailboxes
         $timestamp = new \DateTime(sprintf("-%u minutes", (int) ($input->getOption('timestamp') ?: 1440)));
-        
+
         foreach ($mailboxEmailCollection as $mailboxEmail) {
             $output->writeln("\n# Retrieving mailbox configuration details for <info>$mailboxEmail</info>:\n");
-            
-            if('microsoft') {
-                $mailboxConfigurations = $this->mailboxService->parseMailboxConfigurations();
-                $mailbox = $mailboxConfigurations->getIncomingMailboxByEmailAddress($mailboxEmail);
 
-                if (empty($mailbox)) {
-                    if (false === $input->getOption('no-interaction')) {
-                        $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> not found.</comment>");
-                    }
-    
-                    continue;
-                } else if (false == $mailbox->getIsEnabled()) {
-                    if (false === $input->getOption('no-interaction')) {
-                        $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>");
-                    }
-        
-                    continue;
-                } else {
-                    $imapConfiguration = $mailbox->getImapConfiguration();
-    
-                    if (empty($imapConfiguration)) {
-                        if (false === $input->getOption('no-interaction')) {
-                            $output->writeln("  <comment>Error: No imap configurations defined for email </comment><info>$mailboxEmail</info><comment>.</comment>");
-                        }
-    
-                        continue;
-                    }
-                }
-    
-                try {
-                    if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
-                        $output->writeln("  <comment>Cannot fetch emails from mailboxes with simple transport configurations.</comment>");
-                    } else if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
-                        $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($imapConfiguration->getClient());
-    
-                        if (empty($microsoftApp)) {
-                            $output->writeln("  <comment>No microsoft app was found for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
-    
-                            continue;
-                        } else {
-                            $microsoftAccount = $this->entityManager->getRepository(MicrosoftAccount::class)->findOneBy([
-                                'email' => $imapConfiguration->getUsername(), 
-                                'microsoftApp' => $microsoftApp, 
-                            ]);
-    
-                            if (empty($microsoftAccount)) {
-                                $output->writeln("  <comment>No microsoft account was found with email '" . $imapConfiguration->getUsername() . "' for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
-    
-                                continue;
-                            }
-                        }
-    
-                        $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output);
-                    } else {
-                        $this->refreshMailbox($imapConfiguration->getHost(), $imapConfiguration->getUsername(), urldecode($imapConfiguration->getPassword()), $timestamp, $output);
-                    }
-                } catch (\Exception $e) {
-                    $output->writeln("  <comment>An unexpected error occurred: " . $e->getMessage() . "</comment>");
-                }
-            }else {
+            $mailboxConfigurations = $this->mailboxService->parseMailboxConfigurations();
+            $mailbox = $mailboxConfigurations->getIncomingMailboxByEmailAddress($mailboxEmail);
 
-                try {
-                    $mailbox = $this->container->get('uvdesk.mailbox')->getMailboxByEmail($mailboxEmail);
-    
-                    if (false == $mailbox['enabled']) {
-                        if (false === $input->getOption('no-interaction')) {
-                            $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>");
-                        }
-        
-                        continue;
-                    } else if (empty($mailbox['imap_server'])) {
-                        if (false === $input->getOption('no-interaction')) {
-                            $output->writeln("  <comment>Error: No imap configurations defined for email </comment><info>$mailboxEmail</info><comment>.</comment>");
-                        }
-        
-                        continue;
-                    }
-                } catch (\Exception $e) {
-                    if (false == $input->getOption('no-interaction')) {
-                        $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> not found.</comment>");
-    
-                        // return Command::INVALID;
-                    }
-    
-                    continue;
+            if (empty($mailbox)) {
+                if (false === $input->getOption('no-interaction')) {
+                    $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> not found.</comment>");
                 }
-    
-                try {
-                    $this->refreshMailbox(
-                        $mailbox['imap_server']['host'], 
-                        $mailbox['imap_server']['username'], 
-                        base64_decode($mailbox['imap_server']['password']), 
-                        $timestamp, 
-                        $output, 
-                        $mailbox
-                    );
-                } catch (\Exception $e) {
-                    $output->writeln("  <comment>An unexpected error occurred: " . $e->getMessage() . "</comment>");
+
+                continue;
+            } else if (false == $mailbox->getIsEnabled()) {
+                if (false === $input->getOption('no-interaction')) {
+                    $output->writeln("  <comment>Error: Mailbox for email </comment><info>$mailboxEmail</info><comment> is not enabled.</comment>");
+                }
+
+                continue;
+            } else {
+                $imapConfiguration = $mailbox->getImapConfiguration();
+
+                if (empty($imapConfiguration)) {
+                    if (false === $input->getOption('no-interaction')) {
+                        $output->writeln("  <comment>Error: No imap configurations defined for email </comment><info>$mailboxEmail</info><comment>.</comment>");
+                    }
+
+                    continue;
                 }
             }
-        }
 
+            try {
+                if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
+                    $output->writeln("  <comment>Cannot fetch emails from mailboxes with simple transport configurations.</comment>");
+                } else if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
+                    $microsoftApp = $this->entityManager->getRepository(MicrosoftApp::class)->findOneByClientId($imapConfiguration->getClient());
+
+                    if (empty($microsoftApp)) {
+                        $output->writeln("  <comment>No microsoft app was found for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
+
+                        continue;
+                    } else {
+                        $microsoftAccount = $this->entityManager->getRepository(MicrosoftAccount::class)->findOneBy([
+                            'email' => $imapConfiguration->getUsername(),
+                            'microsoftApp' => $microsoftApp,
+                        ]);
+
+                        if (empty($microsoftAccount)) {
+                            $output->writeln("  <comment>No microsoft account was found with email '" . $imapConfiguration->getUsername() . "' for configured client id '" . $imapConfiguration->getClient() . "'.</comment>");
+
+                            continue;
+                        }
+                    }
+
+                    $this->refreshOutlookMailbox($microsoftApp, $microsoftAccount, $timestamp, $output);
+                } else {
+                    $this->refreshMailbox($imapConfiguration->getHost(), $imapConfiguration->getUsername(), urldecode($imapConfiguration->getPassword()), $timestamp, $output);
+                }
+            } catch (\Exception $e) {
+                $output->writeln("  <comment>An unexpected error occurred: " . $e->getMessage() . "</comment>");
+            }
+        }
         $output->writeln("");
 
         return Command::SUCCESS;
     }
 
-    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output, $mailbox=null)
+    public function refreshMailbox($server_host, $server_username, $server_password, \DateTime $timestamp, OutputInterface $output)
     {
         $output->writeln("  - Establishing connection with mailbox");
 
@@ -215,27 +173,31 @@ class RefreshMailboxCommand extends Command
                 $output->writeln("\n    <bg=black;fg=bright-white>API</> <options=underscore>" . $this->endpoint . "</>\n");
 
                 $counter = 1;
+                try{
 
-                foreach ($emailCollection as $id => $messageNumber) {
-                    $output->writeln("    - <comment>Processing email</comment> <info>$counter</info> <comment>of</comment> <info>$emailCount</info>:");
-                    
-                    $message = imap_fetchbody($imap, $messageNumber, "");
-                    list($response, $responseCode, $responseErrorMessage) = $this->parseInboundEmail($message, $output);
+                    foreach ($emailCollection as $id => $messageNumber) {
+                        $output->writeln("    - <comment>Processing email</comment> <info>$counter</info> <comment>of</comment> <info>$emailCount</info>:");
 
-                    if ($responseCode == 200) {
-                        $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
-                    } else {
-                        if (! empty($responseErrorMessage)) {
-                            $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>$responseErrorMessage</>\n");
-                        } else {
-                            $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>" . $response['message'] . "</>\n");
+                        $message = imap_fetchbody($imap, $messageNumber, "");
+
+                        list($response, $responseCode) = $this->parseInboundEmail($message, $output);
+
+                        if ($response['message'] && !isset($response['error'])) {
+                            $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
                         }
-                    }
-                    
-                    $counter++;
-                }
 
-                $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
+                        if(isset($response['error'])) {
+                            $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red> ". $response['message'] ."</>\n");
+                        }
+
+                        $counter++;
+                    }
+
+                    $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
+                }catch(\Exception $e){
+                    $msg = $e->getMessage();
+                    $output->writeln("  - <comment>$msg</comment>");
+                }
             }
         }
 
@@ -410,29 +372,34 @@ class RefreshMailboxCommand extends Command
 
     public function parseInboundEmail($message, $output)
     {
-        $curlHandler = curl_init();
-        
-        curl_setopt($curlHandler, CURLOPT_HEADER, 0);
-        curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curlHandler, CURLOPT_POST, 1);
-        curl_setopt($curlHandler, CURLOPT_URL, $this->endpoint);
-        curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $message]));
+        $processedThread = $this->mailboxService->processMail($message);
+        $responseMessage = $processedThread['message'];
 
-        $curlResponse = curl_exec($curlHandler);
-        
-        $response = json_decode($curlResponse, true);
-        $responseCode = curl_getinfo($curlHandler, CURLINFO_HTTP_CODE);
-        $responseErrorMessage = null;
-
-        if (curl_errno($curlHandler)
-            || $responseCode != 200
-        ) {
-            $responseErrorMessage = curl_error($curlHandler);
+        if (isset($processedThread['content']['from']) && !empty($processedThread['content']['from'])) {
+            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
         }
 
+        if ((isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) && (isset($processedThread['content']['thread']) && !empty($processedThread['content']['thread']))) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+        } else if (isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
+        }
+
+        return [$processedThread, $responseMessage];
+    }
+
+    protected function isSecureConnectionAvailable()
+    {
+        $headers = [CURLOPT_NOBODY => true, CURLOPT_HEADER => false];
+        $curlHandler = curl_init('https://' . $this->container->getParameter('uvdesk.site_url'));
+
+        curl_setopt_array($curlHandler, $headers);
+        curl_exec($curlHandler);
+
+        $isSecureRequestAvailable = curl_errno($curlHandler) === 0 ? true : false;
         curl_close($curlHandler);
 
-        return [$response, $responseCode, $responseErrorMessage];
+        return $isSecureRequestAvailable;
     }
 
     public function parseOutlookInboundEmail($detailedMessage, $output)

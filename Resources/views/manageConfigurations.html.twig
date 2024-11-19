@@ -150,6 +150,7 @@
 							<option value="outlook_oauth" {% if mailbox.smtpConfiguration is not empty and mailbox.smtpConfiguration.code == 'outlook_oauth' %}selected{% endif %}>{{ 'Outlook Modern Auth'|trans }} </option>
 							<option value="swiftmailer_id" {% if mailbox.swiftmailerConfiguration is not empty and mailbox.swiftmailerConfiguration.code == 'swiftmailer_id' %}selected{% endif %}>{{ 'Swift Mailer'|trans }} </option>
 						</select>
+
 						<div class="uv-element-block" id='swiftMailerIdContainer' style="display:none;">
 							<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
 							{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
@@ -601,8 +602,6 @@
 					outgoingEmailSettings.transport = transport;
 					this.model.set('outgoing', outgoingEmailSettings);
 
-					console.log('changeOutgoingTransportType model:', this.model);
-
                     if (true) {
                         this.model.set('transport', $(e.target).val());
                     }
@@ -652,20 +651,19 @@
 				renderOutgoingTransportConfigurations: function() {
 					let outgoingEmailSettings = this.model.get('outgoing');
 
-					console.log('renderOutgoingTransportConfigurations:', outgoingEmailSettings);
-					
                     switch (outgoingEmailSettings.transport) {
 						case 'outlook':
                             $('.smtp-setting-references').html(this.outlook_smtp_configuration_template(outgoingEmailSettings));
 							break;
 						case 'swiftmailer_id':
-						$('#swiftMailerIdContainer').remove();
+							$('#swiftMailerIdContainer').remove();
                             $('.smtp-setting-references').html(this.swift_mailer_configuration_template(outgoingEmailSettings));
                             break;
 						case 'outlook_oauth':
                             $('.smtp-setting-references').html(this.outlook_oauth_smtp_configuration_template(outgoingEmailSettings));
                             break;
                         default:
+							$('.smtp-setting-references').html('')
                             break;
                     }
                 },
@@ -709,7 +707,6 @@
 		document.addEventListener('DOMContentLoaded', function () {
 			const transportDropdown = document.getElementById('mailboxOutgoingTransportType');
 			const swiftMailerContainer = document.getElementById('swiftMailerIdContainer');
-			const swiftMailerContainerOptions = document.getElementById('swift_mailer');
 
 			// Function to toggle Swift Mailer field visibility
 			function toggleSwiftMailerField() {
@@ -722,7 +719,7 @@
 			}
 
 			toggleSwiftMailerField();
-			
+
 			transportDropdown.addEventListener('change', toggleSwiftMailerField);
 		});
 	</script>
