@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
-use Symfony\Component\EventDispatcher\GenericEvent;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Thread;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Website;
@@ -772,9 +771,10 @@ class MailboxService
             $thread = $this->container->get('ticket.service')->createTicket($mailData);
 
             // Trigger ticket created event
-            $event = new GenericEvent(CoreWorkflowEvents\Ticket\Create::getId(), [
-                'entity' =>  $thread->getTicket(),
-            ]);
+            $event = new CoreWorkflowEvents\Ticket\Create();
+            $event
+                ->setTicket($thread->getTicket())
+            ;
 
             $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
         } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && !empty($mailData['inReplyTo'])) {
@@ -848,9 +848,10 @@ class MailboxService
 
                         $ticket->lastCollaborator = $user;
                         
-                        $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
-                            'entity' => $ticket,
-                        ]);
+                        $event = new CoreWorkflowEvents\Ticket\Collaborator();
+                        $event
+                            ->setTicket($ticket)
+                        ;
 
                         $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
                     }
@@ -863,17 +864,20 @@ class MailboxService
             
             if($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
-                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CustomerReply::getId(), [
-                        'entity' =>  $ticket,
-                    ]);
+                    $event = new CoreWorkflowEvents\Ticket\CustomerReply();
+                    $event
+                        ->setTicket($ticket)
+                    ;
                 }  else if ($thread->getCreatedBy() == 'collaborator') {
-                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\CollaboratorReply::getId(), [
-                        'entity' =>  $ticket,
-                    ]);
+                    $event = new CoreWorkflowEvents\Ticket\CollaboratorReply();
+                    $event
+                        ->setTicket($ticket)
+                    ;
                 } else {
-                    $event = new GenericEvent(CoreWorkflowEvents\Ticket\AgentReply::getId(), [
-                        'entity' =>  $ticket,
-                    ]);
+                    $event = new CoreWorkflowEvents\Ticket\AgentReply();
+                    $event
+                        ->setTicket($ticket)
+                    ;
                 }
             }
 

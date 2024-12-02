@@ -21,6 +21,7 @@ class RefreshMailboxCommand extends Command
 {
     private $endpoint;
     private $outlookEndpoint;
+    private $router;
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $entityManager, MicrosoftIntegration $microsoftIntegration, MailboxService $mailboxService)
     {
@@ -45,14 +46,14 @@ class RefreshMailboxCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $router = $this->container->get('router');
+        $this->router = $this->container->get('router');
         $useSecureConnection = $this->isSecureConnectionAvailable();
 
-        $router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
-        $router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
+        $this->router->getContext()->setHost($this->container->getParameter('uvdesk.site_url'));
+        $this->router->getContext()->setScheme(false === $useSecureConnection ? 'http' : 'https');
 
-        $this->endpoint = $router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
-        $this->outlookEndpoint = $router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->endpoint = $this->router->generate('helpdesk_member_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->outlookEndpoint = $this->router->generate('helpdesk_member_outlook_mailbox_notification', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -308,17 +309,14 @@ class RefreshMailboxCommand extends Command
 
                     unset($detailedMessage['attachments']);
 
-                    list($response, $responseCode, $responseErrorMessage) = $this->parseOutlookInboundEmail($detailedMessage, $output);
+                    list($response, $responseCode) = $this->parseOutlookInboundEmail($detailedMessage, $output);
 
-                    if ($responseCode == 200) {
+                    if ($response['message'] && !isset($response['error'])) {
                         $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
-                    } else {
-                        if (!empty($responseErrorMessage)) {
-                            $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>$responseErrorMessage</>\n");
-                        } else {
-                            $responseErrorMessage = $response['message'] ?? "Null response received";
-                            $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red>$responseErrorMessage</>\n");
-                        }
+                    }
+
+                    if(isset($response['error'])) {
+                        $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red> ". $response['message'] ."</>\n");
                     }
 
                     $counter++;
@@ -338,7 +336,7 @@ class RefreshMailboxCommand extends Command
         
         if (! empty($response['error'])) {
             if (
-                ! empty($response['error']['code']) 
+                ! empty($response['error']['code'])
                 && $response['error']['code'] == 'InvalidAuthenticationToken'
             ) {
                 $tokenResponse = $this->microsoftIntegration->refreshAccessToken($microsoftApp, $refreshToken);
@@ -404,29 +402,19 @@ class RefreshMailboxCommand extends Command
 
     public function parseOutlookInboundEmail($detailedMessage, $output)
     {
-        $curlHandler = curl_init();
-        
-        curl_setopt($curlHandler, CURLOPT_HEADER, 0);
-        curl_setopt($curlHandler, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curlHandler, CURLOPT_POST, 1);
-        curl_setopt($curlHandler, CURLOPT_URL, $this->outlookEndpoint);
-        curl_setopt($curlHandler, CURLOPT_POSTFIELDS, http_build_query(['email' => $detailedMessage]));
+        $processedThread = $this->mailboxService->processOutlookMail($detailedMessage);
+        $responseMessage = $processedThread['message'];
 
-        $curlResponse = curl_exec($curlHandler);
-        
-        $response = json_decode($curlResponse, true);
-        $responseCode = curl_getinfo($curlHandler, CURLINFO_HTTP_CODE);
-        $responseErrorMessage = null;
-
-        if (
-            curl_errno($curlHandler)
-            || $responseCode != 200
-        ) {
-            $responseErrorMessage = curl_error($curlHandler);
+        if (isset($processedThread['content']['from']) && !empty($processedThread['content']['from'])) {
+            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
         }
 
-        curl_close($curlHandler);
+        if ((isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) && (isset($processedThread['content']['thread']) && !empty($processedThread['content']['thread']))) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+        } else if (isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
+        }
 
-        return [$response, $responseCode, $responseErrorMessage];
+        return [$processedThread, $responseMessage];
     }
 }
