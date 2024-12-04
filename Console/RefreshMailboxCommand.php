@@ -117,7 +117,7 @@ class RefreshMailboxCommand extends Command
                         continue;
                     } else {
                         $microsoftAccount = $this->entityManager->getRepository(MicrosoftAccount::class)->findOneBy([
-                            'email' => $imapConfiguration->getUsername(),
+                            'email'        => $imapConfiguration->getUsername(),
                             'microsoftApp' => $microsoftApp,
                         ]);
 
@@ -174,8 +174,7 @@ class RefreshMailboxCommand extends Command
                 $output->writeln("\n    <bg=black;fg=bright-white>API</> <options=underscore>" . $this->endpoint . "</>\n");
 
                 $counter = 1;
-                try{
-
+                try {
                     foreach ($emailCollection as $id => $messageNumber) {
                         $output->writeln("    - <comment>Processing email</comment> <info>$counter</info> <comment>of</comment> <info>$emailCount</info>:");
 
@@ -187,7 +186,7 @@ class RefreshMailboxCommand extends Command
                             $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
                         }
 
-                        if(isset($response['error'])) {
+                        if (isset($response['error'])) {
                             $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red> ". $response['message'] ."</>\n");
                         }
 
@@ -195,7 +194,7 @@ class RefreshMailboxCommand extends Command
                     }
 
                     $output->writeln("  - <info>Mailbox refreshed successfully!</info>");
-                }catch(\Exception $e){
+                } catch (\Exception $e) {
                     $msg = $e->getMessage();
                     $output->writeln("  - <comment>$msg</comment>");
                 }
@@ -214,7 +213,7 @@ class RefreshMailboxCommand extends Command
         $filters = [
             'ReceivedDateTime' => [
                 'operation' => '>', 
-                'value' => $timeSpan, 
+                'value'     => $timeSpan, 
             ], 
         ];
         
@@ -235,7 +234,10 @@ class RefreshMailboxCommand extends Command
             $response = $nextLink ? MicrosoftGraph\Me::getMessagesWithNextLink($nextLink, $credentials['access_token']) : MicrosoftGraph\Me::messages($credentials['access_token'], $mailboxFolderId, $filters);
 
             if (! empty($response['error'])) {
-                if (! empty($response['error']['code']) && $response['error']['code'] == 'InvalidAuthenticationToken') {
+                if (
+                    ! empty($response['error']['code'])
+                    && $response['error']['code'] == 'InvalidAuthenticationToken'
+                ) {
                     $tokenResponse = $this->microsoftIntegration->refreshAccessToken($microsoftApp, $credentials['refresh_token']);
 
                     if (! empty($tokenResponse['access_token'])) {
@@ -311,11 +313,14 @@ class RefreshMailboxCommand extends Command
 
                     list($response, $responseCode) = $this->parseOutlookInboundEmail($detailedMessage, $output);
 
-                    if ($response['message'] && !isset($response['error'])) {
+                    if (
+                        $response['message'] 
+                        && !isset($response['error'])
+                    ) {
                         $output->writeln("\n      <bg=green;fg=bright-white;options=bold>200</> " . $response['message'] . "\n");
                     }
 
-                    if(isset($response['error'])) {
+                    if (isset($response['error'])) {
                         $output->writeln("\n      <bg=red;fg=white;options=bold>ERROR</> <fg=red> ". $response['message'] ."</>\n");
                     }
 
@@ -373,13 +378,24 @@ class RefreshMailboxCommand extends Command
         $processedThread = $this->mailboxService->processMail($message);
         $responseMessage = $processedThread['message'];
 
-        if (isset($processedThread['content']['from']) && !empty($processedThread['content']['from'])) {
+        if (
+            isset($processedThread['content']['from']) 
+            && !empty($processedThread['content']['from'])
+        ) {
             $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
         }
 
-        if ((isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) && (isset($processedThread['content']['thread']) && !empty($processedThread['content']['thread']))) {
+        if (
+            (isset($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['ticket'])) 
+            && (isset($processedThread['content']['thread']) 
+            && !empty($processedThread['content']['thread']))
+        ) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
-        } else if (isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) {
+        } else if (
+            isset($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['ticket'])
+        ) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
         }
 
@@ -405,13 +421,24 @@ class RefreshMailboxCommand extends Command
         $processedThread = $this->mailboxService->processOutlookMail($detailedMessage);
         $responseMessage = $processedThread['message'];
 
-        if (isset($processedThread['content']['from']) && !empty($processedThread['content']['from'])) {
+        if (
+            isset($processedThread['content']['from']) 
+            && !empty($processedThread['content']['from'])
+        ) {
             $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
         }
 
-        if ((isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) && (isset($processedThread['content']['thread']) && !empty($processedThread['content']['thread']))) {
+        if (
+            (isset($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['ticket'])) 
+            && (isset($processedThread['content']['thread']) 
+            && !empty($processedThread['content']['thread']))
+        ) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
-        } else if (isset($processedThread['content']['ticket']) && !empty($processedThread['content']['ticket'])) {
+        } else if (
+            isset($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['ticket'])
+        ) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
         }
 

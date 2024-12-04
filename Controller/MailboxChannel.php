@@ -22,7 +22,7 @@ class MailboxChannel extends AbstractController
 {
     public function loadMailboxes(UserService $userService)
     {
-        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (! $userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
@@ -31,7 +31,7 @@ class MailboxChannel extends AbstractController
 
     public function createMailboxConfiguration(Request $request, EntityManagerInterface $entityManager, UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
     {
-        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (! $userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
@@ -40,15 +40,15 @@ class MailboxChannel extends AbstractController
 
         $microsoftAppCollection = array_map(function ($microsoftApp) {
             return [
-                'id' => $microsoftApp->getId(),
+                'id'   => $microsoftApp->getId(),
                 'name' => $microsoftApp->getName(),
             ];
         }, $microsoftAppCollection);
 
         $microsoftAccountCollection = array_map(function ($microsoftAccount) {
             return [
-                'id' => $microsoftAccount->getId(),
-                'name' => $microsoftAccount->getName(),
+                'id'    => $microsoftAccount->getId(),
+                'name'  => $microsoftAccount->getName(),
                 'email' => $microsoftAccount->getEmail(),
             ];
         }, $microsoftAccountCollection);
@@ -74,7 +74,7 @@ class MailboxChannel extends AbstractController
                             $this->addFlash('warning', 'No configuration details were found for the provided microsoft account.');
 
                             return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-                                'microsoftAppCollection' => $microsoftAppCollection,
+                                'microsoftAppCollection'     => $microsoftAppCollection,
                                 'microsoftAccountCollection' => $microsoftAccountCollection,
                             ]);
                         }
@@ -90,7 +90,7 @@ class MailboxChannel extends AbstractController
                         $this->addFlash('warning', 'The resolved IMAP configuration is not configured for any valid available app.');
 
                         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
-                            'microsoftAppCollection' => $microsoftAppCollection,
+                            'microsoftAppCollection'     => $microsoftAppCollection,
                             'microsoftAccountCollection' => $microsoftAccountCollection,
                         ]);
                     }
@@ -156,7 +156,10 @@ class MailboxChannel extends AbstractController
                 }
             }
 
-            if (empty($imapConfiguration) && empty($smtpConfiguration)) {
+            if (
+                empty($imapConfiguration) 
+                && empty($smtpConfiguration)
+            ) {
                 $this->addFlash('warning', 'Invalid mailbox details provided. Mailbox needs to have at least IMAP or SMTP settings defined.');
             } else {
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
@@ -178,19 +181,19 @@ class MailboxChannel extends AbstractController
                     ->setIsEmailDeliveryDisabled(!empty($params['isEmailDeliveryDisabled']) && 'on' == $params['isEmailDeliveryDisabled'] ? true : false)
                 ;
 
-                if (!empty($imapConfiguration)) {
+                if (! empty($imapConfiguration)) {
                     $mailbox
                         ->setImapConfiguration($imapConfiguration)
                     ;
                 }
 
-                if (!empty($smtpConfiguration)) {
+                if (! empty($smtpConfiguration)) {
                     $mailbox
                         ->setSmtpConfiguration($smtpConfiguration)
                     ;
                 }
 
-                if (!empty($swiftmailerConfiguration)) {
+                if (! empty($swiftmailerConfiguration)) {
                     $mailbox
                         ->setSwiftMailerConfiguration($swiftmailerConfiguration);
                     ;
@@ -198,7 +201,7 @@ class MailboxChannel extends AbstractController
 
                 $mailboxConfiguration->addMailbox($mailbox);
 
-                if (!empty($params['isDefault']) && 'on' == $params['isDefault']) {
+                if (! empty($params['isDefault']) && 'on' == $params['isDefault']) {
                     $mailboxConfiguration
                         ->setDefaultMailbox($mailbox)
                     ;
@@ -238,15 +241,15 @@ class MailboxChannel extends AbstractController
 
         $microsoftAppCollection = array_map(function ($microsoftApp) {
             return [
-                'id' => $microsoftApp->getId(),
+                'id'   => $microsoftApp->getId(),
                 'name' => $microsoftApp->getName(),
             ];
         }, $microsoftAppCollection);
 
         $microsoftAccountCollection = array_map(function ($microsoftAccount) {
             return [
-                'id' => $microsoftAccount->getId(),
-                'name' => $microsoftAccount->getName(),
+                'id'    => $microsoftAccount->getId(),
+                'name'  => $microsoftAccount->getName(),
                 'email' => $microsoftAccount->getEmail(),
             ];
         }, $microsoftAccountCollection);

@@ -35,18 +35,18 @@ class FromEmail extends WorkflowAction
 
         $emailTemplateCollection = array_map(function ($emailTemplate) {
             return [
-                'id' => $emailTemplate->getId(),
+                'id'   => $emailTemplate->getId(),
                 'name' => $emailTemplate->getName(),
             ];
         }, $entityManager->getRepository(EmailTemplates::class)->findAll());
 
         return [
             [
-                'id' => 'use_same_address',
+                'id'   => 'use_same_address',
                 'name' => "Use original email address",
             ], 
             [
-                'id' => 'use_reply_to_address',
+                'id'   => 'use_reply_to_address',
                 'name' => "Use reply-to email address as customer email address",
             ]
         ];
@@ -54,7 +54,7 @@ class FromEmail extends WorkflowAction
 
     public static function applyAction(ContainerInterface $container, Event $event, $value = null)
     {
-        if (!$event instanceof EmailActivity) {
+        if (! $event instanceof EmailActivity) {
             return;
         }
 
@@ -63,7 +63,10 @@ class FromEmail extends WorkflowAction
 
         switch ($value) {
             case 'use_reply_to_address':
-                if (!empty($resolvedEmailHeaders['from']) && !empty($resolvedEmailHeaders['reply-to'])) {
+                if (
+                    !empty($resolvedEmailHeaders['from']) 
+                    && !empty($resolvedEmailHeaders['reply-to'])
+                ) {
                     $emailHeaders['from'] = $emailHeaders['reply-to'];
                     $resolvedEmailHeaders['from'] = $resolvedEmailHeaders['reply-to'];
                 }

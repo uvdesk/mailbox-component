@@ -19,7 +19,6 @@ use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
-
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
 use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
@@ -52,6 +51,7 @@ class MailboxService
     public function createConfiguration($params)
     {
         $configuration = new MailboxConfigurations\MailboxConfiguration($params);
+
         return $configuration ?? null;
     }
 
@@ -59,7 +59,7 @@ class MailboxService
     {
         $path = $this->getPathToConfigurationFile();
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new \Exception("File '$path' not found.");
         }
 
@@ -374,10 +374,10 @@ class MailboxService
 
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
-            'from' => $this->getEmailAddress($from),
-            'to' => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
-            'cc' => $this->parseAddress('cc'),
-            'delivered-to' => $this->parseAddress('delivered-to'),
+            'from'          => $this->getEmailAddress($from),
+            'to'            => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
+            'cc'            => $this->parseAddress('cc'),
+            'delivered-to'  => $this->parseAddress('delivered-to'),
         ];
 
         if (empty($addresses['from'])) {
@@ -489,11 +489,11 @@ class MailboxService
 
         // Search for any existing tickets
         $ticket = $this->searchExistingTickets([
-            'messageId' => $mailData['messageId'],
-            'inReplyTo' => $mailData['inReplyTo'],
+            'messageId'    => $mailData['messageId'],
+            'inReplyTo'    => $mailData['inReplyTo'],
             'referenceIds' => $mailData['referenceIds'],
-            'from' => $mailData['from'],
-            'subject' => $mailData['subject'],
+            'from'         => $mailData['from'],
+            'subject'      => $mailData['subject'],
         ]);
 
         if (empty($ticket)) {
@@ -527,9 +527,9 @@ class MailboxService
                 return [
                     'message' => "The contents of this email has already been processed.", 
                     'content' => [
-                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
-                        'thread' => $thread->getId(), 
-                        'ticket' => $ticket->getId(), 
+                        'from'   => !empty($mailData['from']) ? $mailData['from'] : null,
+                        'thread' => $thread->getId(),
+                        'ticket' => $ticket->getId(),
                     ], 
                 ];
             }
@@ -627,7 +627,7 @@ class MailboxService
             return [
                 'message' => "The contents of this email has already been processed.", 
                 'content' => [
-                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
                     'thread' => !empty($thread) ? $thread->getId() : null, 
                     'ticket' => !empty($ticket) ? $ticket->getId() : null, 
                 ], 
@@ -637,7 +637,7 @@ class MailboxService
         return [
             'message' => "Inbound email processsed successfully.", 
             'content' => [
-                'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
                 'thread' => !empty($thread) ? $thread->getId() : null, 
                 'ticket' => !empty($ticket) ? $ticket->getId() : null, 
             ], 
@@ -669,8 +669,8 @@ class MailboxService
 
         $addresses = [
             'from' => $senderAddress, 
-            'to' => $toRecipients, 
-            'cc' => $ccRecipients, 
+            'to'   => $toRecipients, 
+            'cc'   => $ccRecipients, 
         ];
         
         // Skip email processing if no to-emails are specified
@@ -749,11 +749,11 @@ class MailboxService
 
         // Search for any existing tickets
         $ticket = $this->searchExistingTickets([
-            'messageId' => $mailData['messageId'],
-            'inReplyTo' => $mailData['inReplyTo'],
-            'referenceIds' => $mailData['referenceIds'],
-            'from' => $mailData['from'],
-            'subject' => $mailData['subject'], 
+            'messageId'             => $mailData['messageId'],
+            'inReplyTo'             => $mailData['inReplyTo'],
+            'referenceIds'          => $mailData['referenceIds'],
+            'from'                  => $mailData['from'],
+            'subject'               => $mailData['subject'], 
             'outlookConversationId' => $mailData['outlookConversationId'],
         ]);
 
@@ -788,7 +788,7 @@ class MailboxService
                 return [
                     'message' => "The contents of this email has already been processed 1.", 
                     'content' => [
-                        'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                        'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
                         'thread' => $thread->getId(), 
                         'ticket' => $ticket->getId(), 
                     ], 
@@ -887,7 +887,7 @@ class MailboxService
             return [
                 'message' => "The contents of this email has already been processed 3.", 
                 'content' => [
-                    'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                    'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
                     'thread' => !empty($thread) ? $thread->getId() : null, 
                     'ticket' => !empty($ticket) ? $ticket->getId() : null, 
                 ], 
@@ -897,7 +897,7 @@ class MailboxService
         return [
             'message' => "Inbound email processed successfully.", 
             'content' => [
-                'from' => !empty($mailData['from']) ? $mailData['from'] : null, 
+                'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
                 'thread' => !empty($thread) ? $thread->getId() : null, 
                 'ticket' => !empty($ticket) ? $ticket->getId() : null, 
             ],
