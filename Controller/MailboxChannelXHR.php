@@ -30,9 +30,10 @@ class MailboxChannelXHR extends AbstractController
 
         if ($rawEmail != false &&  !empty($rawEmail)) {
            $this->mailboxService->processMail($rawEmail);
-        }else{
+        } else {
             dump("Empty Text file not allow");
-        } 
+        }
+
         exit(0);
     }
     
@@ -44,8 +45,8 @@ class MailboxChannelXHR extends AbstractController
 
         $collection = array_map(function ($mailbox) use ($defaultMailbox) {
             return [
-                'id' => $mailbox->getId(),
-                'name' => $mailbox->getName(),
+                'id'        => $mailbox->getId(),
+                'name'      => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
             ];
         }, array_values($mailboxConfiguration->getMailboxes()));
@@ -68,7 +69,7 @@ class MailboxChannelXHR extends AbstractController
 
         if (empty($mailbox)) {
             return new JsonResponse([
-                'alertClass' => 'danger',
+                'alertClass'   => 'danger',
                 'alertMessage' => "No mailbox found with id '$id'.",
             ], 404);
         }
@@ -86,7 +87,7 @@ class MailboxChannelXHR extends AbstractController
         file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
         return new JsonResponse([
-            'alertClass' => 'success',
+            'alertClass'   => 'success',
             'alertMessage' => $this->translator->trans('Mailbox configuration removed successfully.'),
         ]);
     }
@@ -158,13 +159,16 @@ class MailboxChannelXHR extends AbstractController
 
         $responseMessage = $processedThread['message'];
 
-        if (!empty($processedThread['content']['from'])) {
+        if (! empty($processedThread['content']['from'])) {
             $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
         }
 
-        if (!empty($processedThread['content']['ticket']) && !empty($processedThread['content']['thread'])) {
+        if (
+            ! empty($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['thread'])
+        ) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
-        } else if (!empty($processedThread['content']['ticket'])) {
+        } else if (! empty($processedThread['content']['ticket'])) {
             $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
         }
 

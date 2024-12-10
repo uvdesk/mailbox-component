@@ -71,7 +71,7 @@ TEMPLATE;
 
 return strtr($template, [
     '[[ DEFAULT_MAILBOX ]]' => $this->getDefaultMailbox() ? $this->getDefaultMailbox()->getId() : null, 
-    '[[ MAILBOXES ]]' => $mailboxes, 
+    '[[ MAILBOXES ]]'       => $mailboxes, 
 ]);
 
 ?>

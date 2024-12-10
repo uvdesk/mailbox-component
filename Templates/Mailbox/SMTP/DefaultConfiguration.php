@@ -21,10 +21,10 @@ $template .= <<<TEMPLATE
 TEMPLATE;
 
 return strtr($template, [
-    '[[ host ]]' => $smtpConfiguration->getHost(),
-    '[[ username ]]' => $smtpConfiguration->getUsername(),
-    '[[ password ]]' => $smtpConfiguration->getPassword(),
-    '[[ port ]]' => $smtpConfiguration->getPort(),
+    '[[ host ]]'           => $smtpConfiguration->getHost(),
+    '[[ username ]]'       => $smtpConfiguration->getUsername(),
+    '[[ password ]]'       => $smtpConfiguration->getPassword(),
+    '[[ port ]]'           => $smtpConfiguration->getPort(),
     '[[ sender_address ]]' => method_exists($smtpConfiguration, 'getSenderAddress') ? $smtpConfiguration->getSenderAddress() : null,
 ]);
 

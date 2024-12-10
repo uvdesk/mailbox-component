@@ -64,7 +64,7 @@ class FromEmail extends WorkflowAction
         switch ($value) {
             case 'use_reply_to_address':
                 if (
-                    !empty($resolvedEmailHeaders['from']) 
+                    ! empty($resolvedEmailHeaders['from']) 
                     && !empty($resolvedEmailHeaders['reply-to'])
                 ) {
                     $emailHeaders['from'] = $emailHeaders['reply-to'];

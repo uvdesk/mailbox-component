@@ -13,9 +13,9 @@ $template .= <<<TEMPLATE
 TEMPLATE;
 
 return strtr($template, [
-    '[[ client ]]' => $smtpConfiguration->getClient(),
+    '[[ client ]]'   => $smtpConfiguration->getClient(),
     '[[ username ]]' => $smtpConfiguration->getUsername(), 
-    '[[ type ]]' => $smtpConfiguration->getType(),
+    '[[ type ]]'     => $smtpConfiguration->getType(),
 ]);
 
 ?>

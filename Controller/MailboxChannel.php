@@ -54,7 +54,7 @@ class MailboxChannel extends AbstractController
         }, $microsoftAccountCollection);
 
         # load swift mailer configuration
-        $swiftmailerConfigurationCollection = $swiftMailer->parseSwiftMailerConfigurations();
+        $swiftMailerConfigurationCollection = $swiftMailer->parseSwiftMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -120,7 +120,7 @@ class MailboxChannel extends AbstractController
                             return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                                 'microsoftAppCollection'     => $microsoftAppCollection,
                                 'microsoftAccountCollection' => $microsoftAccountCollection,
-                                'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                                'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                             ]);
                         }
 
@@ -137,7 +137,7 @@ class MailboxChannel extends AbstractController
                         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                             'microsoftAppCollection'     => $microsoftAppCollection,
                             'microsoftAccountCollection' => $microsoftAccountCollection,
-                            'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                            'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                         ]);
                     }
                 } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
@@ -166,7 +166,7 @@ class MailboxChannel extends AbstractController
 
                 // Swiftmailer Configuration
                 if (!empty($params['swiftmailer_id'])) {
-                    foreach ($swiftmailerConfigurationCollection as $configuration) {
+                    foreach ($swiftMailerConfigurationCollection as $configuration) {
                         if ($configuration->getId() == $params['swiftmailer_id']) {
                             $swiftmailerConfiguration = $configuration;
                             break;
@@ -218,7 +218,7 @@ class MailboxChannel extends AbstractController
         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
             'microsoftAppCollection'     => $microsoftAppCollection,
             'microsoftAccountCollection' => $microsoftAccountCollection,
-            'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+            'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
         ]);
     }
 
@@ -255,7 +255,7 @@ class MailboxChannel extends AbstractController
         }, $microsoftAccountCollection);
 
         # load swift mailer configuration
-        $swiftmailerConfigurationCollection = $swiftMailer->parseSwiftMailerConfigurations();
+        $swiftMailerConfigurationCollection = $swiftMailer->parseSwiftMailerConfigurations();
 
         if ($request->getMethod() == 'POST') {
             $params = $request->request->all();
@@ -277,7 +277,7 @@ class MailboxChannel extends AbstractController
                             return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                                 'microsoftAppCollection'     => $microsoftAppCollection,
                                 'microsoftAccountCollection' => $microsoftAccountCollection,
-                                'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                                'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                             ]);
                         }
 
@@ -294,7 +294,7 @@ class MailboxChannel extends AbstractController
                         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                             'microsoftAppCollection'     => $microsoftAppCollection,
                             'microsoftAccountCollection' => $microsoftAccountCollection,
-                            'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                            'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                         ]);
                     }
                 } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
@@ -323,7 +323,7 @@ class MailboxChannel extends AbstractController
                             return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                                 'microsoftAppCollection'     => $microsoftAppCollection,
                                 'microsoftAccountCollection' => $microsoftAccountCollection,
-                                'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                                'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                             ]);
                         }
 
@@ -340,7 +340,7 @@ class MailboxChannel extends AbstractController
                         return $this->render('@UVDeskMailbox//manageConfigurations.html.twig', [
                             'microsoftAppCollection'     => $microsoftAppCollection,
                             'microsoftAccountCollection' => $microsoftAccountCollection,
-                            'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+                            'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
                         ]);
                     }
                 } else if ($smtpConfiguration instanceof SMTP\Transport\ResolvedTransportConfigurationInterface) {
@@ -367,8 +367,8 @@ class MailboxChannel extends AbstractController
                 $mailbox = new Mailbox($params['id']);
 
                 // Swiftmailer Configuration
-                if (!empty($params['swiftmailer_id'])) {
-                    foreach ($swiftmailerConfigurationCollection as $configuration) {
+                if (! empty($params['swiftmailer_id'])) {
+                    foreach ($swiftMailerConfigurationCollection as $configuration) {
                         if ($configuration->getId() == $params['swiftmailer_id']) {
                             $swiftmailerConfiguration = $configuration;
                             break;
@@ -418,7 +418,7 @@ class MailboxChannel extends AbstractController
             'mailbox'                    => $mailbox,
             'microsoftAppCollection'     => $microsoftAppCollection,
             'microsoftAccountCollection' => $microsoftAccountCollection,
-            'swiftmailerConfigurations'  => $swiftmailerConfigurationCollection,
+            'swiftmailerConfigurations'  => $swiftMailerConfigurationCollection,
         ]);
     }
 }

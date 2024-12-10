@@ -69,12 +69,12 @@ class MailboxService
         foreach (Yaml::parse(file_get_contents($path))['uvdesk_mailbox']['mailboxes'] ?? [] as $id => $params) {
             // Swiftmailer Configuration
             
-            $swiftmailerConfigurations = $this->swiftMailer->parseSwiftMailerConfigurations() ?? null;
+            $swiftMailerConfigurations = $this->swiftMailer->parseSwiftMailerConfigurations() ?? null;
 
             if (isset($params['smtp_swift_mailer_server'])) {
-                foreach ($swiftmailerConfigurations as $configuration) {
+                foreach ($swiftMailerConfigurations as $configuration) {
                     if ($configuration->getId() == $params['smtp_swift_mailer_server']['mailer_id']) {
-                        $swiftmailerConfiguration = $configuration;
+                        $swiftMailerConfiguration = $configuration;
                         break;
                     }
                 }
@@ -83,7 +83,7 @@ class MailboxService
             // IMAP Configuration
             $imapConfiguration = null;
 
-            if (!empty($params['imap_server'])) {
+            if (! empty($params['imap_server'])) {
                 $imapConfiguration = IMAP\Configuration::guessTransportDefinition($params['imap_server']);
     
                 if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
@@ -152,9 +152,9 @@ class MailboxService
                 ;
             }
             
-            if (!empty($swiftmailerConfiguration)) {
-                $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
-            } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
+            if (! empty($swiftMailerConfiguration)) {
+                $mailbox->setSwiftMailerConfiguration($swiftMailerConfiguration);
+            } else if (! empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
                 $mailbox->setSwiftMailerConfiguration($swiftmailerService->createConfiguration('smtp', $params['smtp_server']['mailer_id']));
             }
 
@@ -276,10 +276,13 @@ class MailboxService
         return false;
     }
 
-    private function searchticketSubjectRefrence($senderEmail, $messageSubject) {
+    private function searchTicketSubjectReference($senderEmail, $messageSubject) {
         
         // Search Criteria: Find ticket based on subject
-        if (!empty($senderEmail) && !empty($messageSubject)) {
+        if (
+            !empty($senderEmail)
+            && !empty($messageSubject)
+        ) {
             $threadRepository = $this->entityManager->getRepository(Thread::class);
             $ticket = $threadRepository->findTicketBySubject($senderEmail, $messageSubject);
 
@@ -310,7 +313,7 @@ class MailboxService
                     // Search Criteria 1: Find ticket by unique message id
                     $ticket = $ticketRepository->findOneByReferenceIds($criteriaValue);
 
-                    if (!empty($ticket)) {
+                    if (! empty($ticket)) {
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
@@ -325,7 +328,7 @@ class MailboxService
                     // Search Criteria 1: Find ticket by unique message id
                     $ticket = $ticketRepository->findOneByOutlookConversationId($criteriaValue);
 
-                    if (!empty($ticket)) {
+                    if (! empty($ticket)) {
                         return $ticket;
                     }
                     
@@ -334,12 +337,12 @@ class MailboxService
                     // Search Criteria 2: Find ticket based on in-reply-to reference id
                     $ticket = $this->entityManager->getRepository(Thread::class)->findThreadByRefrenceId($criteriaValue);
 
-                    if (!empty($ticket)) {
+                    if (! empty($ticket)) {
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
         
-                        if (!empty($thread)) {
+                        if (! empty($thread)) {
                             return $thread->getTicket();
                         }
                     }
@@ -353,7 +356,7 @@ class MailboxService
                     foreach ($referenceIds as $messageId) {
                         $thread = $threadRepository->findOneByMessageId($messageId);
 
-                        if (!empty($thread)) {
+                        if (! empty($thread)) {
                             return $thread->getTicket();
                         }
                     }
@@ -386,15 +389,15 @@ class MailboxService
                 'content' => [], 
             ];
         } else {
-            if (!empty($addresses['delivered-to'])) {
+            if (! empty($addresses['delivered-to'])) {
                 $addresses['to'] = array_map(function($address) {
                     return $address['address'];
                 }, $addresses['delivered-to']);
-            } else if (!empty($addresses['to'])) {
+            } else if (! empty($addresses['to'])) {
                 $addresses['to'] = array_map(function($address) {
                     return $address['address'];
                 }, $addresses['to']);
-            } else if (!empty($addresses['cc'])) {
+            } else if (! empty($addresses['cc'])) {
                 $addresses['to'] = array_map(function($address) {
                     return $address['address'];
                 }, $addresses['cc']);
@@ -405,7 +408,7 @@ class MailboxService
                 return [
                     'message' => "No 'to' email addresses were found in the email.", 
                     'content' => [
-                        'from' => !empty($addresses['from']) ? $addresses['from'] : null, 
+                        'from' => ! empty($addresses['from']) ? $addresses['from'] : null, 
                     ], 
                 ];
             }
@@ -415,7 +418,7 @@ class MailboxService
                 return [
                     'message' => "Received an auto-forwarded email which can lead to possible infinite loop of email exchanges. Skipping email from further processing.", 
                     'content' => [
-                        'from' => !empty($addresses['from']) ? $addresses['from'] : null, 
+                        'from' => ! empty($addresses['from']) ? $addresses['from'] : null, 
                     ], 
                 ];
             }
@@ -437,8 +440,8 @@ class MailboxService
 
         $mailData['replyTo'] = '';
         
-        foreach($addresses['to'] as $mailboxEmail){
-            if($this->getMailboxByToEmail(strtolower($mailboxEmail))){
+        foreach ($addresses['to'] as $mailboxEmail){
+            if ($this->getMailboxByToEmail(strtolower($mailboxEmail))) {
                 $mailData['replyTo'] = $mailboxEmail;
             }
         }
@@ -472,7 +475,7 @@ class MailboxService
             ];
         }
         
-        if (!$mailData['message']) {
+        if (! $mailData['message']) {
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
@@ -501,9 +504,9 @@ class MailboxService
             $mailData['referenceIds'] = $mailData['messageId'];
 
             // @Todo For same subject with same customer check
-            // $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+            // $ticketSubjectReferenceExist = $this->searchTicketSubjectReference($mailData['from'], $mailData['subject']);
 
-            // if(!empty($ticketSubjectRefrenceExist)) {
+            // if (!empty($ticketSubjectReferenceExist)) {
             //     return;
             // }
 
@@ -627,19 +630,19 @@ class MailboxService
             return [
                 'message' => "The contents of this email has already been processed.", 
                 'content' => [
-                    'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
-                    'thread' => !empty($thread) ? $thread->getId() : null, 
-                    'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                    'from'   => ! empty($mailData['from']) ? $mailData['from'] : null, 
+                    'thread' => ! empty($thread) ? $thread->getId() : null, 
+                    'ticket' => ! empty($ticket) ? $ticket->getId() : null, 
                 ], 
             ];
         }
 
         return [
-            'message' => "Inbound email processsed successfully.", 
+            'message' => "Inbound email processed successfully.", 
             'content' => [
-                'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
-                'thread' => !empty($thread) ? $thread->getId() : null, 
-                'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                'from'   => ! empty($mailData['from']) ? $mailData['from'] : null, 
+                'thread' => ! empty($thread) ? $thread->getId() : null, 
+                'ticket' => ! empty($ticket) ? $ticket->getId() : null, 
             ], 
         ];
     }
@@ -650,10 +653,10 @@ class MailboxService
         $senderName = null;
         $senderAddress = null;
 
-        if (!empty($outlookEmail['from']['emailAddress']['address'])) {
+        if (! empty($outlookEmail['from']['emailAddress']['address'])) {
             $senderName = $outlookEmail['from']['emailAddress']['name'];
             $senderAddress = $outlookEmail['from']['emailAddress']['address'];
-        } else if (!empty($outlookEmail['sender']['emailAddress']['address'])) {
+        } else if (! empty($outlookEmail['sender']['emailAddress']['address'])) {
             $senderName = $outlookEmail['sender']['emailAddress']['name'];
             $senderAddress = $outlookEmail['sender']['emailAddress']['address'];
         } else {
@@ -762,9 +765,9 @@ class MailboxService
             $mailData['referenceIds'] = $mailData['messageId'];
 
             // @Todo For same subject with same customer check
-            // $ticketSubjectRefrenceExist = $this->searchticketSubjectRefrence($mailData['from'], $mailData['subject']);
+            // $ticketSubjectReferenceExist = $this->searchTicketSubjectReference($mailData['from'], $mailData['subject']);
 
-            // if(!empty($ticketSubjectRefrenceExist)) {
+            // if(!empty($ticketSubjectReferenceExist)) {
             //     return;
             // }
 
@@ -887,9 +890,9 @@ class MailboxService
             return [
                 'message' => "The contents of this email has already been processed 3.", 
                 'content' => [
-                    'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
-                    'thread' => !empty($thread) ? $thread->getId() : null, 
-                    'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                    'from'   => ! empty($mailData['from']) ? $mailData['from'] : null, 
+                    'thread' => ! empty($thread) ? $thread->getId() : null, 
+                    'ticket' => ! empty($ticket) ? $ticket->getId() : null, 
                 ], 
             ];
         }
@@ -897,9 +900,9 @@ class MailboxService
         return [
             'message' => "Inbound email processed successfully.", 
             'content' => [
-                'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
-                'thread' => !empty($thread) ? $thread->getId() : null, 
-                'ticket' => !empty($ticket) ? $ticket->getId() : null, 
+                'from'   => ! empty($mailData['from']) ? $mailData['from'] : null, 
+                'thread' => ! empty($thread) ? $thread->getId() : null, 
+                'ticket' => ! empty($ticket) ? $ticket->getId() : null, 
             ],
         ];
     }

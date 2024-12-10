@@ -28,7 +28,7 @@ class Mailbox
     private $isStrictModeEnabled = false;
     private $imapConfiguration = null;
     private $smtpConfiguration = null;
-    private $swiftmailerConfiguration = null;
+    private $swiftMailerConfiguration = null;
 
     public function __construct($id = null)
     {
@@ -117,31 +117,30 @@ class Mailbox
         return $this->smtpConfiguration;
     }
 
-
-    public function setSwiftMailerConfiguration(SwiftMailerConfiguration $swiftmailerConfiguration)
+    public function setSwiftMailerConfiguration(SwiftMailerConfiguration $swiftMailerConfiguration)
     {
-        $this->swiftmailerConfiguration = $swiftmailerConfiguration;
+        $this->swiftMailerConfiguration = $swiftMailerConfiguration;
 
         return $this;
     }
 
     public function getSwiftMailerConfiguration() : ?SwiftMailerConfiguration
     {
-        return $this->swiftmailerConfiguration;
+        return $this->swiftMailerConfiguration;
     }
 
     public function __toString()
     {
         $imapConfiguration = $this->getImapConfiguration();
         $smtpConfiguration = $this->getSmtpConfiguration();
-        $swiftmailerConfiguration = $this->getSwiftMailerConfiguration();
+        $swiftMailerConfiguration = $this->getSwiftMailerConfiguration();
 
         $imapTemplate = '';
 
-        if (!empty($imapConfiguration)) {
+        if (! empty($imapConfiguration)) {
             if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
                 $imapTemplate = strtr(require self::IMAP_APP_CONFIGURATION_TEMPLATE, [
-                    '[[ imap_client ]]' => $imapConfiguration->getClient(),
+                    '[[ imap_client ]]'   => $imapConfiguration->getClient(),
                     '[[ imap_username ]]' => $imapConfiguration->getUsername(),
                 ]);
             } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
@@ -150,7 +149,7 @@ class Mailbox
                 ]);
             } else {
                 $imapTemplate = strtr(require self::IMAP_DEFAULT_CONFIGURATION_TEMPLATE, [
-                    '[[ imap_host ]]' => $imapConfiguration->getHost(),
+                    '[[ imap_host ]]'     => $imapConfiguration->getHost(),
                     '[[ imap_username ]]' => $imapConfiguration->getUsername(),
                     '[[ imap_password ]]' => $imapConfiguration->getPassword(),
                 ]);
@@ -162,20 +161,20 @@ class Mailbox
         if (!empty($smtpConfiguration)) {
             if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
                 $smtpTemplate = strtr(require self::SMTP_APP_CONFIGURATION_TEMPLATE, [
-                    '[[ client ]]' => $smtpConfiguration->getClient(),
+                    '[[ client ]]'   => $smtpConfiguration->getClient(),
                     '[[ username ]]' => $smtpConfiguration->getUsername(),
-                    '[[ type ]]' => $smtpConfiguration->getType(),
+                    '[[ type ]]'     => $smtpConfiguration->getType(),
                 ]);
             } else {
                 $smtpTemplate = (require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE);
             }
         }
         
-        $swiftmailerTemplate = '';
+        $swiftMailerTemplate = '';
 
-        if (!empty($swiftmailerConfiguration)) {
-            $swiftmailerTemplate = strtr(require self::SWIFT_MAILER_CONFIGURATION_TEMPLATE, [
-                '[[ swiftMailer_id ]]' => $swiftmailerConfiguration->getId(),
+        if (! empty($swiftMailerConfiguration)) {
+            $swiftMailerTemplate = strtr(require self::SWIFT_MAILER_CONFIGURATION_TEMPLATE, [
+                '[[ swiftMailer_id ]]' => $swiftMailerConfiguration->getId(),
             ]);
         }
 

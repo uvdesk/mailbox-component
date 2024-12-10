@@ -65,7 +65,7 @@ final class Configuration
             }
         }
 
-        if (!empty($customConfigurationReflection)) {
+        if (! empty($customConfigurationReflection)) {
             return $customConfigurationReflection->newInstance($host);
         }
 

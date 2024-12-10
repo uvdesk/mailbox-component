@@ -9,7 +9,7 @@ $template = <<<TEMPLATE
 
 TEMPLATE;
 
-if (!empty($imapTemplate)) {
+if (! empty($imapTemplate)) {
     $template .= <<<TEMPLATE
 
             # Incoming email settings
@@ -29,7 +29,7 @@ if (!empty($smtpTemplate)) {
 TEMPLATE;
 }
 
-if (!empty($swiftmailerTemplate)) {
+if (! empty($swiftMailerTemplate)) {
     $template .= <<<TEMPLATE
 
             # Outgoing email settings
@@ -40,14 +40,14 @@ TEMPLATE;
 }
 
 return strtr($template, [
-    '[[ id ]]' => $this->getId(),
-    '[[ name ]]' => $this->getName(),
+    '[[ id ]]'                      => $this->getId(),
+    '[[ name ]]'                    => $this->getName(),
     '[[ disable_outbound_emails ]]' => $this->getIsEmailDeliveryDisabled() ? 'true' : 'false',
-    '[[ status ]]' => $this->getIsEnabled() ? 'true' : 'false',
-    '[[ use_strict_mode ]]' => $this->getIsStrictModeEnabled() ? 'true' : 'false',
-    '[[ smtp_settings ]]' => $smtpTemplate,
-    '[[ imap_settings ]]' => $imapTemplate,
-    '[[ swift_mailer_settings ]]' => $swiftmailerTemplate,
+    '[[ status ]]'                  => $this->getIsEnabled() ? 'true' : 'false',
+    '[[ use_strict_mode ]]'         => $this->getIsStrictModeEnabled() ? 'true' : 'false',
+    '[[ smtp_settings ]]'           => $smtpTemplate,
+    '[[ imap_settings ]]'           => $imapTemplate,
+    '[[ swift_mailer_settings ]]'   => $swiftMailerTemplate,
 ]);
 
 ?>
