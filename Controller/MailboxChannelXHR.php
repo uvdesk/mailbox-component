@@ -30,63 +30,26 @@ class MailboxChannelXHR extends AbstractController
 
         if ($rawEmail != false &&  !empty($rawEmail)) {
            $this->mailboxService->processMail($rawEmail);
-        }else{
+        } else {
             dump("Empty Text file not allow");
-        } 
+        }
+
         exit(0);
-    }
-
-    public function processMailXHR(Request $request)
-    {
-        if ("POST" != $request->getMethod()) {
-            return new JsonResponse([
-                'success' => false, 
-                'message' => 'Request not supported.'
-            ], 500);
-        } else if (null == $request->get('email')) {
-            return new JsonResponse([
-                'success' => false, 
-                'message' => 'Missing required email data in request content.'
-            ], 500);
-        }
-
-        try {
-            $processedThread = $this->mailboxService->processMail($request->get('email'));
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false, 
-                'message' => $e->getMessage()
-            ], 500);
-        }
-
-        $responseMessage = $processedThread['message'];
-
-        if (!empty($processedThread['content']['from'])) {
-            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
-        }
-
-        if (!empty($processedThread['content']['ticket']) && !empty($processedThread['content']['thread'])) {
-            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['thread'] . "]</comment>";
-        } else if (!empty($processedThread['content']['ticket'])) {
-            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
-        }
-
-        return new JsonResponse([
-            'success' => true, 
-            'message' => $responseMessage, 
-        ]);
     }
     
     public function loadMailboxesXHR(Request $request)
     {
-        $collection = array_map(function ($mailbox) {
+        $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
+
+        $defaultMailbox = $mailboxConfiguration->getDefaultMailbox();
+
+        $collection = array_map(function ($mailbox) use ($defaultMailbox) {
             return [
-                'id' => $mailbox->getId(),
-                'name' => $mailbox->getName(),
+                'id'        => $mailbox->getId(),
+                'name'      => $mailbox->getName(),
                 'isEnabled' => $mailbox->getIsEnabled(),
-                'isDeleted' => $mailbox->getIsDeleted() ? $mailbox->getIsDeleted() : false,
             ];
-        }, $this->mailboxService->parseMailboxConfigurations()->getMailboxes());
+        }, array_values($mailboxConfiguration->getMailboxes()));
 
         return new JsonResponse($collection ?? []);
     }
@@ -106,7 +69,7 @@ class MailboxChannelXHR extends AbstractController
 
         if (empty($mailbox)) {
             return new JsonResponse([
-                'alertClass' => 'danger',
+                'alertClass'   => 'danger',
                 'alertMessage' => "No mailbox found with id '$id'.",
             ], 404);
         }
@@ -124,8 +87,94 @@ class MailboxChannelXHR extends AbstractController
         file_put_contents($mailboxService->getPathToConfigurationFile(), (string) $mailboxConfiguration);
 
         return new JsonResponse([
-            'alertClass' => 'success',
+            'alertClass'   => 'success',
             'alertMessage' => $this->translator->trans('Mailbox configuration removed successfully.'),
+        ]);
+    }
+
+    public function processMailXHR(Request $request, MailboxService $mailboxService)
+    {
+        if ("POST" != $request->getMethod()) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Request not supported.'
+            ], 500);
+        } else if (null == $request->get('email')) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Missing required email data in request content.'
+            ], 500);
+        }
+
+        try {
+            $processedThread = $mailboxService->processMail($request->get('email'));
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        $responseMessage = $processedThread['message'];
+
+        if (!empty($processedThread['content']['from'])) {
+            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
+        }
+
+        if (!empty($processedThread['content']['ticket']) && !empty($processedThread['content']['thread'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+        } else if (!empty($processedThread['content']['ticket'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
+        }
+
+        return new JsonResponse([
+            'success' => true, 
+            'message' => $responseMessage, 
+        ]);
+    }
+
+    public function processOutlookMailXHR(Request $request, MailboxService $mailboxService)
+    {
+        if ("POST" != $request->getMethod()) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Request not supported.'
+            ], 500);
+        } else if (null == $request->get('email')) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Missing required email data in request content.'
+            ], 500);
+        }
+
+        try {
+            $processedThread = $mailboxService->processOutlookMail($request->get('email'));
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => $e->getMessage(), 
+                'params'  => $request->get('email')
+            ], 500);
+        }
+
+        $responseMessage = $processedThread['message'];
+
+        if (! empty($processedThread['content']['from'])) {
+            $responseMessage = "Received email from <info>" . $processedThread['content']['from']. "</info>. " . $responseMessage;
+        }
+
+        if (
+            ! empty($processedThread['content']['ticket']) 
+            && !empty($processedThread['content']['thread'])
+        ) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "/#" . $processedThread['content']['ticket'] . "]</comment>";
+        } else if (! empty($processedThread['content']['ticket'])) {
+            $responseMessage .= " <comment>[tickets/" . $processedThread['content']['ticket'] . "]</comment>";
+        }
+
+        return new JsonResponse([
+            'success' => true, 
+            'message' => $responseMessage, 
         ]);
     }
 }

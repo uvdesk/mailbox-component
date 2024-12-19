@@ -221,7 +221,7 @@
 							globalMessageResponse = null;
 						},
 						error: function (model, xhr, options) {
-							if(url = xhr.getResponseHeader('Location'))
+							if (url = xhr.getResponseHeader('Location'))
 								window.location = url;
 						}
 					});
@@ -237,6 +237,7 @@
 				},
 				render: function() {
 					this.$el.html(this.template(this.model));
+					
 					return this;
 				},
 				confirmRemove: function(e) {

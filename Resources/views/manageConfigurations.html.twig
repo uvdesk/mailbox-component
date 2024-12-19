@@ -85,6 +85,7 @@
 					</label>
 				</div>
 
+				{# Default Mailbox #}
 				<div class="uv-element-block">
 					<label>
 						<div class="uv-checkbox">
@@ -104,22 +105,28 @@
 				<div class="uv-hr"></div>
 
 				{# IMAP Settings #}
-				<h3 class="section-heading">{{ 'Incoming Mail (IMAP) Server'|trans }}</h3>
-				<p class="section-description">{{ 'Configure your imap settings which will be used to fetch emails from your mailbox.'|trans }}</p>
+				<h3 class="section-heading">{{ 'Incoming Mail'|trans }}</h3>
+				<p class="section-description">{{ 'Manage how you wish to retrieve and process emails from your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
 					<label class="uv-field-label">{{ 'Transport'|trans }}</label>
 
-					{% if mailbox is defined %}
-						<select name="imap[transport]" id="cta-mailbox-imap-transport" class="uv-select">
-							<option value="custom" {% if mailbox.imapConfiguration.code == 'custom' %}selected{% endif %}>{{ 'IMAP'|trans }}</option>
+					{% if mailbox is defined and mailbox.imapConfiguration is not empty %}
+						<select name="imap[transport]" id="mailboxIncomingTransportType" class="uv-select">
+							<option value="">{{ 'None Selected'|trans }}</option>
 							<option value="gmail" {% if mailbox.imapConfiguration.code == 'gmail' %}selected{% endif %}>{{ 'Gmail'|trans }}</option>
+							<option value="imap" {% if mailbox.imapConfiguration.code == 'imap' %}selected{% endif %}>{{ 'IMAP'|trans }}</option>
+							<option value="outlook" {% if mailbox.imapConfiguration.code == 'outlook' %}selected{% endif %}>{{ 'Outlook'|trans }}</option>
+							<option value="outlook_oauth" {% if mailbox.imapConfiguration.code == 'outlook_oauth' %}selected{% endif %}>{{ 'Outlook Modern Auth'|trans }}</option>
 							<option value="yahoo" {% if mailbox.imapConfiguration.code == 'yahoo' %}selected{% endif %}>{{ 'Yahoo'|trans }}</option>
 						</select>
 					{% else %}
-						<select name="imap[transport]" id="cta-mailbox-imap-transport" class="uv-select">
-							<option value="custom" selected>{{ 'IMAP'|trans }}</option>
+						<select name="imap[transport]" id="mailboxIncomingTransportType" class="uv-select">
+							<option value="" selected>{{ 'None Selected'|trans }}</option>
 							<option value="gmail">{{ 'Gmail'|trans }}</option>
+							<option value="imap">{{ 'IMAP'|trans }}</option>
+							<option value="outlook">{{ 'Outlook'|trans }}</option>
+							<option value="outlook_oauth">{{ 'Outlook Modern Auth'|trans }}</option>
 							<option value="yahoo">{{ 'Yahoo'|trans }}</option>
 						</select>
 					{% endif %}
@@ -129,37 +136,58 @@
 
 				<div class="uv-hr"></div>
 
-				{# SwiftMailer Settings #}
-				<h3 class="section-heading">{{ 'Outgoing Mail (SMTP) Server'|trans }}</h3>
-				<p class="section-description">{{ 'Select a valid Swift Mailer configuration which will be used to send emails through your mailbox.'|trans }}</p>
+				{# SMTP Settings #}
+				<h3 class="section-heading">{{ 'Outgoing Mail'|trans }}</h3>
+				<p class="section-description">{{ 'Manage how you wish to send emails from your mailbox.'|trans }}</p>
 
 				<div class="uv-element-block">
-					<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
+					<label class="uv-field-label">{{ 'Transport'|trans }}</label>
 
-					{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
-						<select name="swiftmailer_id" class="uv-select">
-							<option value="none">{{ 'None Selected'|trans }}</option>
-							{% for configuration in swiftmailerConfigurations %}
-								{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
-									<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
-								{% else %}
-									<option value="{{ configuration.id }}">{{ configuration.id }}</option>
-								{% endif %}
-							{% endfor %}
+					{% if mailbox is defined %}
+						<select name="smtp[transport]" id="mailboxOutgoingTransportType" class="uv-select">
+							<option value="">{{ 'None Selected'|trans }}</option>
+							<option value="outlook" {% if mailbox.smtpConfiguration is not empty and mailbox.smtpConfiguration.code == 'outlook' %}selected{% endif %}>{{ 'Outlook'|trans }} </option>
+							<option value="outlook_oauth" {% if mailbox.smtpConfiguration is not empty and mailbox.smtpConfiguration.code == 'outlook_oauth' %}selected{% endif %}>{{ 'Outlook Modern Auth'|trans }} </option>
+							<option value="swiftmailer_id" {% if mailbox.swiftmailerConfiguration is not empty and mailbox.swiftmailerConfiguration.code == 'swiftmailer_id' %}selected{% endif %}>{{ 'Swift Mailer'|trans }} </option>
 						</select>
+
+						<div class="uv-element-block" id='swiftMailerIdContainer' style="display:none;">
+							<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
+							{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
+								<select name="swiftmailer_id" class="uv-select">
+									<option value="none">{{ 'None Selected'|trans }}</option>
+									{% for configuration in swiftmailerConfigurations %}
+										{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
+											<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
+										{% else %}
+											<option value="{{ configuration.id }}">{{ configuration.id }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							{% else %}
+								<select name="swiftmailer_id" class="uv-select">
+									<option value="none">{{ 'None Selected'|trans }}</option>
+								</select>
+							{% endif %}
+						</div>
 					{% else %}
-						<select name="swiftmailer_id" class="uv-select">
-							<option value="none">{{ 'None Selected'|trans }}</option>
+						<select name="smtp[transport]" id="mailboxOutgoingTransportType" class="uv-select">
+							<option value="" selected>{{ 'None Selected'|trans }}</option>
+							<option value="outlook">{{ 'Outlook'|trans }} </option>
+							<option value="outlook_oauth">{{ 'Outlook Modern Auth'|trans }} </option>
+							<option value="swiftmailer_id">{{ 'Swift Mailer'|trans }}</option>
 						</select>
 					{% endif %}
 				</div>
 
+				<div class="smtp-setting-references"></div>
+
 				<div class="uv-hr"></div>
-				
+
 				{% if mailbox is defined and mailbox.id is not empty %}
-					<input class="uv-btn" href="#" value="{{ 'Update Mailbox'|trans }}" type="submit">
+					<input id="saveConfigurationSettings" class="uv-btn" href="#" value="{{ 'Update Mailbox'|trans }}" type="submit">
 				{% else %}
-					<input class="uv-btn" href="#" value="{{ 'Create Mailbox'|trans }}" type="submit">
+					<input id="saveConfigurationSettings" class="uv-btn" href="#" value="{{ 'Create Mailbox'|trans }}" type="submit">
 				{% endif %}
 			</form>
 		</div>
@@ -169,32 +197,10 @@
 {% block footer %}
 	{{ parent() }}
 
-    <script id="imap_conf_template_predefined" type="text/template">
-        <div class="uv-element-block">
-			<label class="uv-field-label">{{ 'Username/Email' |trans }}</label>
-			
-			<div class="uv-field-block">
-				<% if (typeof(username) != 'undefined' && username != '') { %>
-					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{ 'username@domain.com'|trans }}">
-				<% } else { %>
-					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{ 'username@domain.com'|trans }}">
-                <% } %>
-			</div>
-		</div>
-		
-		<div class="uv-element-block">
-			<label class="uv-field-label">{{ 'Password' |trans }}</label>
-
-			<div class="uv-field-block">
-				<input class="uv-field" type="password" name="imap[password]" placeholder="{{ 'Associated Password'|trans }}">
-			</div>
-		</div>
-	</script>
-
-    <script id="imap_conf_template_custom" type="text/template">
+	<script id="default_imap_configuration_template" type="text/template">
         <div class="uv-element-block">
 			<label class="uv-field-label">{{ 'Host'|trans }}</label>
-			
+
 			<div class="uv-field-block">
 				<% if (typeof(host) != 'undefined' && host != '') { %>
 					<input class="uv-field" type="text" name="imap[host]" value="<%- host %>" placeholder="<%- host %>">
@@ -205,8 +211,8 @@
 		</div>
 
 		<div class="uv-element-block">
-			<label class="uv-field-label">{{ 'Username/Email'|trans }}</label>
-			
+			<label class="uv-field-label">{{ 'Username'|trans }}</label>
+
 			<div class="uv-field-block">
 				<% if (typeof(username) != 'undefined' && username != '') { %>
 					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{'username@domain.com'|trans }}">
@@ -215,7 +221,7 @@
                 <% } %>
 			</div>
 		</div>
-		
+
 		<div class="uv-element-block">
 			<label class="uv-field-label">{{'Password'|trans }}</label>
 
@@ -225,7 +231,215 @@
 		</div>
 	</script>
 
+    <script id="gmail_imap_configuration_template" type="text/template">
+        <div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Username' |trans }}</label>
+
+			<div class="uv-field-block">
+				<% if (typeof(username) != 'undefined' && username != '') { %>
+					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{ 'username@domain.com'|trans }}">
+				<% } else { %>
+					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{ 'username@domain.com'|trans }}">
+                <% } %>
+			</div>
+		</div>
+
+		<div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Password' |trans }}</label>
+
+			<div class="uv-field-block">
+				<input class="uv-field" type="password" name="imap[password]" placeholder="{{ 'Associated Password'|trans }}">
+			</div>
+		</div>
+	</script>
+
+	<script id="yahoo_imap_configuration_template" type="text/template">
+        <div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Username' |trans }}</label>
+
+			<div class="uv-field-block">
+				<% if (typeof(username) != 'undefined' && username != '') { %>
+					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{ 'username@domain.com'|trans }}">
+				<% } else { %>
+					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{ 'username@domain.com'|trans }}">
+                <% } %>
+			</div>
+		</div>
+
+		<div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Password' |trans }}</label>
+
+			<div class="uv-field-block">
+				<input class="uv-field" type="password" name="imap[password]" placeholder="{{ 'Associated Password'|trans }}">
+			</div>
+		</div>
+	</script>
+
+	<script id="outlook_imap_configuration_template" type="text/template">
+        <div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Username' |trans }}</label>
+
+			<div class="uv-field-block">
+				<% if (typeof(username) != 'undefined' && username != '') { %>
+					<input class="uv-field" type="text" name="imap[username]" value="<%- username %>" placeholder="{{ 'username@domain.com'|trans }}">
+				<% } else { %>
+					<input class="uv-field" type="text" name="imap[username]" value="" placeholder="{{ 'username@domain.com'|trans }}">
+                <% } %>
+			</div>
+		</div>
+
+		<div class="uv-element-block">
+			<label class="uv-field-label">{{ 'Password' |trans }}</label>
+
+			<div class="uv-field-block">
+				<input class="uv-field" type="password" name="imap[password]" placeholder="{{ 'Associated Password'|trans }}">
+			</div>
+		</div>
+	</script>
+
+	<script id="outlook_oauth_imap_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Email'|trans }}</label>
+
+            {% if microsoftAccountCollection is defined and microsoftAccountCollection is not empty %}
+                <select name="imap[username]" class="uv-select">
+					<option value="" selected>No account selected</option>
+
+                    {% for microsoftAccount in microsoftAccountCollection %}
+                        <option value="{{ microsoftAccount.id }}">{{ microsoftAccount.email }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="imap[username]" class="uv-select" disabled>
+                    <option selected>{{ 'No microsoft account currently available'|trans }}</option>
+                </select>
+            {% endif %}
+
+			<p class="uv-field-info" style="margin-top: unset;">Select from one of the previously configured microsoft accounts.</p>
+        </div>
+
+		<div class="uv-hr"></div>
+
+		<div class="uv-element-block">
+            <p class="uv-field-label" style="margin-bottom: 6px;">{{ 'Microsoft App'|trans }}</p>
+			<p class="uv-field-info" style="font-style: normal; margin-top: unset;">Continue by signing in through microsoft to add a new account.</p>
+
+            {% if microsoftAppCollection is defined and microsoftAppCollection is not empty %}
+                <select id="imap-microsoftAppId" name="imap[microsoftAppId]" class="uv-select">
+					<option value="" selected>No app selected</option>
+
+                    {% for microsoftApp in microsoftAppCollection %}
+                        <option value="{{ microsoftApp.id }}">{{ microsoftApp.name }}</option>
+                    {% endfor %}
+                </select>
+
+				<button class="uv-btn continue-with-microsoft-app" data-reference="imap-microsoftAppId" style="background-color: #00a1f1;">Continue with Microsoft</button>
+            {% else %}
+                <select id="imap-microsoftAppId" name="imap[microsoftAppId]" class="uv-select" disabled>
+                    <option selected>{{ 'No configured microsoft app currently available'|trans }}</option>
+                </select>
+
+				<a href="{{ path('uvdesk_member_core_framework_microsoft_apps_settings') }}" class="uv-btn" style="background-color: #00a1f1;">Manage Microsoft Apps</a>
+            {% endif %}
+        </div>
+	</script>
+
+    <script id="outlook_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Username'|trans }}</label>
+
+            <div class="uv-field-block">
+                <% if (typeof(username) != 'undefined' && username != '') { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="<%- username %>" />
+                <% } else { %>
+                    <input type="text" name="smtp[username]" class="uv-field" value="" />
+                <% } %>
+            </div>
+        </div>
+
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Password'|trans }}</label>
+
+            <div class="uv-field-block">
+                <input type="password" name="smtp[password]" class="uv-field" value="" placeholder="Associated Password" />
+            </div>
+        </div>
+	</script>
+
+    <script id="outlook_oauth_smtp_configuration_template" type="text/template">
+        <div class="uv-element-block">
+            <label class="uv-field-label">{{ 'Username'|trans }}</label>
+
+            {% if microsoftAccountCollection is defined and microsoftAccountCollection is not empty %}
+                <select name="smtp[username]" class="uv-select">
+					<option value="" selected>No account selected</option>
+
+                    {% for microsoftAccount in microsoftAccountCollection %}
+                        <option value="{{ microsoftAccount.id }}">{{ microsoftAccount.email }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <select name="smtp[username]" class="uv-select" disabled>
+                    <option selected>{{ 'No microsoft account currently available'|trans }}</option>
+                </select>
+            {% endif %}
+
+			<p class="uv-field-info" style="margin-top: unset;">Select from one of the previously configured microsoft accounts.</p>
+        </div>
+
+		<div class="uv-hr"></div>
+
+        <div class="uv-element-block">
+			<p class="uv-field-label" style="margin-bottom: 6px;">{{ 'Microsoft App'|trans }}</p>
+			<p class="uv-field-info" style="font-style: normal; margin-top: unset;">Continue by signing in through microsoft to add a new account.</p>
+
+            {% if microsoftAppCollection is defined and microsoftAppCollection is not empty %}
+                <select id="smtp-microsoftAppId" name="smtp[microsoftAppId]" class="uv-select">
+					<option value="" selected>No app selected</option>
+
+                    {% for microsoftApp in microsoftAppCollection %}
+                        <option value="{{ microsoftApp.id }}">{{ microsoftApp.name }}</option>
+                    {% endfor %}
+                </select>
+
+				<button class="uv-btn continue-with-microsoft-app" data-reference="smtp-microsoftAppId" style="background-color: #00a1f1;" type="button">Continue with Microsoft</button>
+            {% else %}
+                <select id="smtp-microsoftAppId" name="smtp[microsoftAppId]" class="uv-select" disabled>
+                    <option selected>{{ 'No configured microsoft app currently available'|trans }}</option>
+                </select>
+
+				<a href="{{ path('uvdesk_member_core_framework_microsoft_apps_settings') }}" class="uv-btn" style="background-color: #00a1f1;">Manage Microsoft Apps</a>
+            {% endif %}
+        </div>
+	</script>
+
+    <script id="swift_mailer_configuration_template" type="text/template">
+        <div class="uv-element-block">
+			<div id="swift_mailer">
+				<label class="uv-field-label">{{ 'Swift Mailer ID'|trans }}</label>
+				{% if swiftmailerConfigurations is defined and swiftmailerConfigurations is not empty %}
+					<select name="swiftmailer_id" class="uv-select">
+						<option value="none">{{ 'None Selected'|trans }}</option>
+						{% for configuration in swiftmailerConfigurations %}
+							{% if mailbox is defined and mailbox.swiftmailerConfiguration and mailbox.swiftmailerConfiguration.id == configuration.id %}
+								<option value="{{ configuration.id }}" selected>{{ configuration.id }}</option>
+							{% else %}
+								<option value="{{ configuration.id }}">{{ configuration.id }}</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+				{% else %}
+					<select name="swiftmailer_id" class="uv-select">
+						<option value="none">{{ 'None Selected'|trans }}</option>
+					</select>
+				{% endif %}
+			</div>
+		</div>
+	</script>
+
 	<script type="text/javascript">
+		let microsoftAuthPlaceholderUri = "{{ url('uvdesk_member_core_framework_integrations_microsoft_apps_add_account', { appId: 'placeholder', origin: 'helpdesk_member_mailbox_create_configuration' }) }}";
+
 		$(function () {
 			var MailboxConfigurationModel = Backbone.Model.extend({
                 idAttribute: "id",
@@ -236,9 +450,20 @@
 						}
                     },
 					swiftmailer_id: function(value) {
-						if (value == undefined || value == '' || value == 'none') {
+						let outgoingEmailSettings = this.get('outgoing');
+
+						if ('swiftmailer_id' == outgoingEmailSettings.transport && (value == undefined || value == '' || value == 'none')) {
 							return "Please select a valid swift-mailer configuration.";
 						}
+                    },
+					"imap[transport]": function(value) {
+						let incomingEmailSettings = this.get('incoming');
+
+                        if ('' == incomingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please select a valid Incoming mailer service";
+                            }
+                        }
                     },
 					"imap[host]": function(value) {
                         if ('custom' == this.get('transport') || 'imap' == this.get('transport')) {
@@ -247,59 +472,204 @@
                             }
                         }
                     },
-                    "imap[username]": [
-                        {
-                            required: true,
-                            msg: 'Please specify a valid email address.'
-                        },
-                        {
-                            pattern: /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-                            msg: 'Please specify a valid email address.'
-                        }
-                    ],
+                    "imap[username]": function(value) {
+						let incomingEmailSettings = this.get('incoming');
+
+						if (incomingEmailSettings.transport != "" && incomingEmailSettings.transport != "swiftmailer_id") {
+							if ('outlook_oauth' != incomingEmailSettings.transport) {
+								if (value == undefined || value == '') {
+									return "Please enter a valid email address";
+								} else if (/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) == false) {
+									return "Please specify a valid email address";
+								}
+							} else {
+								if (value == undefined || value == '') {
+									return "Please select from one of the available microsoft accounts";
+								}
+							}
+						}
+                    },
                     "imap[password]": function(value) {
-                        if (value == undefined || value == '') {
-                            return "Please enter the associated account password.";
+						let incomingEmailSettings = this.get('incoming');
+
+						if (incomingEmailSettings.transport != "" && incomingEmailSettings.transport != "swiftmailer_id") {
+							if ((value == undefined || value == '') && this.attributes['imap[transport]'] != 'webhook' && this.attributes['imap[transport]'] != 'outlook_oauth') {
+								return "Please enter the associated account password.";
+							}
+						}
+                    },
+					"smtp[transport]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('' == outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please select a valid Outgoing mailer service";
+                            }
+                        }
+                    },
+					"smtp[host]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('smtp' == outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please enter your server host address";
+                            }
+                        }
+                    },
+					"smtp[username]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+						if (outgoingEmailSettings.transport != "" && outgoingEmailSettings.transport != "swiftmailer_id") {
+							if ('outlook_oauth' != outgoingEmailSettings.transport) {
+								if (value == undefined || value == '') {
+									return "Please enter a valid username";
+								}
+							} else {
+								if (value == undefined || value == '') {
+									return "Please select from one of the available microsoft accounts";
+								}
+							}
+						}
+                    },
+					"smtp[senderAddress]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+						if (outgoingEmailSettings.transport == "default") {
+                            if (value != undefined && value != '') {
+								if (/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) == false) {
+									return "Please specify a valid email address";
+								}
+							}
+						}
+                    },
+                    "smtp[password]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+						if (outgoingEmailSettings.transport != "" && outgoingEmailSettings.transport != "swiftmailer_id") {
+							if ((value == undefined || value == '') && 'outlook_oauth' != outgoingEmailSettings.transport) {
+								return "Please enter the password associated with your email address";
+							}
+						}
+                    },
+                    "smtp[port]": function(value) {
+						let outgoingEmailSettings = this.get('outgoing');
+
+                        if ('smtp' == outgoingEmailSettings.transport) {
+                            if (value == undefined || value == '') {
+                                return "Please specify a port number to connect with your mail server";
+                            }
                         }
                     }
 				}
 			});
 
 			var MailboxConfigurationView = Backbone.View.extend({
-                imap_conf_template_custom: _.template($("#imap_conf_template_custom").html()),
-                imap_conf_template_predefined: _.template($("#imap_conf_template_predefined").html()),
+                default_imap_configuration_template: _.template($("#default_imap_configuration_template").html()),
+                gmail_imap_configuration_template: _.template($("#gmail_imap_configuration_template").html()),
+				yahoo_imap_configuration_template: _.template($("#yahoo_imap_configuration_template").html()),
+				outlook_imap_configuration_template: _.template($("#outlook_imap_configuration_template").html()),
+				outlook_oauth_imap_configuration_template: _.template($("#outlook_oauth_imap_configuration_template").html()),
+                outlook_smtp_configuration_template: _.template($("#outlook_smtp_configuration_template").html()),
+                outlook_oauth_smtp_configuration_template: _.template($("#outlook_oauth_smtp_configuration_template").html()),
+                swift_mailer_configuration_template: _.template($("#swift_mailer_configuration_template").html()),
 				events: {
-                    'change #cta-mailbox-imap-transport': 'changeImapTransportType',
-					'click .uv-btn' : "validateSubmission",
+                    'change #mailboxIncomingTransportType': 'changeIncomingTransportType',
+					'change #mailboxOutgoingTransportType': 'changeOutgoingTransportType',
+					'click #saveConfigurationSettings' : "submitConfigurationSettings",
+					'click .continue-with-microsoft-app': "continueWithMicrosoftApp"
 				},
 				initialize: function() {
                     Backbone.Validation.bind(this);
-                    this.renderTransportConfigurations();
+
+                    this.renderIncomingTransportConfigurations();
+					this.renderOutgoingTransportConfigurations();
 				},
-                changeImapTransportType: function(e) {
+                changeIncomingTransportType: function(e) {
+					let transport = $(e.target).val();
+					let incomingEmailSettings = this.model.get('incoming');
+
+					incomingEmailSettings.transport = transport;
+					this.model.set('incoming', incomingEmailSettings);
+
+					console.log('changeIncomingTransportType model:', incomingEmailSettings);
+
+                    this.renderIncomingTransportConfigurations();
+                },
+				changeOutgoingTransportType: function(e) {
+					let transport = $(e.target).val();
+					let outgoingEmailSettings = this.model.get('outgoing');
+
+					outgoingEmailSettings.transport = transport;
+					this.model.set('outgoing', outgoingEmailSettings);
+
                     if (true) {
                         this.model.set('transport', $(e.target).val());
                     }
 
-                    this.renderTransportConfigurations();
+                    this.renderOutgoingTransportConfigurations();
                 },
-                renderTransportConfigurations: function() {
-                    switch (this.model.get('transport')) {
-                        case 'custom':
-                            $('.imap-setting-references').html(this.imap_conf_template_custom(this.model.attributes));
+				continueWithMicrosoftApp: function(e) {
+					e.preventDefault();
+
+					let reference = $(e.target).data('reference');
+					let microsoftAppId = $("#" + reference).val();
+
+					if (microsoftAppId != "") {
+						window.location.href = microsoftAuthPlaceholderUri.replace('placeholder', microsoftAppId);
+					} else {
+						console.log('select a valid microsoft app');
+					}
+                },
+                renderIncomingTransportConfigurations: function() {
+					let incomingEmailSettings = this.model.get('incoming');
+
+					console.log('renderIncomingTransportConfigurations:', incomingEmailSettings);
+
+                    switch (incomingEmailSettings.transport) {
+                        case 'imap':
+                            $('.imap-setting-references').html(this.default_imap_configuration_template(incomingEmailSettings));
                             break;
                         case 'gmail':
-                            $('.imap-setting-references').html(this.imap_conf_template_predefined(this.model.attributes));
+                            $('.imap-setting-references').html(this.gmail_imap_configuration_template(incomingEmailSettings));
                             break;
                         case 'yahoo':
-                            $('.imap-setting-references').html(this.imap_conf_template_predefined(this.model.attributes));
+                            $('.imap-setting-references').html(this.yahoo_imap_configuration_template(incomingEmailSettings));
+                            break;
+						case 'outlook':
+                            $('.imap-setting-references').html(this.outlook_imap_configuration_template(incomingEmailSettings));
+                            break;
+						case 'outlook_oauth':
+                            $('.imap-setting-references').html(this.outlook_oauth_imap_configuration_template(incomingEmailSettings));
+                            break;
+						case 'swiftmailer_id':
+                            $('.imap-setting-references').html(this.swift_mailer_configuration_template(incomingEmailSettings));
                             break;
                         default:
                             break;
                     }
                 },
-                validateSubmission: function(e) {
+				renderOutgoingTransportConfigurations: function() {
+					let outgoingEmailSettings = this.model.get('outgoing');
+
+                    switch (outgoingEmailSettings.transport) {
+						case 'outlook':
+                            $('.smtp-setting-references').html(this.outlook_smtp_configuration_template(outgoingEmailSettings));
+							break;
+						case 'swiftmailer_id':
+							$('#swiftMailerIdContainer').remove();
+                            $('.smtp-setting-references').html(this.swift_mailer_configuration_template(outgoingEmailSettings));
+                            break;
+						case 'outlook_oauth':
+                            $('.smtp-setting-references').html(this.outlook_oauth_smtp_configuration_template(outgoingEmailSettings));
+                            break;
+                        default:
+							$('.smtp-setting-references').html('')
+                            break;
+                    }
+                },
+                submitConfigurationSettings: function(e) {
                     e.preventDefault();
+
                     this.model.set(this.$el.serializeObject());
 
 			        if (this.model.isValid(true)) {
@@ -309,20 +679,48 @@
 			});
 
             {% if mailbox is defined %}
-                new MailboxConfigurationView({
-                    el: $("#mailbox-settings-view"),
-                    model: new MailboxConfigurationModel({
-						transport: "{{ mailbox.imapConfiguration.code }}",
-						host: "{{ mailbox.imapConfiguration.host }}",
-						username: "{{ mailbox.imapConfiguration.username }}",
+				new MailboxConfigurationView({
+					el: $("#mailbox-settings-view"),
+					model: new MailboxConfigurationModel({
+						incoming: {
+							transport: "{{ mailbox.imapConfiguration.code is defined and mailbox.imapConfiguration.code is not empty ? mailbox.imapConfiguration.code : '' }}",
+							host: "{{ mailbox.imapConfiguration.host is defined and mailbox.imapConfiguration.host is not empty ? mailbox.imapConfiguration.host : '' }}",
+							username: "{{ mailbox.imapConfiguration.username is defined and mailbox.imapConfiguration.username is not empty ? mailbox.imapConfiguration.username : '' }}",
+						},
+						outgoing: {
+							transport: "{{ mailbox.smtpConfiguration.code is defined and mailbox.smtpConfiguration.code is not empty ? mailbox.smtpConfiguration.code : '' }}",
+							host: "{{ mailbox.smtpConfiguration.host is defined and mailbox.smtpConfiguration.host is not empty ? mailbox.smtpConfiguration.host : '' }}",
+							username: "{{ mailbox.smtpConfiguration.username is defined and mailbox.smtpConfiguration.username is not empty ? mailbox.smtpConfiguration.username : '' }}",
+						}
 					})
-                });
+				});
             {% else %}
                 new MailboxConfigurationView({
                     el: $("#mailbox-settings-view"),
-                    model: new MailboxConfigurationModel({ transport: 'custom' })
+                    model: new MailboxConfigurationModel({ incoming: { transport: '' }, outgoing: { transport: '' } })
                 });
             {% endif %}
+		});
+	</script>
+	
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const transportDropdown = document.getElementById('mailboxOutgoingTransportType');
+			const swiftMailerContainer = document.getElementById('swiftMailerIdContainer');
+
+			// Function to toggle Swift Mailer field visibility
+			function toggleSwiftMailerField() {
+				// Check if the selected value matches 'swiftmailer_id'
+				if (transportDropdown.value === 'swiftmailer_id') {
+					swiftMailerContainer.style.display = 'block'; // Show container
+				} else {
+					swiftMailerContainer.style.display = 'none'; // Hide container
+				}
+			}
+
+			toggleSwiftMailerField();
+
+			transportDropdown.addEventListener('change', toggleSwiftMailerField);
 		});
 	</script>
 {% endblock %}
