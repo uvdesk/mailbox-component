@@ -63,7 +63,7 @@ class MailboxChannel extends AbstractController
             $imapConfiguration = null;
 
             // IMAP Configuration
-            if (!empty($params['imap']['transport'])) {
+            if (! empty($params['imap']['transport'])) {
                 $imapConfiguration = IMAP\Configuration::createTransportDefinition($params['imap']['transport'], !empty($params['imap']['host']) ? trim($params['imap']['host'], '"') : null);
 
                 if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
@@ -107,7 +107,10 @@ class MailboxChannel extends AbstractController
             }
 
             // SMTP Configuration
-            if (!empty($params['smtp']['transport']) && 'swiftmailer_id' !== $params['smtp']['transport']) {
+            if (
+                ! empty($params['smtp']['transport']) 
+                && 'swiftmailer_id' !== $params['smtp']['transport']
+            ) {
                 $smtpConfiguration = SMTP\Configuration::createTransportDefinition($params['smtp']['transport'], !empty($params['smtp']['host']) ? trim($params['smtp']['host'], '"') : null);
 
                 if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
@@ -164,8 +167,8 @@ class MailboxChannel extends AbstractController
             } else {
                 $mailboxConfiguration = $mailboxService->parseMailboxConfigurations();
 
-                // Swiftmailer Configuration
-                if (!empty($params['swiftmailer_id'])) {
+                // SwiftMailer Configuration
+                if (! empty($params['swiftmailer_id'])) {
                     foreach ($swiftMailerConfigurationCollection as $configuration) {
                         if ($configuration->getId() == $params['swiftmailer_id']) {
                             $swiftmailerConfiguration = $configuration;
@@ -224,7 +227,7 @@ class MailboxChannel extends AbstractController
 
     public function updateMailboxConfiguration($id, Request $request, EntityManagerInterface $entityManager, UserService $userService, MailboxService $mailboxService, TranslatorInterface $translator, SwiftMailerService $swiftMailer)
     {
-        if (!$userService->isAccessAuthorized('ROLE_ADMIN')) {
+        if (! $userService->isAccessAuthorized('ROLE_ADMIN')) {
             return $this->redirect($this->generateUrl('helpdesk_member_dashboard'));
         }
 
@@ -310,7 +313,10 @@ class MailboxChannel extends AbstractController
             }
 
             // SMTP Configuration
-            if (!empty($params['smtp']['transport']) && 'swiftmailer_id' !== $params['smtp']['transport']) {
+            if (
+                ! empty($params['smtp']['transport']) 
+                && 'swiftmailer_id' !== $params['smtp']['transport']
+            ) {
                 $smtpConfiguration = SMTP\Configuration::createTransportDefinition($params['smtp']['transport'], !empty($params['smtp']['host']) ? trim($params['smtp']['host'], '"') : null);
 
                 if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
@@ -366,7 +372,7 @@ class MailboxChannel extends AbstractController
    
                 $mailbox = new Mailbox($params['id']);
 
-                // Swiftmailer Configuration
+                // SwiftMailer Configuration
                 if (! empty($params['swiftmailer_id'])) {
                     foreach ($swiftMailerConfigurationCollection as $configuration) {
                         if ($configuration->getId() == $params['swiftmailer_id']) {
@@ -380,19 +386,19 @@ class MailboxChannel extends AbstractController
                     ->setName($params['name'])
                     ->setIsEnabled(!empty($params['isEnabled']) && 'on' == $params['isEnabled'] ? true : false);
 
-                if (!empty($imapConfiguration)) {
+                if (! empty($imapConfiguration)) {
                     $mailbox
                         ->setImapConfiguration($imapConfiguration)
                     ;
                 }
 
-                if (!empty($smtpConfiguration)) {
+                if (! empty($smtpConfiguration)) {
                     $mailbox
                         ->setSmtpConfiguration($smtpConfiguration)
                     ;
                 }
 
-                if (!empty($swiftmailerConfiguration) && empty($smtpConfiguration)) {
+                if (! empty($swiftmailerConfiguration) && empty($smtpConfiguration)) {
                     $mailbox
                         ->setSwiftMailerConfiguration($swiftmailerConfiguration);
                     ;
@@ -400,7 +406,7 @@ class MailboxChannel extends AbstractController
 
                 $mailboxConfiguration->addMailbox($mailbox);
 
-                if (!empty($params['isDefault']) && 'on' == $params['isDefault']) {
+                if (! empty($params['isDefault']) && 'on' == $params['isDefault']) {
                     $mailboxConfiguration
                         ->setDefaultMailbox($mailbox)
                     ;

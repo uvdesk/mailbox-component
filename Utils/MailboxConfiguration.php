@@ -23,7 +23,7 @@ final class MailboxConfiguration
         $imapConfiguration = $mailbox->getImapConfiguration();
 
         if (
-            !empty($imapConfiguration) 
+            ! empty($imapConfiguration) 
             && !$imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface 
             && !$imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface
         ) {
@@ -59,7 +59,10 @@ final class MailboxConfiguration
 
     public function getDefaultMailbox(): ?Mailbox
     {
-        if (!empty($this->defaultMailbox) && !empty($this->collection[$this->defaultMailbox])) {
+        if (
+            ! empty($this->defaultMailbox) 
+            && !empty($this->collection[$this->defaultMailbox])
+        ) {
             return $this->collection[$this->defaultMailbox];
         }
 
@@ -81,7 +84,7 @@ final class MailboxConfiguration
 
     public function getMailboxById($mailboxId): ?Mailbox
     {
-        if (!empty($this->collection[$mailboxId])) {
+        if (! empty($this->collection[$mailboxId])) {
             return $this->collection[$mailboxId];
         }
 
@@ -93,7 +96,7 @@ final class MailboxConfiguration
         foreach ($this->collection as $mailbox) {
             $smtpConfiguration = $mailbox->getSmtpConfiguration();
 
-            if (!empty($smtpConfiguration) && $smtpConfiguration->getUsername() == $mailboxEmail) {
+            if (! empty($smtpConfiguration) && $smtpConfiguration->getUsername() == $mailboxEmail) {
                 return $mailbox;
             }
         }
@@ -106,7 +109,7 @@ final class MailboxConfiguration
         foreach ($this->collection as $mailbox) {
             $imapConfiguration = $mailbox->getImapConfiguration();
 
-            if (!empty($imapConfiguration) && $imapConfiguration->getUsername() == $mailboxEmail) {
+            if (! empty($imapConfiguration) && $imapConfiguration->getUsername() == $mailboxEmail) {
                 return $mailbox;
             }
         }
@@ -121,7 +124,7 @@ final class MailboxConfiguration
 
     public function __toString()
     {
-        if (!empty($this->collection)) {
+        if (! empty($this->collection)) {
             $mailboxes = array_reduce($this->collection, function($mailboxes, $mailbox) {
                 return $mailboxes . (string) $mailbox;
             }, '');

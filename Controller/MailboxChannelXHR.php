@@ -153,7 +153,7 @@ class MailboxChannelXHR extends AbstractController
             return new JsonResponse([
                 'success' => false, 
                 'message' => $e->getMessage(), 
-                'params' => $request->get('email')
+                'params'  => $request->get('email')
             ], 500);
         }
 

@@ -106,7 +106,10 @@ class MailboxService
             // SMTP Configuration
             $smtpConfiguration = null; 
 
-            if (!empty($params['smtp_server']) && !isset($params['smtp_server']['mailer_id'])) {
+            if (
+                ! empty($params['smtp_server']) 
+                && !isset($params['smtp_server']['mailer_id'])
+            ) {
                 $smtpConfiguration = SMTP\Configuration::guessTransportDefinition($params['smtp_server']);
     
                 if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
@@ -127,7 +130,7 @@ class MailboxService
                         ->setPassword($params['smtp_server']['password'])
                     ;
 
-                    if (!empty($params['smtp_server']['sender_address'])) {
+                    if (! empty($params['smtp_server']['sender_address'])) {
                         $smtpConfiguration
                             ->setSenderAddress($params['smtp_server']['sender_address'])
                         ;
@@ -140,13 +143,13 @@ class MailboxService
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled']);
 
-            if (!empty($imapConfiguration)) {
+            if (! empty($imapConfiguration)) {
                 $mailbox
                     ->setImapConfiguration($imapConfiguration)
                 ;
             }
 
-            if (!empty($smtpConfiguration)) {
+            if (! empty($smtpConfiguration)) {
                 $mailbox
                     ->setSmtpConfiguration($smtpConfiguration)
                 ;
@@ -280,8 +283,8 @@ class MailboxService
         
         // Search Criteria: Find ticket based on subject
         if (
-            !empty($senderEmail)
-            && !empty($messageSubject)
+            ! empty($senderEmail)
+            && ! empty($messageSubject)
         ) {
             $threadRepository = $this->entityManager->getRepository(Thread::class);
             $ticket = $threadRepository->findTicketBySubject($senderEmail, $messageSubject);
@@ -318,7 +321,7 @@ class MailboxService
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
         
-                        if (!empty($thread)) {
+                        if (! empty($thread)) {
                             return $thread->getTicket();
                         }
                     }
@@ -377,10 +380,10 @@ class MailboxService
 
         $from = $this->parseAddress('from') ?: $this->parseAddress('sender');
         $addresses = [
-            'from'          => $this->getEmailAddress($from),
-            'to'            => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
-            'cc'            => $this->parseAddress('cc'),
-            'delivered-to'  => $this->parseAddress('delivered-to'),
+            'from'         => $this->getEmailAddress($from),
+            'to'           => empty($this->parseAddress('X-Forwarded-To')) ? $this->parseAddress('to') : $this->parseAddress('X-Forwarded-To'),
+            'cc'           => $this->parseAddress('cc'),
+            'delivered-to' => $this->parseAddress('delivered-to'),
         ];
 
         if (empty($addresses['from'])) {
@@ -468,7 +471,7 @@ class MailboxService
             $mailData['subject'] = $parser->getHeader('subject');
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
             $mailData['attachments'] = $parser->getAttachments();
-        }catch(\Exception $e){
+        } catch(\Exception $e) {
             return [
                 'error'   => true,
                 'message' => $e->getMessage(),
@@ -481,7 +484,7 @@ class MailboxService
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
         
-        if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
+        if (! empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
             return [
                 'message' => "Received email where the sender email address is present in the block list. Skipping this email from further processing.", 
                 'content' => [
@@ -530,7 +533,7 @@ class MailboxService
                 return [
                     'message' => "The contents of this email has already been processed.", 
                     'content' => [
-                        'from'   => !empty($mailData['from']) ? $mailData['from'] : null,
+                        'from'   => ! empty($mailData['from']) ? $mailData['from'] : null,
                         'thread' => $thread->getId(),
                         'ticket' => $ticket->getId(),
                     ], 
@@ -547,13 +550,16 @@ class MailboxService
                 ];
             }
 
-            if ($ticket->getCustomer() && $ticket->getCustomer()->getEmail() == $mailData['from']) {
+            if (
+                $ticket->getCustomer() 
+                && $ticket->getCustomer()->getEmail() == $mailData['from']
+            ) {
                 // Reply from customer
                 $user = $ticket->getCustomer();
 
                 $mailData['user'] = $user;
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
-            } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])){
+            } else if ($this->entityManager->getRepository(Ticket::class)->isTicketCollaborator($ticket, $mailData['from'])) {
             	// Reply from collaborator
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
 
@@ -563,7 +569,10 @@ class MailboxService
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
                 
-                if (!empty($user) && null != $user->getAgentInstance()) {
+                if (
+                    ! empty($user) 
+                    && null != $user->getAgentInstance()
+                ) {
                     $mailData['user'] = $user;
                     $mailData['createdBy'] = 'agent';
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
@@ -589,7 +598,6 @@ class MailboxService
                         $this->entityManager->flush();
 
                         $ticket->lastCollaborator = $user;
-                        
                                
                         $event = new CoreWorkflowEvents\Ticket\Collaborator();
                         $event
@@ -780,18 +788,22 @@ class MailboxService
             ;
 
             $this->container->get('event_dispatcher')->dispatch($event, 'uvdesk.automation.workflow.execute');
-        } else if (false === $ticket->getIsTrashed() && strtolower($ticket->getStatus()->getCode()) != 'spam' && !empty($mailData['inReplyTo'])) {
+        } else if (
+            false === $ticket->getIsTrashed()
+            && strtolower($ticket->getStatus()->getCode()) != 'spam'
+            && ! empty($mailData['inReplyTo'])
+        ) {
             $mailData['threadType'] = 'reply';
             $thread = $this->entityManager->getRepository(Thread::class)->findOneByMessageId($mailData['messageId']);
             $ticketRef = $this->entityManager->getRepository(Ticket::class)->findById($ticket->getId());
             $referenceIds = explode(' ', $ticketRef[0]->getReferenceIds());
 
-            if (!empty($thread)) {
+            if (! empty($thread)) {
                 // Thread with the same message id exists skip process.
                 return [
                     'message' => "The contents of this email has already been processed 1.", 
                     'content' => [
-                        'from'   => !empty($mailData['from']) ? $mailData['from'] : null, 
+                        'from'   => ! empty($mailData['from']) ? $mailData['from'] : null, 
                         'thread' => $thread->getId(), 
                         'ticket' => $ticket->getId(), 
                     ], 
@@ -823,8 +835,7 @@ class MailboxService
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
-                
-                if (!empty($user) && null != $user->getAgentInstance()) {
+                if (! empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $mailData['createdBy'] = 'agent';
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
@@ -865,7 +876,7 @@ class MailboxService
             
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
             
-            if($thread->getThreadType() == 'reply') {
+            if ($thread->getThreadType() == 'reply') {
                 if ($thread->getCreatedBy() == 'customer') {
                     $event = new CoreWorkflowEvents\Ticket\CustomerReply();
                     $event

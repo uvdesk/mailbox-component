@@ -3,9 +3,10 @@ CHANGELOG for 1.1.x
 
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
-* 1.1.4 
+* 1.1.4 (2024-12-19)
     * Microsoft Modern App related updates.
     * License and support email address updates.
+    * Code refactoring.
 
 * 1.1.3 (2023-06-12)
     * Update: Dropped dependency on uvdesk/composer-plugin in support of symfony/flex
