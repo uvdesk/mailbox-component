@@ -386,6 +386,9 @@ class MailboxService
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
 
+        $bodyHtml = mb_convert_encoding($parser->getMessageBody('htmlEmbedded'), 'UTF-8', 'auto');
+        $bodyText = mb_convert_encoding($parser->getMessageBody('text'), 'UTF-8', 'auto');
+
         if (empty($addresses['from'])) {
             return [
                 'message' => "No 'from' email address was found while processing contents of email.", 
@@ -469,7 +472,7 @@ class MailboxService
         try {
             $htmlFilter = new HTMLFilter();
             $mailData['subject'] = $parser->getHeader('subject');
-            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
+            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($bodyHtml));
             $mailData['attachments'] = $parser->getAttachments();
         } catch(\Exception $e) {
             return [
@@ -478,8 +481,8 @@ class MailboxService
             ];
         }
         
-        if (! $mailData['message']) {
-            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
+        if (!$mailData['message']) {
+            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($bodyText));
         }
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
