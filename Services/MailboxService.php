@@ -5,8 +5,6 @@ namespace Webkul\UVDesk\MailboxBundle\Services;
 use PhpMimeMailParser\Parser as EmailParser;
 use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
@@ -15,15 +13,12 @@ use Webkul\UVDesk\CoreFrameworkBundle\Entity\Website;
 use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\SupportRole;
-use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
-use Webkul\UVDesk\MailboxBundle\Utils\Imap\Configuration as ImapConfiguration;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
-use Webkul\UVDesk\MailboxBundle\Workflow\Events as MaibloxWorkflowEvents;
 
 class MailboxService
 {
@@ -386,9 +381,6 @@ class MailboxService
             'delivered-to' => $this->parseAddress('delivered-to'),
         ];
 
-        $bodyHtml = mb_convert_encoding($parser->getMessageBody('htmlEmbedded'), 'UTF-8', 'auto');
-        $bodyText = mb_convert_encoding($parser->getMessageBody('text'), 'UTF-8', 'auto');
-
         if (empty($addresses['from'])) {
             return [
                 'message' => "No 'from' email address was found while processing contents of email.", 
@@ -472,7 +464,7 @@ class MailboxService
         try {
             $htmlFilter = new HTMLFilter();
             $mailData['subject'] = $parser->getHeader('subject');
-            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($bodyHtml));
+            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
             $mailData['attachments'] = $parser->getAttachments();
         } catch(\Exception $e) {
             return [
@@ -481,8 +473,8 @@ class MailboxService
             ];
         }
         
-        if (!$mailData['message']) {
-            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($bodyText));
+        if (! $mailData['message']) {
+            $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
