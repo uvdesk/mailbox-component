@@ -5,11 +5,12 @@ namespace Webkul\UVDesk\MailboxBundle\Utils\Mailbox;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\TokenGenerator;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
+use Webkul\UVDesk\CoreFrameworkBundle\Utils\SwiftMailer\BaseConfiguration as SwiftMailerConfiguration;
 
 class Mailbox
 {
     CONST TOKEN_RANGE = '12345';
-    
+
     const IMAP_APP_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/IMAP/AppConfiguration.php";
     const IMAP_DEFAULT_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/IMAP/DefaultConfiguration.php";
     const IMAP_SIMPLE_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/IMAP/SimpleConfiguration.php";
@@ -18,6 +19,7 @@ class Mailbox
     const SMTP_DEFAULT_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/SMTP/DefaultConfiguration.php";
 
     const MAILBOX_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/MailboxSettings.php";
+    const SWIFT_MAILER_CONFIGURATION_TEMPLATE = __DIR__ . "/../../Templates/Mailbox/SwiftMailerSettings.php";
 
     private $id = null;
     private $name = null;
@@ -26,6 +28,7 @@ class Mailbox
     private $isStrictModeEnabled = false;
     private $imapConfiguration = null;
     private $smtpConfiguration = null;
+    private $swiftMailerConfiguration = null;
 
     public function __construct($id = null)
     {
@@ -114,18 +117,31 @@ class Mailbox
         return $this->smtpConfiguration;
     }
 
+    public function setSwiftMailerConfiguration(SwiftMailerConfiguration $swiftMailerConfiguration)
+    {
+        $this->swiftMailerConfiguration = $swiftMailerConfiguration;
+
+        return $this;
+    }
+
+    public function getSwiftMailerConfiguration() : ?SwiftMailerConfiguration
+    {
+        return $this->swiftMailerConfiguration;
+    }
+
     public function __toString()
     {
         $imapConfiguration = $this->getImapConfiguration();
         $smtpConfiguration = $this->getSmtpConfiguration();
+        $swiftMailerConfiguration = $this->getSwiftMailerConfiguration();
 
         $imapTemplate = '';
 
-        if (!empty($imapConfiguration)) {
+        if (! empty($imapConfiguration)) {
             if ($imapConfiguration instanceof IMAP\Transport\AppTransportConfigurationInterface) {
                 $imapTemplate = strtr(require self::IMAP_APP_CONFIGURATION_TEMPLATE, [
-                    '[[ imap_client ]]' => $imapConfiguration->getClient(),
-                    '[[ imap_username ]]' => $imapConfiguration->getUsername(), 
+                    '[[ imap_client ]]'   => $imapConfiguration->getClient(),
+                    '[[ imap_username ]]' => $imapConfiguration->getUsername(),
                 ]);
             } else if ($imapConfiguration instanceof IMAP\Transport\SimpleTransportConfigurationInterface) {
                 $imapTemplate = strtr(require self::IMAP_SIMPLE_CONFIGURATION_TEMPLATE, [
@@ -133,7 +149,7 @@ class Mailbox
                 ]);
             } else {
                 $imapTemplate = strtr(require self::IMAP_DEFAULT_CONFIGURATION_TEMPLATE, [
-                    '[[ imap_host ]]' => $imapConfiguration->getHost(),
+                    '[[ imap_host ]]'     => $imapConfiguration->getHost(),
                     '[[ imap_username ]]' => $imapConfiguration->getUsername(),
                     '[[ imap_password ]]' => $imapConfiguration->getPassword(),
                 ]);
@@ -145,13 +161,21 @@ class Mailbox
         if (!empty($smtpConfiguration)) {
             if ($smtpConfiguration instanceof SMTP\Transport\AppTransportConfigurationInterface) {
                 $smtpTemplate = strtr(require self::SMTP_APP_CONFIGURATION_TEMPLATE, [
-                    '[[ client ]]' => $smtpConfiguration->getClient(),
-                    '[[ username ]]' => $smtpConfiguration->getUsername(), 
-                    '[[ type ]]' => $smtpConfiguration->getType(), 
+                    '[[ client ]]'   => $smtpConfiguration->getClient(),
+                    '[[ username ]]' => $smtpConfiguration->getUsername(),
+                    '[[ type ]]'     => $smtpConfiguration->getType(),
                 ]);
             } else {
-                $smtpTemplate = require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE;
+                $smtpTemplate = (require self::SMTP_DEFAULT_CONFIGURATION_TEMPLATE);
             }
+        }
+        
+        $swiftMailerTemplate = '';
+
+        if (! empty($swiftMailerConfiguration)) {
+            $swiftMailerTemplate = strtr(require self::SWIFT_MAILER_CONFIGURATION_TEMPLATE, [
+                '[[ swiftMailer_id ]]' => $swiftMailerConfiguration->getId(),
+            ]);
         }
 
         return require self::MAILBOX_CONFIGURATION_TEMPLATE;

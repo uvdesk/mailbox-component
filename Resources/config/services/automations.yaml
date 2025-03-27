@@ -1,0 +1,12 @@
+services:
+    Webkul\UVDesk\MailboxBundle\Workflow\Events\:
+        resource: '../../../Workflow/Events/*'
+        arguments: ['@service_container', '@request_stack', '@doctrine.orm.entity_manager']
+        tags:
+            - { name: uvdesk.automations.workflow.events }
+    
+    Webkul\UVDesk\MailboxBundle\Workflow\Actions\:
+        resource: '../../../Workflow/Actions/*'
+        arguments: ['@service_container', '@request_stack', '@doctrine.orm.entity_manager']
+        tags:
+            - { name: uvdesk.automations.workflow.actions }

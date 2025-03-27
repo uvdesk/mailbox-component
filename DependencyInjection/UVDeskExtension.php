@@ -21,9 +21,15 @@ class UVDeskExtension extends Extension
 
     public function load(array $configs, ContainerBuilder $container)
     {
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('services.yaml');
-
+        $services = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config/services'));
+        
+        $services->load('services.yaml');
+        
+        // Register automations conditionally if AutomationBundle has been added as an dependency.
+        if (array_key_exists('UVDeskAutomationBundle', $container->getParameter('kernel.bundles'))) {
+            $services->load('automations.yaml');
+        }
+        
         // Load bundle configurations
         $configuration = $this->getConfiguration($configs, $container);
 

@@ -64,12 +64,14 @@ TEMPLATE;
         #         # For app transport method
         #         type: ~
         #         client: ~
+        #     smtp_swift_mailer_server:
+        #         mailer_id: ~
 TEMPLATE;
 }
 
 return strtr($template, [
     '[[ DEFAULT_MAILBOX ]]' => $this->getDefaultMailbox() ? $this->getDefaultMailbox()->getId() : null, 
-    '[[ MAILBOXES ]]' => $mailboxes, 
+    '[[ MAILBOXES ]]'       => $mailboxes, 
 ]);
 
 ?>

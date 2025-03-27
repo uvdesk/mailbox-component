@@ -5,16 +5,16 @@ services:
         public: false
     
     Webkul\UVDesk\MailboxBundle\:
-        resource: '../../*'
-        exclude: '../../{DependencyInjection,Entity,Package,Templates,Migrations,Tests}'
+        resource: '../../../*'
+        exclude: '../../../{DependencyInjection,Entity,Package,Templates,Migrations,Tests}'
     
     Webkul\UVDesk\MailboxBundle\Controller\:
-        resource: '../../Controller/*'
+        resource: '../../../Controller/*'
         tags: ['controller.service_arguments']
     
     Webkul\UVDesk\MailboxBundle\Console\:
-        resource: '../../Console/*'
-        exclude: '../../Console/{UTF8Symbol.php,ANSIEscapeSequence.php}'
+        resource: '../../../Console/*'
+        exclude: '../../../Console/{UTF8Symbol.php,ANSIEscapeSequence.php}'
     
     Webkul\UVDesk\MailboxBundle\EventListener\Mailer:
         tags:
