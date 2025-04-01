@@ -3,6 +3,9 @@ CHANGELOG for 1.1.x
 
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
+* 1.1.5
+    * Email Encoding related issues fixes.
+
 * 1.1.4 (2024-12-19)
     * Microsoft Modern App related updates.
     * License and support email address updates.
