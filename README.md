@@ -12,8 +12,6 @@ The Mailbox component provides tools that allows your helpdesk to process ticket
     <a href="https://gitter.im/uvdesk/mailbox-component"><img src="https://badges.gitter.im/uvdesk/mailbox-component.svg" alt="connect on gitter"></a>
 </p>
 
-The **Mailbox** component enables your [UVDesk Community][1] helpdesk to fetch emails from multiple sources and process them into tickets effortlessly.
-
 The **Mailbox** component enables your [UVDesk Community][1] helpdesk to automatically fetch incoming emails from multiple email sources, such as Gmail, Outlook, and custom email servers. It seamlessly converts these emails into structured support tickets, ensuring that each customer query is organized and easily trackable. This integration eliminates the need for manual email sorting, streamlining your support workflow by automatically categorizing, prioritizing, and routing tickets to the appropriate teams. The Mailbox component enhances operational efficiency by ensuring no email is overlooked and that every query is promptly addressed, providing a smoother experience for both your support team and customers.
 
 Installation
