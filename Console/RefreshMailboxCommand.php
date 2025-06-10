@@ -10,12 +10,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Webkul\UVDesk\CoreFrameworkBundle\Services\MicrosoftIntegration;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Microsoft\MicrosoftApp;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Microsoft\MicrosoftAccount;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\Microsoft\Graph as MicrosoftGraph;
-use Webkul\UVDesk\CoreFrameworkBundle\Services\MicrosoftIntegration;
-use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
 
 class RefreshMailboxCommand extends Command
 {

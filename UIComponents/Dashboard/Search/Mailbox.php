@@ -3,9 +3,6 @@
 namespace Webkul\UVDesk\MailboxBundle\UIComponents\Dashboard\Search;
 
 use Webkul\UVDesk\CoreFrameworkBundle\Dashboard\Segments\SearchItemInterface;
-use Symfony\Component\Translation\Translator;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
-use Symfony\Component\HttpFoundation\Request;
 
 class Mailbox implements SearchItemInterface
 {

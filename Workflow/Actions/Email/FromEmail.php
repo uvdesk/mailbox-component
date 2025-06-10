@@ -3,14 +3,11 @@
 namespace Webkul\UVDesk\MailboxBundle\Workflow\Actions\Email;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Webkul\UVDesk\AutomationBundle\Workflow\Action as WorkflowAction;
 use Webkul\UVDesk\AutomationBundle\Workflow\Event;
-use Webkul\UVDesk\AutomationBundle\Workflow\Events\EmailActivity;
 use Webkul\UVDesk\AutomationBundle\Workflow\FunctionalGroup;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity as CoreEntities;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\Attachment;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\EmailTemplates;
-use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
+use Webkul\UVDesk\AutomationBundle\Workflow\Events\EmailActivity;
+use Webkul\UVDesk\AutomationBundle\Workflow\Action as WorkflowAction;
 
 class FromEmail extends WorkflowAction
 {

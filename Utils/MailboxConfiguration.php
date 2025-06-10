@@ -2,8 +2,8 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Utils;
 
-use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 
 final class MailboxConfiguration
 {

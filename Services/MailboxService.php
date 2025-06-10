@@ -2,10 +2,13 @@
 
 namespace Webkul\UVDesk\MailboxBundle\Services;
 
-use PhpMimeMailParser\Parser as EmailParser;
 use Symfony\Component\Yaml\Yaml;
 use Doctrine\ORM\EntityManagerInterface;
+use PhpMimeMailParser\Parser as EmailParser;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
+use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\User;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Ticket;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\Thread;
@@ -14,10 +17,7 @@ use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 use Webkul\UVDesk\CoreFrameworkBundle\Utils\HTMLFilter;
 use Webkul\UVDesk\CoreFrameworkBundle\Entity\SupportRole;
 use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webkul\UVDesk\CoreFrameworkBundle\Workflow\Events as CoreWorkflowEvents;
-use Webkul\UVDesk\MailboxBundle\Utils\IMAP;
-use Webkul\UVDesk\MailboxBundle\Utils\SMTP;
 use Webkul\UVDesk\CoreFrameworkBundle\SwiftMailer\SwiftMailer as SwiftMailerService;
 
 class MailboxService

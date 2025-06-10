@@ -2,10 +2,10 @@
 
 namespace Webkul\UVDesk\MailboxBundle\EventListener;
 
+use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\Event\ConfigurationRemovedEvent;
 use Webkul\UVDesk\CoreFrameworkBundle\Mailer\Event\ConfigurationUpdatedEvent;
-use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
-use Webkul\UVDesk\MailboxBundle\Utils\Mailbox\Mailbox;
 
 class Mailer
 {

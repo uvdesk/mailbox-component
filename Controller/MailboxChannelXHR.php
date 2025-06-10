@@ -3,13 +3,12 @@
 namespace Webkul\UVDesk\MailboxBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
-use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Webkul\UVDesk\MailboxBundle\Services\MailboxService;
+use Webkul\UVDesk\MailboxBundle\Utils\MailboxConfiguration;
 
 class MailboxChannelXHR extends AbstractController
 {
@@ -40,9 +39,6 @@ class MailboxChannelXHR extends AbstractController
     public function loadMailboxesXHR(Request $request)
     {
         $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
-
-        $defaultMailbox = $mailboxConfiguration->getDefaultMailbox();
-
         $collection = array_map(function ($mailbox) use ($defaultMailbox) {
             return [
                 'id'        => $mailbox->getId(),
