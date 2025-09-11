@@ -39,7 +39,8 @@ class MailboxChannelXHR extends AbstractController
     public function loadMailboxesXHR(Request $request)
     {
         $mailboxConfiguration = $this->mailboxService->parseMailboxConfigurations();
-        $collection = array_map(function ($mailbox) use ($defaultMailbox) {
+        
+        $collection = array_map(function ($mailbox) {
             return [
                 'id'        => $mailbox->getId(),
                 'name'      => $mailbox->getName(),
