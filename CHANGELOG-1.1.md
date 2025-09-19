@@ -4,7 +4,14 @@ CHANGELOG for 1.1.x
 This changelog references any relevant changes introduced in 1.1 minor versions.
 
 * 1.1.5
+    Updates:
+    * Code Refactoring.
+    * Readme.md file updates.
+    * Swiftmailer svg icon related update.
+
+    Bug Fixes:
     * Email Encoding related issues fixes.
+    * Removed duplicate imap folder which is creating issue with wamp setup.
 
 * 1.1.4 (2024-12-19)
     * Microsoft Modern App related updates.
